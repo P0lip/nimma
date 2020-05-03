@@ -1,0 +1,8 @@
+.idea/
+node_modules/
+.cache/
+.nyc_output/
+coverage/
+*.log
+src/index.cjs
+dist/

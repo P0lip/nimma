@@ -1,0 +1,58 @@
+{
+  "name": "nimma",
+  "version": "0.0.0",
+  "description": "JSONPath-based object querying that scales.",
+  "keywords": [
+    "json",
+    "jsonpath"
+  ],
+  "homepage": "https://github.com/P0lip/nimma",
+  "bugs": {
+    "url": "https://github.com/P0lip/nimma/issues"
+  },
+  "engines": {
+    "node": ">=10"
+  },
+  "files": [
+    "dist/**",
+    "src/index.d.ts"
+  ],
+  "typings": "./src/index.d.ts",
+  "main": "./dist/index.cjs",
+  "exports": {
+    "import": "./dist/index.mjs",
+    "require": "./dist/index.cjs"
+  },
+  "license": "Apache-2.0",
+  "author": "P0lip",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/P0lip/nimma"
+  },
+  "scripts": {
+    "prebuild": "node ./scripts/generate-parser.js",
+    "build": "NODE_ENV=production rollup -c",
+    "lint": "eslint --cache --cache-location .cache/ src/**/*.mjs",
+    "test": "NODE_ENV=test c8 mocha --experimental-modules --config .mocharc ./**/__tests__/**/*.test.mjs",
+    "prepublish": "npm run lint && npm run test && npm run build"
+  },
+  "devDependencies": {
+    "c8": "^7.1.0",
+    "chai": "^4.2.0",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.10.1",
+    "eslint-plugin-chai-expect": "^2.1.0",
+    "eslint-plugin-chai-friendly": "^0.5.0",
+    "eslint-plugin-prettier": "^3.1.2",
+    "husky": "^4.2.5",
+    "jison": "^0.4.18",
+    "mocha": "^7.1.1",
+    "mocha-each": "^2.0.1",
+    "prettier": "^2.0.4",
+    "rollup": "^2.4.0"
+  },
+  "dependencies": {
+    "astring": "^1.4.3",
+    "jsep": "^0.3.4"
+  }
+}

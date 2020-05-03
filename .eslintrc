@@ -1,0 +1,52 @@
+{
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "module"
+  },
+  "env": {
+    "es6": true,
+    "shared-node-browser": true
+  },
+  "extends": ["eslint:recommended", "plugin:prettier/recommended"],
+  "rules": {
+    "func-names": "off",
+    "no-param-reassign": "warn",
+    "no-restricted-syntax": ["warn", "ArrayPattern", "ForOfStatement"],
+    "global-require": "warn",
+    "sort-keys": "error",
+    "no-continue": "off",
+    "no-labels": "off",
+    "no-label-var": "off",
+    "no-void": "off",
+    "no-undefined": "error",
+    "padding-line-between-statements": [
+      "error",
+      { "blankLine": "never", "prev": "*", "next": "case" },
+      { "blankLine": "never", "prev": "*", "next": "default" },
+      { "blankLine": "always", "prev": "block-like", "next": "break" }
+    ],
+
+    "prettier/prettier": "error"
+  },
+  "overrides": [
+    {
+      "files": ["src/**/__tests__/*.test.mjs"],
+      "extends": ["plugin:chai-expect/recommended"],
+      "env": {
+        "node": true
+      },
+      "globals": {
+        "expect": true
+      },
+      "plugins": [
+        "chai-expect",
+        "chai-friendly"
+      ],
+      "rules": {
+        "sort-keys": "off",
+        "no-unused-expressions": 0,
+        "chai-friendly/no-unused-expressions": 2
+      }
+    }
+  ]
+}
