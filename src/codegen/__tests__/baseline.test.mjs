@@ -10,7 +10,7 @@ const { expect } = chai;
 
 function print(path) {
   const parser = new Parser();
-  return astring.generate(baseline(parser.parse(path)));
+  return astring.generate(baseline(parser.parse(path)).tree.root);
 }
 
 describe('baseline', () => {

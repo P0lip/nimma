@@ -184,7 +184,7 @@ export function baseline(ast) {
     );
   }
 
-  return tree.root;
+  return { feedback, tree };
 }
 
 function assertNoOOB(arrNode, length) {

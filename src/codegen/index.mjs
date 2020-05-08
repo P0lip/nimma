@@ -4,6 +4,7 @@ import { baseline } from './baseline.mjs';
 import * as b from './builders.mjs';
 import { SCOPE_ID } from './consts.mjs';
 import Parser from '../parser/parser.mjs';
+import { optimizer } from './optimizer.mjs';
 
 const cache = new Map([
   ['$', 'return scope.path.length === 0'],
@@ -18,7 +19,7 @@ export function generate(path) {
 
   try {
     const parser = new Parser();
-    const code = baseline(parser.parse(path));
+    const code = optimizer(baseline(parser.parse(path)));
     const body = astring.generate(generateBody(code));
     cache.set(path, body);
     return constructFn(body);
