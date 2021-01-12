@@ -87,7 +87,7 @@ export class Scope {
           evalResult[id] = true;
           return true;
         }
-      } catch {
+      } catch (ex) {
         evalResult[id] = false;
         // happens
       }
