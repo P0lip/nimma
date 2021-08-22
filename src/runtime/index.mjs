@@ -1,3 +1,2 @@
-export { JSONPathExpression } from './expression.mjs';
-export { traverse } from './traverse.mjs';
-export { Scope } from './scope.mjs';
+export * from './codegen-functions/index.mjs';
+export { default as Scope } from './scope.mjs';

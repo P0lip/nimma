@@ -1,155 +1,158 @@
-import { Path } from './path.mjs';
+import process from 'node:process';
+
+import AggregateError from './aggregate-error.mjs';
+import proxyCallbacks from './proxy-callbacks.mjs';
 import { Sandbox } from './sandbox.mjs';
-import { constructFn } from '../codegen/index.mjs';
+import { bailedTraverse, traverse } from './traverse.mjs';
 
-export class Scope {
-  constructor(root, exprs) {
-    this._lookupCache = new Set();
-    this._lastIndex = -1;
-    this.pos = -1;
+export default class Scope {
+  #ticks = 0;
+  #parent;
+  #tree;
+  #output;
 
-    this.ticks = 0;
-
-    this.exprs = exprs;
-    this.markedForCollection = [];
-
-    this.state = new Map();
-    this.path = new Path();
+  constructor(root, parent = null) {
+    this.root = root;
+    this.#parent = parent;
+    this.#tree = null;
+    this.path = [];
+    this.errors = [];
     this.sandbox = new Sandbox(this.path, root, null);
+
+    const self = this;
+    this.#output = {
+      path: this.path,
+      get value() {
+        return self.value;
+      },
+    };
   }
 
-  enter(key) {
-    this._lookupCache.clear();
-    this.pos = 0;
-    this.ticks += 1;
-    this.path.push(key);
-    this.sandbox = this.sandbox.push();
+  get ticks() {
+    return this.#ticks;
+  }
 
-    return this.path.length;
+  set ticks(value) {
+    this.#ticks = value;
+    if (this.#parent !== null) {
+      this.#parent.ticks++;
+    }
+  }
+
+  get depth() {
+    return this.path.length - 1;
   }
 
   get property() {
     return this.sandbox.property;
   }
 
-  exit(pos) {
-    this._lookupCache.clear();
-    this._lastIndex = -1;
-    this.pos = -1;
-    this.path.length = pos - 1;
+  get value() {
+    return this.sandbox.value;
+  }
+
+  enter(key) {
+    if (process.env.NODE_ENV !== 'production') {
+      this.ticks += 1;
+    }
+
+    this.path.push(key);
+    this.sandbox = this.sandbox.push();
+
+    return this.path.length;
+  }
+
+  next() {
+    if (process.env.NODE_ENV !== 'production') {
+      this.ticks += 1;
+    }
+  }
+
+  exit(depth) {
+    const length = Math.max(0, depth - 1);
+    while (this.path.length > length) {
+      this.path.pop();
+    }
+
     this.sandbox = this.sandbox.pop();
 
     return this.path.length;
   }
 
-  set lastIndex(value) {
-    const exprState = this._getCacheForExpr(this.exprs[this.pos]);
-    exprState.lastIndex = value;
-    this._lastIndex = value;
-  }
+  fork(path) {
+    const newScope = new Scope(this.root, this);
 
-  get lastIndex() {
-    if (this._lastIndex !== -1) {
-      return this._lastIndex;
-    }
-
-    return this._getCacheForExpr(this.exprs[this.pos]).lastIndex;
-  }
-
-  next(path) {
-    this._lastIndex = -1;
-    this.pos += 1;
-
-    return this._lookupCache.has(path);
-  }
-
-  _getCacheForExpr(expr) {
-    const cache = this.state.get(expr);
-    if (cache !== void 0) {
-      return cache;
-    }
-
-    const newCache = {
-      evalResult: {},
-      lastIndex: 0,
-    };
-
-    this.state.set(expr, newCache);
-    return newCache;
-  }
-
-  evaluate(code, index, id) {
-    const { evalResult } = this._getCacheForExpr(this.exprs[this.pos]);
-
-    if (this.path.length === index + 1) {
-      try {
-        if (constructFn(code)(this)) {
-          evalResult[id] = true;
-          return true;
-        }
-      } catch {
-        evalResult[id] = false;
-        // happens
+    for (const segment of path) {
+      newScope.enter(segment);
+      if (newScope.value === void 0) {
+        return null;
       }
     }
 
-    return evalResult[id] === true;
+    return newScope;
   }
 
-  // store(value, id) {
-  //   const { evalResult } = this._getCacheForExpr(this.exprs[this.pos]);
-  //
-  //   if (value === true) {
-  //     evalResult[id] = this.path.length;
-  //     return evalResult[id];
-  //   }
-  //
-  //   const lastKnownIndex = evalResult[id];
-  //   if (lastKnownIndex === void 0 || lastKnownIndex < fromIndex) {
-  //     return -1;
-  //   }
-  //
-  //   return lastKnownIndex;
-  // }
+  traverse(fn) {
+    traverse.call(this, fn);
+  }
 
-  // todo: use this concept instead of path.indexOf
-  evaluateDeep(code, fromIndex, id) {
-    const { evalResult } = this._getCacheForExpr(this.exprs[this.pos]);
+  bail(id, fn, deps) {
+    // this should be triggered N times, not once...
+    // "$.channels.*.[publish,subscribe][?(@property === 'message' && @.schemaFormat === void 0)].payload",
+    // this.#tree[id] = noop;
+    const scope = this.fork(this.path);
+    bailedTraverse.call(scope, fn, deps);
+  }
 
-    try {
-      if (constructFn(code)(this)) {
-        evalResult[id] = this.path.length - 1;
-        return evalResult[id];
-      }
-    } catch (ex) {
-      // happens
+  proxyCallbacks() {
+    return proxyCallbacks.apply(this, arguments);
+  }
+
+  registerTree(tree) {
+    this.#tree = { ...tree };
+    return this.#tree;
+  }
+
+  emit(fn, pos, withKeys) {
+    if (pos === 0 && !withKeys) {
+      return void fn(this.#output);
     }
 
-    const lastKnownIndex = evalResult[id];
-    if (lastKnownIndex === void 0 || lastKnownIndex < fromIndex) {
-      return -1;
+    if (pos !== 0 && pos > this.depth + 1) {
+      return;
     }
 
-    return lastKnownIndex;
-  }
+    const output =
+      pos === 0
+        ? this.#output
+        : {
+            path: this.#output.path.slice(
+              0,
+              Math.max(0, this.#output.path.length - pos),
+            ),
+            value: (this.sandbox.at(-pos - 1) ?? this.sandbox.at(0)).value,
+          };
 
-  hit(path) {
-    this._lookupCache.add(path);
-  }
-
-  miss() {
-    // stub
+    if (!withKeys) {
+      fn(output);
+    } else {
+      fn({
+        path: output.path,
+        value:
+          output.path.length === 0
+            ? void 0
+            : output.path[output.path.length - 1],
+      });
+    }
   }
 
   destroy() {
-    // this.markedForCollection.push(this.exprs[this.pos]);
-  }
+    this.path.length = 0;
+    this.sandbox.destroy();
+    this.sandbox = null;
 
-  collect() {
-    while (this.markedForCollection.length > 0) {
-      const expr = this.markedForCollection.pop();
-      this.exprs.splice(this.exprs.indexOf(expr, 1));
-      this.state.delete(expr);
+    if (this.errors.length > 0) {
+      throw new AggregateError(this.errors);
     }
   }
 }

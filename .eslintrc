@@ -1,17 +1,20 @@
 {
+  "parser": "@babel/eslint-parser",
   "parserOptions": {
-    "ecmaVersion": 2020,
+    "ecmaVersion": 2021,
     "sourceType": "module"
   },
+  "globals": {
+    "globalThis": true
+  },
   "env": {
-    "es6": true,
-    "shared-node-browser": true
+    "es6": true
   },
   "extends": ["eslint:recommended", "plugin:prettier/recommended"],
+  "plugins": ["simple-import-sort"],
   "rules": {
     "func-names": "off",
     "no-param-reassign": "warn",
-    "no-restricted-syntax": ["warn", "ArrayPattern", "ForOfStatement"],
     "global-require": "warn",
     "sort-keys": "error",
     "no-continue": "off",
@@ -26,7 +29,8 @@
       { "blankLine": "always", "prev": "block-like", "next": "break" }
     ],
 
-    "prettier/prettier": "error"
+    "prettier/prettier": "error",
+    "simple-import-sort/imports": "error"
   },
   "overrides": [
     {
@@ -34,9 +38,6 @@
       "extends": ["plugin:chai-expect/recommended"],
       "env": {
         "node": true
-      },
-      "globals": {
-        "expect": true
       },
       "plugins": [
         "chai-expect",

@@ -1,29 +1,27 @@
-declare class Path extends Array {}
+import type Fallback from './codegen/fallback';
 
-export type JSONPathExpressionErrorHandler = (ex: Error) => void;
-export type JSONPathExpressionMatchHandler = (
-  value: unknown,
-  path: Path,
-) => void;
+export type Callback = (scope: EmittedScope) => void;
 
-export class JSONPathExpression {
+type JsonPath = (string | number)[];
+type Input = Record<string, unknown> | unknown[];
+
+export type EmittedScope = {
+  readonly path: JsonPath;
+  readonly value: unknown;
+};
+
+declare class Nimma {
   constructor(
-    pathExpression: string,
-    onMatch: JSONPathExpressionMatchHandler,
-    onError: JSONPathExpressionErrorHandler,
-  );
+    expressions: string[],
+    opts?: {
+      fallback: Fallback;
+      unsafe: boolean;
+      output: 'ES2018' | 'ES2021' | 'auto'
+    },
+  ): Nimma;
 
-  public path: string;
-  public matches(scope: Scope): boolean;
-  public onMatch: JSONPathExpressionMatchHandler;
-  public onError: JSONPathExpressionErrorHandler;
+  public query(input: Input, callbacks: Record<string, Callback>): void;
+  public readonly sourceCode: string;
 }
 
-export function traverse(
-  obj: { [key in PropertyKey]: unknown },
-  exprs: JSONPathExpression[],
-): void;
-
-export class Scope {
-
-}
+export default Nimma;

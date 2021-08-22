@@ -8,128 +8,238 @@
 yarn add nimma
 ```
 
-or if npm is package manager of your choice
+or if npm is the package manager of your choice
 
 ```sh
 npm install nimma --save
 ```
 
+## Features
+
+- Very good JSONPath support - besides a few tiny exceptions, the whole spec is covered,
+- Supports the majority of JSONPath-plus additions,
+- Support for containments (`in`) and regex (`~=`) operators, as taken from [draft-ietf-jsonpath-base-01](https://datatracker.ietf.org/doc/html/draft-ietf-jsonpath-base),
+- Increased security - only a strict set of operations are supported in Filter Expressions - no global references, or assignments are permitted.
+
 ## Usage
 
 ```js
-import { traverse, JSONPathExpression } from 'nimma';
+import Nimma from 'https://cdn.skypack.dev/nimma';
 
-const document = {
-  user: {
-    name: 'Eva',
+const n = new Nimma([
+  '$.info',
+  '$.info.contact',
+  '$.info^',
+  '$.info^~',
+  '$.servers[*].url',
+  '$.servers[0:2]',
+  '$.servers[:5]',
+  "$.bar['children']",
+  "$.bar['0']",
+  "$.bar['children.bar']",
+  '$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload',
+  "$..[?( @property === 'get' || @property === 'put' || @property === 'post' )]",
+  "$..paths..[?( @property === 'get' || @property === 'put' || @property === 'post' )]",
+  `$.examples.*`,
+  '$[1:-5:-2]',
+  '$..foo..[?( @property >= 900 )]..foo',
+]);
+
+// you can perform the query...
+n.query(document, {
+  ['$.info']({ value, path }) {
+      //
   },
-  foo: {
-    name: 'test',
-    user: {
-      name: 'John',
-    },
-  },
-};
+  // and so on for each specified path
+});
 
-
-const userName = new JSONPathExpression(
-  '$..[?(@parentProperty === "user" && @.name)]',
-  console.log,
-);
-
-const name = new JSONPathExpression(
-  '$..name',
-  console.log,
-);
-
-const fooName = new JSONPathExpression(
-  '$.foo.name',
-  console.log,
-)
-
-traverse(document, [userName, name, fooName]);
+// ... or write the generated code. It's advisable to write the code to further re-use.
+await cache.writeFile('./nimma-code.mjs', n.sourceCode); // once
 ```
 
-### Nimma vs jsonpath / jsonpath-plus
+Here's how the sourceCode would look like for the above path expressions
 
-To make sure we are all on the same page, we have to note `jsonpath-plus` does differ from `jsonpath`.
-Apart from syntax additions jsonpath-plus comes with, there are a few fairly significant differences in the way expressions are parsed.
-Nimma will have its own gotchas, yet for the time being, it uses parser from `jsonpath` and supports a few `jsonpath-plus` exclusive features,
-therefore it's safe to say that nimma is something in between at the very moment.
+```js
+import {Scope, isObject, inBounds} from "nimma/runtime";
+const tree = {
+  "$.info": function (scope, fn) {
+    const value = scope.sandbox.root;
+    if (isObject(value)) {
+      scope.fork(["info"])?.emit(fn, 0, false);
+    }
+  },
+  "$.info.contact": function (scope, fn) {
+    const value = scope.sandbox.root?.["info"];
+    if (isObject(value)) {
+      scope.fork(["info", "contact"])?.emit(fn, 0, false);
+    }
+  },
+  "$.info^": function (scope, fn) {
+    const value = scope.sandbox.root;
+    if (isObject(value)) {
+      scope.fork(["info"])?.emit(fn, 1, false);
+    }
+  },
+  "$.info^~": function (scope, fn) {
+    const value = scope.sandbox.root;
+    if (isObject(value)) {
+      scope.fork(["info"])?.emit(fn, 1, true);
+    }
+  },
+  "$.servers[*].url": function (scope, fn) {
+    if (scope.depth !== 2) return;
+    if (scope.path[0] !== "servers") return;
+    if (scope.path[2] !== "url") return;
+    scope.emit(fn, 0, false);
+  },
+  "$.servers[0:2]": function (scope, fn) {
+    if (scope.depth !== 1) return;
+    if (scope.path[0] !== "servers") return;
+    if (typeof scope.path[1] !== "number" || scope.path[1] >= 2) return;
+    scope.emit(fn, 0, false);
+  },
+  "$.servers[:5]": function (scope, fn) {
+    if (scope.depth !== 1) return;
+    if (scope.path[0] !== "servers") return;
+    if (typeof scope.path[1] !== "number" || scope.path[1] >= 5) return;
+    scope.emit(fn, 0, false);
+  },
+  "$.bar['children']": function (scope, fn) {
+    const value = scope.sandbox.root?.["bar"];
+    if (isObject(value)) {
+      scope.fork(["bar", "children"])?.emit(fn, 0, false);
+    }
+  },
+  "$.bar['0']": function (scope, fn) {
+    const value = scope.sandbox.root?.["bar"];
+    if (isObject(value)) {
+      scope.fork(["bar", "0"])?.emit(fn, 0, false);
+    }
+  },
+  "$.bar['children.bar']": function (scope, fn) {
+    const value = scope.sandbox.root?.["bar"];
+    if (isObject(value)) {
+      scope.fork(["bar", "children.bar"])?.emit(fn, 0, false);
+    }
+  },
+  "$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload": function (scope, fn) {
+    if (scope.depth !== 4) return;
+    if (scope.path[0] !== "channels") return;
+    if (scope.path[2] !== "publish" && scope.path[2] !== "subscribe") return;
+    if (!(scope.sandbox.at(3).value.schemaFormat === void 0)) return;
+    if (scope.path[4] !== "payload") return;
+    scope.emit(fn, 0, false);
+  },
+  "$..[?( @property === 'get' || @property === 'put' || @property === 'post' )]": function (scope, fn) {
+    if (!(scope.sandbox.property === 'get' || scope.sandbox.property === 'put' || scope.sandbox.property === 'post')) return;
+    scope.emit(fn, 0, false);
+  },
+  "$..paths..[?( @property === 'get' || @property === 'put' || @property === 'post' )]": function (scope, fn) {
+    if (scope.depth < 1) return;
+    let pos = 0;
+    if ((pos = scope.path.indexOf("paths", pos), pos === -1)) return;
+    if (scope.depth < pos + 1 || (pos = !(scope.sandbox.property === 'get' || scope.sandbox.property === 'put' || scope.sandbox.property === 'post') ? -1 : scope.depth, pos === -1)) return;
+    if (scope.depth !== pos) return;
+    scope.emit(fn, 0, false);
+  },
+  "$.examples.*": function (scope, fn) {
+    if (scope.depth !== 1) return;
+    if (scope.path[0] !== "examples") return;
+    scope.emit(fn, 0, false);
+  },
+  "$[1:-5:-2]": function (scope, fn) {
+    if (scope.depth !== 0) return;
+    if (typeof scope.path[0] !== "number" || !inBounds(scope.sandbox.parentValue, scope.path[0], 1, -5, -2)) return;
+    scope.emit(fn, 0, false);
+  },
+  "$..foo..[?( @property >= 900 )]..foo": function (scope, fn) {
+    scope.bail("$..foo..[?( @property >= 900 )]..foo", scope => scope.emit(fn, 0, false), [{
+      fn: scope => scope.property !== "foo",
+      deep: true
+    }, {
+      fn: scope => !(scope.sandbox.property >= 900),
+      deep: true
+    }, {
+      fn: scope => scope.property !== "foo",
+      deep: true
+    }]);
+  }
+};
+export default function (input, callbacks) {
+  const scope = new Scope(input);
+  const _tree = scope.registerTree(tree);
+  const _callbacks = scope.proxyCallbacks(callbacks, {});
+  try {
+    _tree["$.info"](scope, _callbacks["$.info"]);
+    _tree["$.info.contact"](scope, _callbacks["$.info.contact"]);
+    _tree["$.info^"](scope, _callbacks["$.info^"]);
+    _tree["$.info^~"](scope, _callbacks["$.info^~"]);
+    _tree["$.bar['children']"](scope, _callbacks["$.bar['children']"]);
+    _tree["$.bar['0']"](scope, _callbacks["$.bar['0']"]);
+    _tree["$.bar['children.bar']"](scope, _callbacks["$.bar['children.bar']"]);
+    _tree["$..foo..[?( @property >= 900 )]..foo"](scope, _callbacks["$..foo..[?( @property >= 900 )]..foo"]);
+    scope.traverse(() => {
+      _tree["$.servers[*].url"](scope, _callbacks["$.servers[*].url"]);
+      _tree["$.servers[0:2]"](scope, _callbacks["$.servers[0:2]"]);
+      _tree["$.servers[:5]"](scope, _callbacks["$.servers[:5]"]);
+      _tree["$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload"](scope, _callbacks["$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload"]);
+      _tree["$..[?( @property === 'get' || @property === 'put' || @property === 'post' )]"](scope, _callbacks["$..[?( @property === 'get' || @property === 'put' || @property === 'post' )]"]);
+      _tree["$..paths..[?( @property === 'get' || @property === 'put' || @property === 'post' )]"](scope, _callbacks["$..paths..[?( @property === 'get' || @property === 'put' || @property === 'post' )]"]);
+      _tree["$.examples.*"](scope, _callbacks["$.examples.*"]);
+      _tree["$[1:-5:-2]"](scope, _callbacks["$[1:-5:-2]"]);
+    });
+  } finally {
+    scope.destroy();
+  }
+}
+```
 
-When should I use it? If you have just a single JSONPath expression, you should not use nimma.
-Nimma is particularly useful if you have:
-- large dataset
-- lots of queries (say more than 5) to be performed
+Since it's a valid ES Module, you can easily load it again and there's no need for `new Nimma`.
 
-Currently, nimma bails out upon:
-- slice expressions
-- filter expressions followed by descendant member
+### Supported opts
 
-Based on my own experience, these two kind of expressions aren't particularly common.
-One of the next releases of nimma will bring support for these two. 
+- output: ES2018 | ES2021 | auto
+- fallback
+- unsafe
+
+## Comparison vs jsonpath-plus and alikes
+
+Nimma, although being yet-another-json-path query engine, it's considerably different from its JS counterparts.
+Nimma takes dozens/hundreds/thousands of JSONPath expressions and attempt to form a proper JS code,
+while packages like jsonpath-plus or jsonpath take a JSONPath expression and loop over its segments during the query.
+They are meant to be executed on a single expression, whereas Nimma, for the most time, doesn't really care whether you supply it with 10s or 100s of paths.
+
+Futhermore, Nimma, despite remaining close to the ~spec~, well, "spec", does make certain minor assumptions - the most notable being here that the order of query doesn't matter.
+In order words, Nimma guarantees that all matching values will be returned, but doesn't assure any order.
+This may be a deal breaker for some, but I haven't spotted such people in my life.
+In reality, this would only matter if you used negative boundaries in Slice Expressions.
+In addition to that, it also doesn't accumulate the results - this duties lies on the consumer.
+These are tradeoffs that are likely to be negligible for the vast percentage of cases, yet they may play a role for some.
+
+Unlike the aforementioned libraries, Nimma forbids any arbitrary code execution.
+This is mostly thanks to a forked version of [jsep](https://github.com/EricSmekens/jsep) Nimma is equipped with, as well as a set of additional enforcements.
+Due to that, it's not possible to reference any object or function, even if it exists in the given environment.
+For instance, `$[?(Array.isArray(@)]` will throw an exception, same as `$[(?Object.prototype = {})]`, etc.
+As a result, it's generally safer to execute these expressions, however there's no security guarantee here by any means,
+and therefore it's still advisable to run Nimma in an isolated environment if JSONPath expressions cannot be trusted.
+
+Since Nimma serves a different purpose, a use of other libraries is not ruled out.
+It certainly doesn't aim to compete with any of them.
+In fact, Nimma relies on `jsonpath-plus` under rare circumstances (mostly when "^" or "~" is not placed at the end of the expression).
 
 ### How does it actually work?
 
 Nimma consists of 3 major components. These are:
 - parser
-- codegen (baseline + optimizer)
+- codegen (iterator/feedback + baseline)
 - runtime (scope + sandbox + traverse)
 
-Parser takes any JSON Path expression and generates ast that's consumed by codegen in the next step.
+Parser takes any JSON Path expression and generates an AST that's consumed by the codegen in the next step.
+
 Codegen is a two-step process:
- - baseline processes the ast and generates a decent ESTree-compliant AST representing the JS code as well as collects feedback about the path expression
- - optimizer (not implemented yet, will likely be optional) gets the ESTree-compliant AST and improves it based on the feedback collected earlier
-Baseline is tied to the runtime to some extent, since it has direct references to certain features exposed by the runtime module.
-Runtime provides a set of utils needed by the generated code.
-Scope & Sandbox is some sort of glue needed to make generated code work `traverse`.
-
-## Todo/plans
-
-Although nimma has a decent spec coverage already, there is still room for the improvement.
-Here is a rough list of plans for the next releases.
-
-The work is happening on `develop` branch.
-
-Parsing:
-- [ ] Drop current JSONPath expression parser borrowed from [jsonpath](https://github.com/dchester/jsonpath), and replace it with jsep
-  - [ ] remove all unused methods we do not need to get leaner on size
-  - [ ] add first-class support for `@` and `@.`
-  - [ ] add SliceExpression node (`[start:end:step]`, `[start:]`, `[:end]` et.)
-  - [ ] add FilterExpression node (`[?(expr)]`)
-  - [ ] wildcards... treat them as MemberExpressions + simply add a special property, like `wildcard`, `recursive`, `deep` or `descendant`? 
-  - [ ] script expressions `[(expr)]`... MemberExpressions without any other changes?
-  - [ ] keys (`~`) - need to treat tilde as a valid identifier, I guess
-  - [ ] parent (`^`) - ditto
-
-Codegen:
-- [ ] optimizer
-  - [ ] reduce oob checks
-  - [ ] in certain cases pull the very last rhs expression and place it at the front
-  - [ ] fast paths for simpler paths
-    ```js    
-     scope.sandbox.value === scope.sandbox.root.foo.bar // $.foo.bar
-     scope.sandbox.parent.value === scope.sandbox.root.foo.bar // $.foo.bar[*] 
-     // etc.
-    ```
-- [ ] baseline
-  - [ ] do not inline filter expressions - export them instead for use by runtime
-  - [ ] descendant members are treated as filter expressions
-  - [ ] general cleanup & simplification
-- [ ] 'inliner' - to be used externally by projects such as Spectral
-  - [ ] scope analysis (could use eslint-scope)
-  - [ ] not quite clear yet, will add more in future
-
-Runtime:
-- [ ] introduce more state to scope to cover 'middle' filter expressions
-- [ ] drop Path - it didn't turn out to be needed
-- [ ] path lookup is sub-optimal
-- [ ] naming is somewhat confusing at times (sandbox in particular)
-- [ ] ability to evaluate filter expressions provided by baseline compiler 
-
-## Thanks
-
-- David Chester for [JSONPath expression parser](https://github.com/dchester/jsonpath).
+- first, we have a quick pass of the tree to collect some feedback about it that will be used by the actual code generators
+- baseline processes the AST & the feedback gathered by the Iterator, and generates a decent ESTree-compliant AST representing that we dump later only
+  - there's also a concept of "fast paths" implemented that are basically stubs for some common use cases to generate an even more efficient code
 
 ## LICENSE
 

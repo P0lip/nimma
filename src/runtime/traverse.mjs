@@ -1,49 +1,51 @@
-import { Scope } from './scope.mjs';
+import isObject from './codegen-functions/is-object.mjs';
 
-function _traverse(curObj, scope) {
-  for (const key of Object.keys(curObj)) {
-    const value = curObj[key];
-    const pos = scope.enter(key);
+function _traverseBody(key, curObj, scope, cb, deps) {
+  const value = curObj[key];
+  const pos = scope.enter(key);
+  scope.next();
 
-    for (; scope.pos < scope.exprs.length; ) {
-      const expr = scope.exprs[scope.pos];
-      const hasBeenMatched = scope.next(expr.path);
+  const matched = deps !== null && deps.length > 0 && !deps[0].fn(scope);
 
-      try {
-        hasBeenMatched;
-        if (expr.matches(scope)) {
-          expr.onMatch(value, scope.path);
-          scope.hit(expr.path);
-        }
-      } catch (ex) {
-        expr.onError(ex);
-      }
-    }
-
-    if (value !== null && typeof value === 'object') {
-      _traverse(value, scope);
-    }
-
-    scope.exit(pos);
+  if (deps === null || (deps.length === 1 && matched)) {
+    cb(scope);
   }
 
-  scope.collect();
+  if (!isObject(value)) {
+    // no-nop
+  } else if (deps === null) {
+    _traverse(value, scope, cb, deps);
+  } else if (deps.length > 0) {
+    if (matched) {
+      _traverse(value, scope, cb, deps.slice(1));
+    }
+
+    if (deps[0].deep) {
+      scope.exit(pos);
+      scope.enter(key);
+      _traverse(value, scope, cb, deps);
+    }
+  }
+
+  scope.exit(pos);
 }
 
-export function traverse(root, exprs) {
-  const scope = new Scope(root, exprs);
-
-  for (const expr of scope.exprs) {
-    scope.next();
-
-    try {
-      if (expr.matches(scope)) {
-        expr.onMatch(root, scope.path);
-      }
-    } catch (ex) {
-      expr.onError(ex);
+function _traverse(curObj, scope, cb, deps) {
+  if (Array.isArray(curObj)) {
+    for (let i = 0; i < curObj.length; i++) {
+      _traverseBody(i, curObj, scope, cb, deps);
+    }
+  } else {
+    for (const key of Object.keys(curObj)) {
+      _traverseBody(key, curObj, scope, cb, deps);
     }
   }
+}
 
-  _traverse(root, scope);
+export function traverse(cb) {
+  _traverse(this.root, this, cb, null);
+}
+
+export function bailedTraverse(cb, deps) {
+  _traverse(this.value, this, cb, deps);
 }

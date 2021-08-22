@@ -1,0 +1,9 @@
+ls:
+  .mjs: kebab-case
+  .js: kebab-case
+  .test.mjs: kebab-case
+
+ignore:
+  - dist
+  - node_modules
+  - rollup.config.js

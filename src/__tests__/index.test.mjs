@@ -1,25 +1,33 @@
-import mocha from 'mocha';
 import chai from 'chai';
+import mocha from 'mocha';
 
-import { traverse, JSONPathExpression } from '../index.mjs';
+import { jsonPathPlus } from '../fallbacks/index.mjs';
+import Nimma from '../index.mjs';
 
-const { describe, it, xit } = mocha;
+const { describe, it } = mocha;
 const { expect } = chai;
 
-function createCollector() {
-  const collected = [];
-
-  const collect = (value, path) => {
-    collected.push([value, [...path]]);
+function collect(input, expressions, fallback = null) {
+  const collected = {};
+  const _ = (expr, scope) => {
+    collected[expr] ??= [];
+    collected[expr].push([scope.value, [...scope.path]]);
   };
 
-  return {
-    collect,
-    collected,
-  };
+  const n = new Nimma(expressions, { fallback });
+
+  n.query(
+    input,
+    expressions.reduce((mapped, expression) => {
+      mapped[expression] = _.bind(null, expression);
+      return mapped;
+    }, {}),
+  );
+
+  return collected;
 }
 
-describe('nimma', () => {
+describe('Nimma', () => {
   it('root', () => {
     const document = {
       info: {
@@ -30,10 +38,10 @@ describe('nimma', () => {
       },
     };
 
-    const { collected, collect } = createCollector();
-    const expr = new JSONPathExpression('$', collect);
-    traverse(document, [expr]);
-    expect(collected).to.deep.equal([[document, []]]);
+    const collected = collect(document, ['$']);
+    expect(collected).to.deep.equal({
+      $: [[document, []]],
+    });
   });
 
   it('works', () => {
@@ -46,10 +54,10 @@ describe('nimma', () => {
       },
     };
 
-    const { collected, collect } = createCollector();
-    const expr = new JSONPathExpression('$.info.contact', collect);
-    traverse(document, [expr]);
-    expect(collected).to.deep.equal([[{ test: 'c' }, ['info', 'contact']]]);
+    const collected = collect(document, ['$.info.contact']);
+    expect(collected).to.deep.equal({
+      '$.info.contact': [[{ test: 'c' }, ['info', 'contact']]],
+    });
   });
 
   it('works #2', () => {
@@ -63,13 +71,13 @@ describe('nimma', () => {
       },
     };
 
-    const { collected, collect } = createCollector();
-    const expr = new JSONPathExpression('$.info.contact.*', collect);
-    traverse(document, [expr]);
-    expect(collected).to.deep.equal([
-      ['bar', ['info', 'contact', 'foo']],
-      ['c', ['info', 'contact', 'test']],
-    ]);
+    const collected = collect(document, ['$.info.contact.*']);
+    expect(collected).to.deep.equal({
+      '$.info.contact.*': [
+        ['bar', ['info', 'contact', 'foo']],
+        ['c', ['info', 'contact', 'test']],
+      ],
+    });
   });
 
   it('works #3', () => {
@@ -85,17 +93,17 @@ describe('nimma', () => {
       },
     };
 
-    const { collected, collect } = createCollector();
-    const expr = new JSONPathExpression(
+    const collected = collect(document, [
       '$.info..[?(@property.startsWith("foo"))]',
-      collect,
-    );
-    traverse(document, [expr]);
-    expect(collected).to.deep.equal([
-      ['a', ['info', 'contact', 'foo']],
-      ['b', ['info', 'contact', 'foo-2']],
-      ['c', ['info', 'contact', 'foo-3']],
     ]);
+
+    expect(collected).to.deep.equal({
+      '$.info..[?(@property.startsWith("foo"))]': [
+        ['a', ['info', 'contact', 'foo']],
+        ['b', ['info', 'contact', 'foo-2']],
+        ['c', ['info', 'contact', 'foo-3']],
+      ],
+    });
   });
 
   it('works #4', () => {
@@ -111,17 +119,17 @@ describe('nimma', () => {
       },
     };
 
-    const { collected, collect } = createCollector();
-    const expr = new JSONPathExpression(
+    const collected = collect(document, [
       '$.info..*[?(@property.startsWith("foo"))]',
-      collect,
-    );
-    traverse(document, [expr]);
-    expect(collected).to.deep.equal([
-      ['a', ['info', 'contact', 'foo']],
-      ['b', ['info', 'contact', 'foo-2']],
-      ['c', ['info', 'contact', 'foo-3']],
     ]);
+
+    expect(collected).to.deep.equal({
+      '$.info..*[?(@property.startsWith("foo"))]': [
+        ['a', ['info', 'contact', 'foo']],
+        ['b', ['info', 'contact', 'foo-2']],
+        ['c', ['info', 'contact', 'foo-3']],
+      ],
+    });
   });
 
   it('works #5', () => {
@@ -144,18 +152,18 @@ describe('nimma', () => {
       },
     };
 
-    const { collected, collect } = createCollector();
-    const expr = new JSONPathExpression(
+    const collected = collect(document, [
       "$.paths.*[?( @property === 'get' || @property === 'put' || @property === 'post' )]",
-      collect,
-    );
-
-    traverse(document, [expr]);
-    expect(collected).to.deep.equal([
-      [{ put: { baz: 2 } }, ['paths', 'bar', 'get']],
-      [2, ['paths', 'bar', 'put']],
-      [{ post: {} }, ['paths', 'foo', 'get']],
     ]);
+
+    expect(collected).to.deep.equal({
+      "$.paths.*[?( @property === 'get' || @property === 'put' || @property === 'post' )]":
+        [
+          [{ put: { baz: 2 } }, ['paths', 'bar', 'get']],
+          [2, ['paths', 'bar', 'put']],
+          [{ post: {} }, ['paths', 'foo', 'get']],
+        ],
+    });
   });
 
   it('works #6', () => {
@@ -178,20 +186,20 @@ describe('nimma', () => {
       },
     };
 
-    const { collected, collect } = createCollector();
-    const expr = new JSONPathExpression(
+    const collected = collect(document, [
       "$..[?( @property === 'get' || @property === 'put' || @property === 'post' )]",
-      collect,
-    );
-
-    traverse(document, [expr]);
-    expect(collected).to.deep.equal([
-      [{ put: { baz: 2 } }, ['paths', 'bar', 'get']],
-      [{ baz: 2 }, ['paths', 'bar', 'get', 'put']],
-      [2, ['paths', 'bar', 'put']],
-      [{ post: {} }, ['paths', 'foo', 'get']],
-      [{}, ['paths', 'foo', 'get', 'post']],
     ]);
+
+    expect(collected).to.deep.equal({
+      "$..[?( @property === 'get' || @property === 'put' || @property === 'post' )]":
+        [
+          [{ put: { baz: 2 } }, ['paths', 'bar', 'get']],
+          [{ baz: 2 }, ['paths', 'bar', 'get', 'put']],
+          [2, ['paths', 'bar', 'put']],
+          [{ post: {} }, ['paths', 'foo', 'get']],
+          [{}, ['paths', 'foo', 'get', 'post']],
+        ],
+    });
   });
 
   it('works #7', () => {
@@ -214,20 +222,20 @@ describe('nimma', () => {
       },
     };
 
-    const { collected, collect } = createCollector();
-    const expr = new JSONPathExpression(
+    const collected = collect(document, [
       "$..paths..[?( @property === 'get' || @property === 'put' || @property === 'post' )]",
-      collect,
-    );
-
-    traverse(document, [expr]);
-    expect(collected).to.deep.equal([
-      [{ put: { baz: 2 } }, ['paths', 'bar', 'get']],
-      [{ baz: 2 }, ['paths', 'bar', 'get', 'put']],
-      [2, ['paths', 'bar', 'put']],
-      [{ post: {} }, ['paths', 'foo', 'get']],
-      [{}, ['paths', 'foo', 'get', 'post']],
     ]);
+
+    expect(collected).to.deep.equal({
+      "$..paths..[?( @property === 'get' || @property === 'put' || @property === 'post' )]":
+        [
+          [{ put: { baz: 2 } }, ['paths', 'bar', 'get']],
+          [{ baz: 2 }, ['paths', 'bar', 'get', 'put']],
+          [2, ['paths', 'bar', 'put']],
+          [{ post: {} }, ['paths', 'foo', 'get']],
+          [{}, ['paths', 'foo', 'get', 'post']],
+        ],
+    });
   });
 
   it('works #8', () => {
@@ -250,20 +258,19 @@ describe('nimma', () => {
       },
     };
 
-    const { collected, collect } = createCollector();
-    const expr = new JSONPathExpression(
+    const collected = collect(document, [
       "$..paths..*[?( @property === 'get' || @property === 'put' || @property === 'post' )]",
-      collect,
-    );
-
-    traverse(document, [expr]);
-    expect(collected).to.deep.equal([
-      [{ put: { baz: 2 } }, ['paths', 'bar', 'get']],
-      [{ baz: 2 }, ['paths', 'bar', 'get', 'put']],
-      [2, ['paths', 'bar', 'put']],
-      [{ post: {} }, ['paths', 'foo', 'get']],
-      [{}, ['paths', 'foo', 'get', 'post']],
     ]);
+    expect(collected).to.deep.equal({
+      "$..paths..*[?( @property === 'get' || @property === 'put' || @property === 'post' )]":
+        [
+          [{ put: { baz: 2 } }, ['paths', 'bar', 'get']],
+          [{ baz: 2 }, ['paths', 'bar', 'get', 'put']],
+          [2, ['paths', 'bar', 'put']],
+          [{ post: {} }, ['paths', 'foo', 'get']],
+          [{}, ['paths', 'foo', 'get', 'post']],
+        ],
+    });
   });
 
   it('works #9', () => {
@@ -287,15 +294,14 @@ describe('nimma', () => {
       },
     };
 
-    const { collected, collect } = createCollector();
-    const expr = new JSONPathExpression('$..paths..get', collect);
-
-    traverse(document, [expr]);
-    expect(collected).to.deep.equal([
-      [{ put: { baz: 2 } }, ['paths', 'bar', 'get']],
-      [{ post: {} }, ['paths', 'foo', 'get']],
-      [{}, ['paths', 'get']],
-    ]);
+    const collected = collect(document, ['$..paths..get']);
+    expect(collected).to.deep.equal({
+      '$..paths..get': [
+        [{ put: { baz: 2 } }, ['paths', 'bar', 'get']],
+        [{ post: {} }, ['paths', 'foo', 'get']],
+        [{}, ['paths', 'get']],
+      ],
+    });
   });
 
   it('works #10', () => {
@@ -323,15 +329,14 @@ describe('nimma', () => {
       },
     };
 
-    const { collected, collect } = createCollector();
-    const expr = new JSONPathExpression('$..bar..c', collect);
-
-    traverse(document, [expr]);
-    expect(collected).to.deep.equal([
-      [true, ['bar', 'foo', 'bar', 'c']],
-      [false, ['bar', 'foo', 'bar', 'bar', 'x', 'c']],
-      ['yup!', ['foo', 'x', 'bar', 'd', 'c']],
-    ]);
+    const collected = collect(document, ['$..bar..c']);
+    expect(collected).to.deep.equal({
+      '$..bar..c': [
+        [true, ['bar', 'foo', 'bar', 'c']],
+        [false, ['bar', 'foo', 'bar', 'bar', 'x', 'c']],
+        ['yup!', ['foo', 'x', 'bar', 'd', 'c']],
+      ],
+    });
   });
 
   it('works #11', () => {
@@ -355,21 +360,17 @@ describe('nimma', () => {
       },
     };
 
-    const { collected, collect } = createCollector();
-    const expr = new JSONPathExpression(
-      '$.bar[?( @property >= 400 )]..foo',
-      collect,
-    );
-
-    traverse(document, [expr]);
-    expect(collected).to.deep.equal([
-      ['c', ['bar', '401', 'foo']],
-      ['e', ['bar', '401', 'z', '900', 'foo']],
-      ['d', ['bar', '401', 'z', 'foo']],
-    ]);
+    const collected = collect(document, ['$.bar[?( @property >= 400 )]..foo']);
+    expect(collected).to.deep.equal({
+      '$.bar[?( @property >= 400 )]..foo': [
+        ['c', ['bar', '401', 'foo']],
+        ['e', ['bar', '401', 'z', '900', 'foo']],
+        ['d', ['bar', '401', 'z', 'foo']],
+      ],
+    });
   });
 
-  xit('works #12', () => {
+  it('works #12', () => {
     const document = {
       bar: {
         200: {
@@ -390,21 +391,18 @@ describe('nimma', () => {
       },
     };
 
-    const { collected, collect } = createCollector();
-    const expr = new JSONPathExpression(
-      '$..[?( @property >= 400 )]..foo',
-      collect,
-    );
-
-    traverse(document, [expr]);
-    expect(collected).to.deep.equal([
-      ['c', ['bar', '401', 'foo']],
-      ['e', ['bar', '401', 'z', '900', 'foo']],
-      ['d', ['bar', '401', 'z', 'foo']],
-    ]);
+    const collected = collect(document, ['$..[?( @property >= 400 )]..foo']);
+    expect(collected).to.deep.equal({
+      '$..[?( @property >= 400 )]..foo': [
+        ['c', ['bar', '401', 'foo']],
+        ['e', ['bar', '401', 'z', '900', 'foo']],
+        ['d', ['bar', '401', 'z', 'foo']],
+        ['e', ['bar', '401', 'z', '900', 'foo']],
+      ],
+    });
   });
 
-  xit('works #13', () => {
+  it('works #13', () => {
     const document = {
       bar: {
         200: {
@@ -426,16 +424,15 @@ describe('nimma', () => {
       },
     };
 
-    const { collected, collect } = createCollector();
-    const expr = new JSONPathExpression(
+    const collected = collect(document, [
       '$..foo..[?( @property >= 900 )]..foo',
-      collect,
-    );
-
-    traverse(document, [expr]);
-    expect(collected).to.deep.equal([
-      ['e', ['bar', '401', 'z', 'foo', '900', 'foo']],
     ]);
+
+    expect(collected).to.deep.equal({
+      '$..foo..[?( @property >= 900 )]..foo': [
+        ['e', ['bar', '401', 'z', 'foo', '900', 'foo']],
+      ],
+    });
   });
 
   it('works #14', () => {
@@ -450,15 +447,18 @@ describe('nimma', () => {
       },
     };
 
-    const { collected, collect } = createCollector();
-    let expr = new JSONPathExpression('$..examples.*', collect);
-    expr = new JSONPathExpression('$..examples.*', collect);
-    expr = new JSONPathExpression('$..examples.*', collect);
-    traverse(document, [expr]);
-    expect(collected).to.deep.equal([
-      ['a', ['bar', 'examples', 'foo']],
-      [{ foo: 'b' }, ['bar', 'examples', 'z']],
-    ]);
+    const collected = collect(document, ['$..examples.*', '$..examples..*']);
+    expect(collected).to.deep.equal({
+      '$..examples.*': [
+        ['a', ['bar', 'examples', 'foo']],
+        [{ foo: 'b' }, ['bar', 'examples', 'z']],
+      ],
+      '$..examples..*': [
+        ['a', ['bar', 'examples', 'foo']],
+        [{ foo: 'b' }, ['bar', 'examples', 'z']],
+        ['b', ['bar', 'examples', 'z', 'foo']],
+      ],
+    });
   });
 
   it('works #15', () => {
@@ -470,10 +470,11 @@ describe('nimma', () => {
       },
     };
 
-    const { collected, collect } = createCollector();
-    const expr = new JSONPathExpression('$.info', collect);
-    traverse(document, [expr]);
-    expect(collected).to.deep.equal([[{ contact: { test: 'c' } }, ['info']]]);
+    const collected = collect(document, ['$.info']);
+
+    expect(collected).to.deep.equal({
+      '$.info': [[{ contact: { test: 'c' } }, ['info']]],
+    });
   });
 
   it('works #16', () => {
@@ -493,22 +494,23 @@ describe('nimma', () => {
         ],
       },
     };
-    const { collected, collect } = createCollector();
-    const expr = new JSONPathExpression(
+    const collected = collect(document, [
       "$..parameters[?(@.in === 'header')]",
-      collect,
-    );
-    traverse(document, [expr]);
-    expect(collected).to.deep.equal([
-      [{ in: 'header', name: 'fooA' }, ['parameters', '0']],
-      [{ in: 'header', name: 'd 1' }, ['foo', 'parameters', '0']],
     ]);
+    expect(collected).to.deep.equal({
+      "$..parameters[?(@.in === 'header')]": [
+        [{ in: 'header', name: 'fooA' }, ['parameters', 0]],
+        [{ in: 'header', name: 'd 1' }, ['foo', 'parameters', 0]],
+      ],
+    });
   });
 
   it('works #17', () => {
     const document = {
-      user: {
-        name: 'Eva',
+      bar: {
+        user: {
+          name: 'Eva',
+        },
       },
       foo: {
         user: {
@@ -516,15 +518,175 @@ describe('nimma', () => {
         },
       },
     };
-    const { collected, collect } = createCollector();
-    const expr = new JSONPathExpression(
-      "$..[?(@parentProperty === 'user' && @.name)]",
-      collect,
-    );
-    traverse(document, [expr]);
-    expect(collected).to.deep.equal([
-      [{ name: 'Eva' }, ['user']],
-      [{ name: 'John' }, ['foo', 'user']],
+    const collected = collect(document, [
+      "$..[?((@parentProperty === 'foo' || @parentProperty === 'bar') && @.name)]",
     ]);
+    expect(collected).to.deep.equal({
+      "$..[?((@parentProperty === 'foo' || @parentProperty === 'bar') && @.name)]":
+        [
+          [{ name: 'Eva' }, ['bar', 'user']],
+          [{ name: 'John' }, ['foo', 'user']],
+        ],
+    });
+  });
+
+  it('works #18', () => {
+    const document = {
+      example: 'test',
+      examples: {
+        user: {
+          name: 'Eva',
+        },
+        foo: {
+          user: {
+            name: 'John',
+          },
+        },
+      },
+      author: {
+        name: 'Jakub',
+      },
+    };
+
+    const collected = collect(document, ['$.examples..*']);
+    expect(collected).to.deep.eq({
+      '$.examples..*': [
+        [{ name: 'Eva' }, ['examples', 'user']],
+        ['Eva', ['examples', 'user', 'name']],
+        [{ user: { name: 'John' } }, ['examples', 'foo']],
+        [{ name: 'John' }, ['examples', 'foo', 'user']],
+        ['John', ['examples', 'foo', 'user', 'name']],
+      ],
+    });
+  });
+
+  it('works #19', () => {
+    const document = {
+      channels: {
+        '/a': {
+          publish: {
+            a: {
+              payload: 2,
+            },
+          },
+        },
+        '/b': {
+          publish: {
+            b: {
+              payload: 4,
+            },
+          },
+        },
+      },
+    };
+
+    const collected = collect(document, [
+      '$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload',
+    ]);
+
+    expect(collected).to.deep.eq({
+      '$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload':
+        [
+          [2, ['channels', '/a', 'publish', 'a', 'payload']],
+          [4, ['channels', '/b', 'publish', 'b', 'payload']],
+        ],
+    });
+  });
+
+  it('works #20', () => {
+    const document = {
+      openapi: '3.0.2',
+      components: {
+        links: {
+          address: {
+            operationId: 'getUserAddressByUUID',
+            parameters: {
+              param: {
+                value: 'value',
+                in: 'header',
+              },
+            },
+          },
+        },
+      },
+    };
+
+    const collected = collect(document, ['$..parameters[?(@.in)]']);
+
+    expect(collected).to.deep.eq({
+      '$..parameters[?(@.in)]': [
+        [
+          { in: 'header', value: 'value' },
+          ['components', 'links', 'address', 'parameters', 'param'],
+        ],
+      ],
+    });
+  });
+
+  it('works #21', () => {
+    const document = {
+      firstName: 'John',
+      lastName: 'doe',
+      age: 26,
+      address: {
+        streetAddress: 'naist street',
+        city: 'Nara',
+        postalCode: '630-0192',
+      },
+      phoneNumbers: [
+        {
+          type: 'iPhone',
+          number: '0123-4567-8888',
+        },
+        {
+          type: 'home',
+          number: '0123-4567-8910',
+        },
+      ],
+    };
+
+    const collected = collect(document, ['$.address~', '$[*]~']);
+
+    expect(collected).to.deep.eq({
+      '$.address~': [['address', ['address']]],
+      '$[*]~': [
+        ['firstName', ['firstName']],
+        ['lastName', ['lastName']],
+        ['age', ['age']],
+        ['address', ['address']],
+        ['phoneNumbers', ['phoneNumbers']],
+      ],
+    });
+  });
+
+  it('works #22', () => {
+    const document = {
+      test1: {
+        example: true,
+      },
+    };
+
+    const collected = collect(document, ['$[?(@ && @.example)]']);
+
+    expect(collected).to.deep.eq({
+      '$[?(@ && @.example)]': [[{ example: true }, ['test1']]],
+    });
+  });
+
+  it('works #23', () => {
+    const document = {
+      foo: {
+        bar: true,
+      },
+      info: {
+        bar: false,
+      },
+    };
+
+    const collected = collect(document, ['$.foo^.info'], jsonPathPlus);
+
+    expect(collected).to.deep.eq({
+      '$.foo^.info': [[{ bar: false }, ['info']]],
+    });
   });
 });
