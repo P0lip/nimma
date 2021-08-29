@@ -1,8 +1,9 @@
 import * as b from '../ast/builders.mjs';
-import scope from '../templates/scope.mjs';
 import astring from '../dump.mjs';
-import treeMethodCall from '../templates/tree-method-call.mjs';
 import fnParams from '../templates/fn-params.mjs';
+import scope from '../templates/scope.mjs';
+import treeMethodCall from '../templates/tree-method-call.mjs';
+import TraversalZones from './traversal-zones.mjs';
 
 const params = [b.identifier('input'), b.identifier('callbacks')];
 
@@ -48,6 +49,7 @@ export default class ESTree {
   constructor({ format }) {
     this.format = format;
     this.ctx = null;
+    this.traversalZones = new TraversalZones();
   }
 
   addRuntimeDependency(specifier) {
@@ -77,11 +79,13 @@ export default class ESTree {
         if (!this.#program.has(node)) {
           this.#program.add(node);
         }
+
         break;
       case 'body':
         if (!this.#body.has(node)) {
           this.#body.add(node);
         }
+
         break;
       case 'callbacks':
         this.#callbacks = node;
@@ -106,61 +110,73 @@ export default class ESTree {
       ),
     ]);
 
+    const traversalZones = this.traversalZones.root;
+
     return astring(
-      b.program([
-        b.importDeclaration(
-          [...this.#runtimeDependencies].map(dep =>
-            b.importSpecifier(b.identifier(dep), b.identifier(dep)),
+      b.program(
+        [
+          b.importDeclaration(
+            [...this.#runtimeDependencies].map(dep =>
+              b.importSpecifier(b.identifier(dep), b.identifier(dep)),
+            ),
+            b.stringLiteral('nimma/runtime'),
           ),
-          b.stringLiteral('nimma/runtime'),
-        ),
-        ...this.#program,
-        this.#tree.properties.length === 0
-          ? b.emptyStatement()
-          : b.variableDeclaration('const', [
-              b.variableDeclarator(b.identifier('tree'), this.#tree),
-            ]),
-        b.exportDefaultDeclaration(
-          b.functionDeclaration(
-            null,
-            params,
-            b.blockStatement([
-              NEW_SCOPE_VARIABLE_DECLARATION,
-              this.#tree.properties.length === 0
-                ? b.emptyStatement()
-                : proxyTree,
-              b.variableDeclaration('const', [
-                b.variableDeclarator(
-                  b.identifier('_callbacks'),
-                  b.callExpression(scope.proxyCallbacks, [
-                    b.identifier('callbacks'),
-                    this.#callbacks ?? b.objectExpression([]),
-                  ]),
-                ),
+          ...this.#program,
+          traversalZones,
+          this.#tree.properties.length === 0
+            ? null
+            : b.variableDeclaration('const', [
+                b.variableDeclarator(b.identifier('tree'), this.#tree),
               ]),
-              b.tryStatement(
-                b.blockStatement([
-                  ...this.#body,
-                  this.#traverse.size === 0
-                    ? b.emptyStatement()
-                    : b.expressionStatement(
-                        b.callExpression(scope.traverse, [
-                          b.arrowFunctionExpression(
-                            [],
-                            b.blockStatement(Array.from(this.#traverse)),
-                          ),
-                        ]),
+          b.exportDefaultDeclaration(
+            b.functionDeclaration(
+              null,
+              params,
+              b.blockStatement(
+                [
+                  NEW_SCOPE_VARIABLE_DECLARATION,
+                  this.#tree.properties.length === 0 ? null : proxyTree,
+                  b.variableDeclaration('const', [
+                    b.variableDeclarator(
+                      b.identifier('_callbacks'),
+                      b.callExpression(scope.proxyCallbacks, [
+                        b.identifier('callbacks'),
+                        this.#callbacks ?? b.objectExpression([]),
+                      ]),
+                    ),
+                  ]),
+                  b.tryStatement(
+                    b.blockStatement(
+                      [
+                        ...this.#body,
+                        this.#traverse.size === 0
+                          ? null
+                          : b.expressionStatement(
+                              b.callExpression(scope.traverse, [
+                                b.arrowFunctionExpression(
+                                  [],
+                                  b.blockStatement(Array.from(this.#traverse)),
+                                ),
+                                traversalZones === null
+                                  ? b.nullLiteral()
+                                  : traversalZones.declarations[0].id,
+                              ]),
+                            ),
+                      ].filter(Boolean),
+                    ),
+                    null,
+                    b.blockStatement([
+                      b.expressionStatement(
+                        b.callExpression(scope.destroy, []),
                       ),
-                ]),
-                null,
-                b.blockStatement([
-                  b.expressionStatement(b.callExpression(scope.destroy, [])),
-                ]),
+                    ]),
+                  ),
+                ].filter(Boolean),
               ),
-            ]),
+            ),
           ),
-        ),
-      ]),
+        ].filter(Boolean),
+      ),
     );
   }
 }

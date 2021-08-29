@@ -27,6 +27,32 @@ describe('Code Generator', () => {
         '$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload',
       ]),
     ).to.eq(`import {Scope, isObject} from "nimma/runtime";
+const zones = {
+  "info": {
+    "contact": {
+      "*": {}
+    }
+  },
+  "servers": {
+    "*": {
+      "url": {}
+    }
+  },
+  "channels": {
+    "*": {
+      "publish": {
+        "*": {
+          "payload": {}
+        }
+      },
+      "subscribe": {
+        "*": {
+          "payload": {}
+        }
+      }
+    }
+  }
+};
 const tree = {
   "$.info": function (scope, fn) {
     const value = scope.sandbox.root;
@@ -107,7 +133,7 @@ export default function (input, callbacks) {
       _tree["$.servers[0:2]"](scope, _callbacks["$.servers[0:2]"]);
       _tree["$.servers[:5]"](scope, _callbacks["$.servers[:5]"]);
       _tree["$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload"](scope, _callbacks["$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload"]);
-    });
+    }, zones);
   } finally {
     scope.destroy();
   }
@@ -135,6 +161,32 @@ export default function (input, callbacks) {
     ).to.eq(`import {Scope, isObject, get} from "nimma/runtime";
 const emptyScope = {
   emit: function () {}
+};
+const zones = {
+  "info": {
+    "contact": {
+      "*": {}
+    }
+  },
+  "servers": {
+    "*": {
+      "url": {}
+    }
+  },
+  "channels": {
+    "*": {
+      "publish": {
+        "*": {
+          "payload": {}
+        }
+      },
+      "subscribe": {
+        "*": {
+          "payload": {}
+        }
+      }
+    }
+  }
 };
 const tree = {
   "$.info": function (scope, fn) {
@@ -216,7 +268,7 @@ export default function (input, callbacks) {
       _tree["$.servers[0:2]"](scope, _callbacks["$.servers[0:2]"]);
       _tree["$.servers[:5]"](scope, _callbacks["$.servers[:5]"]);
       _tree["$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload"](scope, _callbacks["$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload"]);
-    });
+    }, zones);
   } finally {
     scope.destroy();
   }
@@ -228,6 +280,13 @@ export default function (input, callbacks) {
     it('keys', () => {
       expect(generate(['$.info~', '$.servers[*].url~', '$.servers[:5]~'])).to
         .eq(`import {Scope, isObject} from "nimma/runtime";
+const zones = {
+  "servers": {
+    "*": {
+      "url": {}
+    }
+  }
+};
 const tree = {
   "$.info~": function (scope, fn) {
     const value = scope.sandbox.root;
@@ -257,7 +316,7 @@ export default function (input, callbacks) {
     scope.traverse(() => {
       _tree["$.servers[*].url~"](scope, _callbacks["$.servers[*].url~"]);
       _tree["$.servers[:5]~"](scope, _callbacks["$.servers[:5]~"]);
-    });
+    }, zones);
   } finally {
     scope.destroy();
   }
@@ -318,7 +377,7 @@ export default function (input, callbacks) {
       _tree["$.servers[*].url^^"](scope, _callbacks["$.servers[*].url^^"]);
       _tree["$..baz^^"](scope, _callbacks["$..baz^^"]);
       _tree["$..baz~^^"](scope, _callbacks["$..baz~^^"]);
-    });
+    }, null);
   } finally {
     scope.destroy();
   }
@@ -416,7 +475,7 @@ export default function (input, callbacks) {
       _tree["$..[?( @property === 'get' || @property === 'put' || @property === 'post' )]"](scope, _callbacks["$..[?( @property === 'get' || @property === 'put' || @property === 'post' )]"]);
       _tree["$..paths..[?( @property === 'get' || @property === 'put' || @property === 'post' )]"](scope, _callbacks["$..paths..[?( @property === 'get' || @property === 'put' || @property === 'post' )]"]);
       _tree["$.components.schemas..[?(@property !== 'properties' && @ && (@ && @.example !== void 0 || @.default !== void 0))]"](scope, _callbacks["$.components.schemas..[?(@property !== 'properties' && @ && (@ && @.example !== void 0 || @.default !== void 0))]"]);
-    });
+    }, null);
   } finally {
     scope.destroy();
   }
@@ -487,7 +546,7 @@ export default function (input, callbacks) {
     scope.traverse(() => {
       _tree["$.examples..*"](scope, _callbacks["$.examples..*"]);
       _tree["$.examples.*"](scope, _callbacks["$.examples.*"]);
-    });
+    }, null);
   } finally {
     scope.destroy();
   }
@@ -506,6 +565,9 @@ export default function (input, callbacks) {
         '$[1:-5:-2]',
       ]),
     ).to.eq(`import {Scope, inBounds} from "nimma/runtime";
+const zones = {
+  "*": {}
+};
 const tree = {
   "$[0:2]": function (scope, fn) {
     if (scope.depth !== 0) return;
@@ -550,7 +612,7 @@ export default function (input, callbacks) {
       _tree["$[::2]"](scope, _callbacks["$[::2]"]);
       _tree["$[1::2]"](scope, _callbacks["$[1::2]"]);
       _tree["$[1:-5:-2]"](scope, _callbacks["$[1:-5:-2]"]);
-    });
+    }, zones);
   } finally {
     scope.destroy();
   }
@@ -654,7 +716,6 @@ export default function (input, callbacks) {
     _tree["$..foo..[?( @property >= 900 )]..foo"](scope, _callbacks["$..foo..[?( @property >= 900 )]..foo"]);
     _tree["$.paths..content.*.examples"](scope, _callbacks["$.paths..content.*.examples"]);
     _tree["$.paths..content.bar..examples"](scope, _callbacks["$.paths..content.bar..examples"]);
-    ;
   } finally {
     scope.destroy();
   }
@@ -716,7 +777,7 @@ export default function (input, callbacks) {
       _tree["$..headers..[?(@.example && @.schema)]"](scope, _callbacks["$..headers..[?(@.example && @.schema)]"]);
       _tree["$..[?(@ && @.example)]"](scope, _callbacks["$..[?(@ && @.example)]"]);
       _tree["$[?(@ && @.example)]"](scope, _callbacks["$[?(@ && @.example)]"]);
-    });
+    }, null);
   } finally {
     scope.destroy();
   }
@@ -727,14 +788,11 @@ export default function (input, callbacks) {
   describe('fast paths', () => {
     it('root', () => {
       expect(generate(['$'])).to.eq(`import {Scope} from "nimma/runtime";
-;
 export default function (input, callbacks) {
   const scope = new Scope(input);
-  ;
   const _callbacks = scope.proxyCallbacks(callbacks, {});
   try {
     scope.emit(_callbacks.$, 0, false);
-    ;
   } finally {
     scope.destroy();
   }
@@ -745,6 +803,9 @@ export default function (input, callbacks) {
     it('top-level-wildcard', () => {
       expect(generate(['$[*]', '$.*', '$[*]^', '$[*]~'])).to
         .eq(`import {Scope} from "nimma/runtime";
+const zones = {
+  "*": {}
+};
 const tree = {
   "$[*]": function (scope, fn) {
     if (scope.depth === 0) {
@@ -773,7 +834,7 @@ export default function (input, callbacks) {
       _tree["$[*]"](scope, _callbacks["$[*]"]);
       _tree["$[*]^"](scope, _callbacks["$[*]^"]);
       _tree["$[*]~"](scope, _callbacks["$[*]~"]);
-    });
+    }, zones);
   } finally {
     scope.destroy();
   }
@@ -792,6 +853,9 @@ export default function (input, callbacks) {
         "$[?(@ ~= 'test')]",
       ]),
     ).to.eq(`import {Scope} from "nimma/runtime";
+const zones = {
+  "*": {}
+};
 const tree = {
   "$[?(index(@)=='key')]": function (scope, fn) {
     if (scope.depth !== 0) return;
@@ -818,7 +882,7 @@ export default function (input, callbacks) {
       _tree["$[?(index(@)=='key')]"](scope, _callbacks["$[?(index(@)=='key')]"]);
       _tree["$[?(@ in ['red','green','blue'])]"](scope, _callbacks["$[?(@ in ['red','green','blue'])]"]);
       _tree["$[?(@ ~= 'test')]"](scope, _callbacks["$[?(@ ~= 'test')]"]);
-    });
+    }, zones);
   } finally {
     scope.destroy();
   }
@@ -846,7 +910,6 @@ export default function (input, callbacks) {
   });
   try {
     _tree["$.info.contact"](scope, _callbacks["$.info.contact"]);
-    ;
   } finally {
     scope.destroy();
   }
@@ -877,16 +940,13 @@ const fallback = Function(\`return (input, path, fn) => {
   "JSONPath": nimma_JSONPath,
   "toPath": nimma_toPath
 });
-;
 export default function (input, callbacks) {
   const scope = new Scope(input);
-  ;
   const _callbacks = scope.proxyCallbacks(callbacks, {});
   try {
     for (const path of ["$.foo^.info"]) {
       fallback(input, path, _callbacks[path])
     }
-    ;
   } finally {
     scope.destroy();
   }

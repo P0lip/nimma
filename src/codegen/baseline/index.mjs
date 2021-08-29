@@ -1,6 +1,9 @@
 import * as b from '../ast/builders.mjs';
 import fastPaths from '../fast-paths/index.mjs';
 import Iterator from '../iterator.mjs';
+import generateEmitCall from '../templates/emit-call.mjs';
+import scope from '../templates/scope.mjs';
+import ESTree from '../tree/tree.mjs';
 import {
   generateFilterScriptExpression,
   generateMemberExpression,
@@ -8,9 +11,6 @@ import {
   generateSliceExpression,
   generateWildcardExpression,
 } from './generators.mjs';
-import scope from '../templates/scope.mjs';
-import ESTree from '../tree/tree.mjs';
-import generateEmitCall from '../templates/emit-call.mjs';
 
 export default function baseline(jsonPaths, format) {
   const tree = new ESTree({ format });
@@ -38,6 +38,10 @@ export default function baseline(jsonPaths, format) {
 
     if (iterator.length === -1) {
       continue;
+    }
+
+    if (!iterator.fixed) {
+      tree.traversalZones.destroy();
     }
 
     const ctx = {
@@ -72,24 +76,31 @@ export default function baseline(jsonPaths, format) {
               ]),
         );
 
+    const zone = iterator.fixed ? tree.traversalZones.create() : null;
+
     for (const node of iterator) {
       let treeNode;
 
       switch (node.type) {
         case 'MemberExpression':
           treeNode = generateMemberExpression(iterator, node, tree);
+          zone?.expand(node.value);
           break;
         case 'MultipleMemberExpression':
           treeNode = generateMultipleMemberExpression(iterator, node, tree);
+          zone?.expandMultiple(node.value);
           break;
         case 'SliceExpression':
           treeNode = generateSliceExpression(iterator, node, tree);
+          zone?.resize();
           break;
         case 'ScriptFilterExpression':
           treeNode = generateFilterScriptExpression(iterator, node, tree);
+          zone?.resize();
           break;
         case 'WildcardExpression':
           treeNode = generateWildcardExpression(iterator, node, tree);
+          zone?.resize();
           if (treeNode === null) {
             continue;
           }
@@ -176,6 +187,8 @@ export default function baseline(jsonPaths, format) {
     }
 
     tree.push(b.blockStatement(branch), 'tree-method');
+
+    zone?.attach();
   }
 
   tree.push(

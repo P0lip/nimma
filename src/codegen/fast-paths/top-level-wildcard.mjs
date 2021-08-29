@@ -4,9 +4,8 @@
 
 import * as b from '../ast/builders.mjs';
 import { isDeep, isWildcardExpression } from '../guards.mjs';
-import treeMethodCall from '../templates/tree-method-call.mjs';
-import scope from '../templates/scope.mjs';
 import generateEmitCall from '../templates/emit-call.mjs';
+import scope from '../templates/scope.mjs';
 
 const BINARY_EXPRESSION = b.binaryExpression(
   '===',
@@ -34,6 +33,8 @@ export default (nodes, tree, ctx) => {
   );
 
   tree.push(b.stringLiteral(ctx.id), 'traverse');
+
+  tree.traversalZones.create()?.resize().attach();
 
   return true;
 };

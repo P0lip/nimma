@@ -12,12 +12,11 @@
  */
 
 import * as b from '../ast/builders.mjs';
-import { fnIdentifier } from '../templates/fn-params.mjs';
 import { isDeep, isMemberExpression } from '../guards.mjs';
+import { fnIdentifier } from '../templates/fn-params.mjs';
 import sandbox from '../templates/sandbox.mjs';
 import scope from '../templates/scope.mjs';
 import treeMethodCall from '../templates/tree-method-call.mjs';
-import { assignmentExpression } from '../ast/builders.mjs';
 
 const VALUE_IDENTIFIER = b.identifier('value');
 const IS_OBJECT_IDENTIFIER = b.identifier('isObject');

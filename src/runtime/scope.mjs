@@ -3,7 +3,7 @@ import process from 'node:process';
 import AggregateError from './aggregate-error.mjs';
 import proxyCallbacks from './proxy-callbacks.mjs';
 import { Sandbox } from './sandbox.mjs';
-import { bailedTraverse, traverse } from './traverse.mjs';
+import { bailedTraverse, traverse, zonedTraverse } from './traverse.mjs';
 
 export default class Scope {
   #ticks = 0;
@@ -92,14 +92,15 @@ export default class Scope {
     return newScope;
   }
 
-  traverse(fn) {
-    traverse.call(this, fn);
+  traverse(fn, zones) {
+    if (zones !== null) {
+      zonedTraverse.call(this, fn, zones);
+    } else {
+      traverse.call(this, fn);
+    }
   }
 
   bail(id, fn, deps) {
-    // this should be triggered N times, not once...
-    // "$.channels.*.[publish,subscribe][?(@property === 'message' && @.schemaFormat === void 0)].payload",
-    // this.#tree[id] = noop;
     const scope = this.fork(this.path);
     bailedTraverse.call(scope, fn, deps);
   }

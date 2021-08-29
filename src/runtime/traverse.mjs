@@ -12,7 +12,7 @@ function _traverseBody(key, curObj, scope, cb, deps) {
   }
 
   if (!isObject(value)) {
-    // no-nop
+    // no-op
   } else if (deps === null) {
     _traverse(value, scope, cb, deps);
   } else if (deps.length > 0) {
@@ -49,3 +49,68 @@ export function traverse(cb) {
 export function bailedTraverse(cb, deps) {
   _traverse(this.value, this, cb, deps);
 }
+
+export function zonedTraverse(cb, zones) {
+  zonesRegistry.set(this.root, zones);
+  _traverse(new Proxy(this.root, traps), this, cb, null);
+}
+
+const zonesRegistry = new WeakMap();
+
+const traps = {
+  get(target, key) {
+    const value = target[key];
+    if (!isObject(value)) {
+      return value;
+    }
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        if (isObject(item)) {
+          zonesRegistry.set(item, zonesRegistry.get(value));
+        }
+      }
+    }
+
+    return new Proxy(value, traps);
+  },
+
+  ownKeys(target) {
+    const stored = zonesRegistry.get(target);
+
+    if (stored === void 0) {
+      return [];
+    }
+
+    zonesRegistry.delete(target);
+
+    if ('*' in stored) {
+      const actualKeys = Object.keys(target);
+
+      for (const key of actualKeys) {
+        const value = target[key];
+        if (isObject(value)) {
+          zonesRegistry.set(value, stored['*']);
+        }
+      }
+
+      return Array.isArray(target) ? actualKeys.map(Number) : actualKeys;
+    }
+
+    const actualKeys = Object.keys(stored);
+
+    for (const key of actualKeys) {
+      if (!Object.hasOwnProperty.call(target, key)) {
+        actualKeys.splice(actualKeys.indexOf(key), 1);
+        continue;
+      }
+
+      const value = target[key];
+      if (isObject(value)) {
+        zonesRegistry.set(value, stored[key]);
+      }
+    }
+
+    return actualKeys;
+  },
+};

@@ -1,7 +1,8 @@
-import Nimma from '../../index.mjs';
-import * as JSONPath from 'jsonpath-plus';
 import * as chai from 'chai';
+import * as JSONPath from 'jsonpath-plus';
 import toPath from 'lodash.topath';
+
+import Nimma from '../../index.mjs';
 
 const { expect } = chai;
 

@@ -2,10 +2,10 @@
 // $..[?(@.bar])
 // $[?(@.bar])
 
+import jsep from '../../parser/jsep/index.mjs';
 import * as b from '../ast/builders.mjs';
 import { rewriteESTree } from '../baseline/generators.mjs';
-import jsep from '../../parser/jsep/index.mjs';
-import { isDeep } from '../guards.mjs';
+import { isDeep, isScriptFilterExpression } from '../guards.mjs';
 import generateEmitCall from '../templates/emit-call.mjs';
 import scope from '../templates/scope.mjs';
 
@@ -15,7 +15,7 @@ const TOP_LEVEL_DEPTH_IF_STATEMENT = b.ifStatement(
 );
 
 export default (nodes, tree, ctx) => {
-  if (nodes.length !== 1 || nodes[0].type !== 'ScriptFilterExpression') {
+  if (nodes.length !== 1 || !isScriptFilterExpression(nodes[0])) {
     return false;
   }
 
@@ -36,6 +36,10 @@ export default (nodes, tree, ctx) => {
     ],
     [b.stringLiteral(ctx.id), 'traverse'],
   ]);
+
+  if (!isDeep(nodes[0])) {
+    tree.traversalZones.create()?.resize().attach();
+  }
 
   return true;
 };
