@@ -1,6 +1,6 @@
 {
   "name": "nimma",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "JSONPath engine that scales.",
   "keywords": [
     "json",

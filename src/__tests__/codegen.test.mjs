@@ -862,18 +862,21 @@ export default function (input, callbacks) {
     ).to.eq(`import {Scope} from "nimma/runtime";
 import {JSONPath as nimma_JSONPath} from "jsonpath-plus";
 import {default as nimma_toPath} from "lodash.topath";
-const fallback = Function("JSONPath", "toPath", \`return function (input, path, fn) {
-    JSONPath({
+const fallback = Function(\`return (input, path, fn) => {
+    this.JSONPath({
       callback: result =>
         void fn({
-          path: toPath(result.path.slice(1)),
+          path: this.toPath(result.path.slice(1)),
           value: result.value,
         }),
       json: input,
       path,
       resultType: 'all',
     });
-  }\`)(nimma_JSONPath, nimma_toPath);
+  }\`).call({
+  "JSONPath": nimma_JSONPath,
+  "toPath": nimma_toPath
+});
 ;
 export default function (input, callbacks) {
   const scope = new Scope(input);

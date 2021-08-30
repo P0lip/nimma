@@ -10,11 +10,11 @@ export default new Fallback(
     ],
     'lodash.topath': [{ imported: 'default', local: 'toPath', value: toPath }],
   },
-  function (input, path, fn, JSONPath, toPath) {
-    JSONPath({
+  function (input, path, fn) {
+    this.JSONPath({
       callback: result =>
         void fn({
-          path: toPath(result.path.slice(1)),
+          path: this.toPath(result.path.slice(1)),
           value: result.value,
         }),
       json: input,

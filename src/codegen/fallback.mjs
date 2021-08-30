@@ -8,6 +8,8 @@ function safeIdentifier(name) {
   return b.identifier(safeName(name));
 }
 
+const FN_DECLARATION_REGEXP = /(?:function\s*)?\(([^)]+)\)\s*(?:=>)?\s*{?/;
+
 export default class Fallback {
   #modules = new Set();
   #deps = new Map();
@@ -31,11 +33,11 @@ export default class Fallback {
     }
 
     this.extraCode = Reflect.apply(Function.toString, fn, []).replace(
-      /\(([^)]+)\)/,
+      FN_DECLARATION_REGEXP,
       (_, args) => {
         const arr = args.split(/[,\s]+/);
         arr.length = 3;
-        return `(${arr.join(', ')})`;
+        return `(${arr.join(', ')}) => {`;
       },
     );
   }
@@ -53,14 +55,22 @@ export default class Fallback {
         b.variableDeclarator(
           id,
           b.callExpression(
-            b.callExpression(b.identifier('Function'), [
-              ...args.map(b.stringLiteral),
-              b.templateLiteral(
-                [b.templateElement({ raw: `return ${this.extraCode}` })],
-                [],
+            b.memberExpression(
+              b.callExpression(b.identifier('Function'), [
+                b.templateLiteral(
+                  [b.templateElement({ raw: `return ${this.extraCode}` })],
+                  [],
+                ),
+              ]),
+              b.identifier('call'),
+            ),
+            [
+              b.objectExpression(
+                args.map(arg =>
+                  b.objectProperty(b.stringLiteral(arg), safeIdentifier(arg)),
+                ),
               ),
-            ]),
-            args.map(safeIdentifier),
+            ],
           ),
         ),
       ]),
