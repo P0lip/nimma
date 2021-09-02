@@ -40,7 +40,7 @@ export default function baseline(jsonPaths, format) {
       continue;
     }
 
-    if (!iterator.fixed) {
+    if (!iterator.feedback.fixed) {
       tree.traversalZones.destroy();
     }
 
@@ -57,26 +57,26 @@ export default function baseline(jsonPaths, format) {
       }
     }
 
-    const branch = iterator.bailed
+    const branch = iterator.feedback.bailed
       ? []
       : [
           b.ifStatement(
             b.binaryExpression(
-              iterator.fixed ? '!==' : '<',
+              iterator.feedback.fixed ? '!==' : '<',
               scope.depth,
               b.numericLiteral(iterator.length - 1),
             ),
             b.returnStatement(),
           ),
         ].concat(
-          iterator.fixed
+          iterator.feedback.fixed
             ? []
             : b.variableDeclaration('let', [
                 b.variableDeclarator(b.identifier('pos'), b.numericLiteral(0)),
               ]),
         );
 
-    const zone = iterator.fixed ? tree.traversalZones.create() : null;
+    const zone = iterator.feedback.fixed ? tree.traversalZones.create() : null;
 
     for (const node of iterator) {
       let treeNode;
@@ -110,7 +110,7 @@ export default function baseline(jsonPaths, format) {
           throw new SyntaxError('Unsupported');
       }
 
-      if (iterator.bailed) {
+      if (iterator.feedback.bailed) {
         branch.push(
           b.objectExpression([
             b.objectProperty(
@@ -125,18 +125,22 @@ export default function baseline(jsonPaths, format) {
       }
     }
 
-    if (!iterator.fixed && !iterator.bailed) {
+    if (
+      !iterator.feedback.fixed &&
+      !iterator.feedback.bailed &&
+      !iterator.state.inverted
+    ) {
       branch.push(
         b.ifStatement(
           b.binaryExpression(
             '!==',
             scope.depth,
-            iterator.pos === 0
+            iterator.state.pos === 0
               ? b.identifier('pos')
               : b.binaryExpression(
                   '+',
                   b.identifier('pos'),
-                  b.numericLiteral(iterator.pos),
+                  b.numericLiteral(iterator.state.pos),
                 ),
           ),
           b.returnStatement(),
@@ -144,9 +148,9 @@ export default function baseline(jsonPaths, format) {
       );
     }
 
-    const placement = iterator.bailed ? 'body' : 'traverse';
+    const placement = iterator.feedback.bailed ? 'body' : 'traverse';
 
-    if (iterator.bailed) {
+    if (iterator.feedback.bailed) {
       branch.splice(
         0,
         branch.length,

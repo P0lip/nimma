@@ -1,6 +1,7 @@
 function safeCall(target, args) {
   try {
-    Reflect.apply(target, null, args);
+    // Reflect.apply(target, null, args);
+    target(...args);
   } catch (ex) {
     this.errors.push(ex);
   }

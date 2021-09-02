@@ -1,23 +1,42 @@
-import * as b from '../ast/builders.mjs';
 import jsep from '../../parser/jsep/index.mjs';
-import scope from '../templates/scope.mjs';
+import * as b from '../ast/builders.mjs';
 import sandbox from '../templates/sandbox.mjs';
+import scope from '../templates/scope.mjs';
 
 const pos = b.identifier('pos');
 
 export function generateMemberExpression(iterator, { deep, value }) {
-  if (iterator.bailed) {
+  if (iterator.feedback.bailed) {
     return b.binaryExpression('!==', scope.property, b.literal(value));
+  }
+
+  if (iterator.state.inverted) {
+    return b.binaryExpression(
+      '!==',
+      iterator.state.pos === 0
+        ? scope.property
+        : b.memberExpression(
+            scope.path,
+            b.binaryExpression(
+              '-',
+              scope.depth,
+              b.numericLiteral(Math.abs(iterator.state.pos)),
+            ),
+            true,
+          ),
+      b.literal(value),
+    );
   }
 
   if (deep) {
     const isLastNode =
       iterator.nextNode === null || iterator.nextNode === 'KeyExpression';
+
     const right = b.sequenceExpression([
       b.assignmentExpression(
         '=',
         pos,
-        isLastNode // tis his every true?
+        isLastNode
           ? b.conditionalExpression(
               b.binaryExpression('!==', scope.property, b.literal(value)),
               b.numericLiteral(-1),
@@ -27,7 +46,7 @@ export function generateMemberExpression(iterator, { deep, value }) {
               b.memberExpression(scope.path, b.identifier('indexOf')),
               [
                 b.literal(value),
-                iterator.pos === 0
+                iterator.state.pos === 0
                   ? pos
                   : b.binaryExpression('+', pos, b.numericLiteral(1)),
               ],
@@ -42,9 +61,13 @@ export function generateMemberExpression(iterator, { deep, value }) {
         b.binaryExpression(
           '<',
           scope.depth,
-          iterator.pos === 0
+          iterator.state.pos === 0
             ? pos
-            : b.binaryExpression('+', pos, b.numericLiteral(iterator.pos)),
+            : b.binaryExpression(
+                '+',
+                pos,
+                b.numericLiteral(iterator.state.pos),
+              ),
         ),
         right,
       );
@@ -55,13 +78,13 @@ export function generateMemberExpression(iterator, { deep, value }) {
 
   let left;
 
-  if (!iterator.fixed) {
+  if (!iterator.feedback.fixed && iterator.state.absolutePos !== 0) {
     left = b.binaryExpression(
       '<',
       scope.depth,
-      iterator.pos === 0
+      iterator.state.pos === 0
         ? pos
-        : b.binaryExpression('+', pos, b.numericLiteral(iterator.pos)),
+        : b.binaryExpression('+', pos, b.numericLiteral(iterator.state.pos)),
     );
   }
 
@@ -69,11 +92,11 @@ export function generateMemberExpression(iterator, { deep, value }) {
     '!==',
     b.memberExpression(
       scope.path,
-      iterator.pos === 0
+      iterator.state.pos === 0
         ? b.numericLiteral(0)
-        : iterator.fixed
-        ? b.numericLiteral(iterator.pos)
-        : b.binaryExpression('+', pos, b.numericLiteral(iterator.pos)),
+        : iterator.feedback.fixed
+        ? b.numericLiteral(iterator.state.pos)
+        : b.binaryExpression('+', pos, b.numericLiteral(iterator.state.pos)),
       true,
     ),
     b.literal(value),
@@ -89,14 +112,14 @@ export function generateMultipleMemberExpression(iterator, node) {
         '&&',
         concat,
         generateMemberExpression(iterator, {
-          type: 'eMemberExpression',
+          type: 'MemberExpression',
           value: member,
           // eslint-disable-next-line sort-keys
           deep: node.deep,
         }),
       ),
     generateMemberExpression(iterator, {
-      type: 'eMemberExpression',
+      type: 'MemberExpression',
       value: node.value[0],
       // eslint-disable-next-line sort-keys
       deep: node.deep,
@@ -107,14 +130,15 @@ export function generateMultipleMemberExpression(iterator, node) {
 const IN_BOUNDS_IDENTIFIER = b.identifier('inBounds');
 
 export function generateSliceExpression(iterator, node, tree) {
-  const member =
-    iterator.pos === 0
-      ? b.numericLiteral(0)
-      : iterator.fixed
-      ? b.numericLiteral(iterator.pos)
-      : b.binaryExpression('+', pos, b.numericLiteral(iterator.pos));
+  const member = iterator.state.inverted
+    ? b.binaryExpression('-', scope.depth, b.numericLiteral(iterator.state.pos))
+    : iterator.state.pos === 0
+    ? b.numericLiteral(0)
+    : iterator.feedback.fixed
+    ? b.numericLiteral(iterator.state.pos)
+    : b.binaryExpression('+', pos, b.numericLiteral(iterator.state.pos));
 
-  const path = iterator.bailed
+  const path = iterator.feedback.bailed
     ? scope.property
     : b.memberExpression(scope.path, member, true);
 
@@ -139,7 +163,7 @@ export function generateSliceExpression(iterator, node, tree) {
           sandbox.parentValue,
           b.memberExpression(
             scope.path,
-            iterator.bailed
+            iterator.feedback.bailed
               ? b.binaryExpression(
                   '-',
                   b.memberExpression(scope.path, b.identifier('length')),
@@ -186,15 +210,19 @@ export function generateSliceExpression(iterator, node, tree) {
 }
 
 export function generateWildcardExpression(iterator) {
-  if (iterator.bailed) {
+  if (iterator.feedback.bailed) {
     return b.booleanLiteral(false);
-  } else if (iterator.nextNode === null && !iterator.fixed) {
+  } else if (iterator.nextNode === null && !iterator.feedback.fixed) {
     return b.sequenceExpression([
       b.assignmentExpression(
         '=',
         b.identifier('pos'),
         b.conditionalExpression(
-          b.binaryExpression('<', scope.depth, b.numericLiteral(iterator.pos)),
+          b.binaryExpression(
+            '<',
+            scope.depth,
+            b.numericLiteral(iterator.state.pos),
+          ),
           b.numericLiteral(-1),
           scope.depth,
         ),
@@ -213,13 +241,17 @@ export function generateFilterScriptExpression(iterator, { deep, value }) {
     '!',
     rewriteESTree(
       esTree,
-      iterator.fixed && iterator.pos > 0 && iterator.nextNode !== null
-        ? iterator.pos
+      iterator.state.fixed &&
+        iterator.state.pos > 0 &&
+        iterator.nextNode !== null
+        ? iterator.state.pos + 1
+        : iterator.state.inverted && iterator.state.pos !== 0
+        ? iterator.state.pos - 1
         : 0,
     ),
   );
 
-  if (iterator.bailed || !deep) return node;
+  if (iterator.feedback.bailed || !deep || iterator.state.inverted) return node;
 
   const assignment = b.sequenceExpression([
     b.assignmentExpression(
@@ -230,16 +262,16 @@ export function generateFilterScriptExpression(iterator, { deep, value }) {
     b.binaryExpression('===', pos, b.numericLiteral(-1)),
   ]);
 
-  if (iterator.pos === 0) return assignment;
+  if (iterator.state.pos === 0) return assignment;
 
   return b.logicalExpression(
     '||',
     b.binaryExpression(
       '<',
       scope.depth,
-      iterator.pos === 0
+      iterator.state.pos === 0
         ? pos
-        : b.binaryExpression('+', pos, b.numericLiteral(iterator.pos)),
+        : b.binaryExpression('+', pos, b.numericLiteral(iterator.state.pos)),
     ),
     assignment,
   );
@@ -302,6 +334,17 @@ export function rewriteESTree(node, pos) {
       node.arguments = node.arguments.map(argument =>
         rewriteESTree(argument, pos),
       );
+
+      if (
+        node.callee.type === 'MemberExpression' &&
+        node.callee.object === sandbox.property &&
+        node.callee.property.name in String.prototype
+      ) {
+        node.callee.object = b.callExpression(b.identifier('String'), [
+          node.callee.object,
+        ]);
+      }
+
       assertDefinedIdentifier(node.callee);
       break;
     case 'Identifier':

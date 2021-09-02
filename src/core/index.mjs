@@ -18,12 +18,14 @@ function getOutputFormat() {
 
 export default class Nimma {
   #fallback;
+  #compiledFn;
 
   constructor(
     expressions,
     { fallback = null, unsafe = true, output = 'auto' } = {},
   ) {
     this.#fallback = fallback;
+    this.#compiledFn = null;
 
     const mappedExpressions = [];
     const erroredExpressions = [];
@@ -31,7 +33,7 @@ export default class Nimma {
     for (const expression of new Set(expressions)) {
       try {
         const parsed = parser.parse(expression);
-        if (unsafe === false && Iterator.getBailedPos(parsed) !== -1) {
+        if (unsafe === false && Iterator.analyze(parsed).bailed) {
           throw SyntaxError('Bail');
         }
 
@@ -75,13 +77,18 @@ export default class Nimma {
   }
 
   query(input, callbacks) {
+    if (this.#compiledFn !== null) {
+      this.#compiledFn(input, callbacks);
+      return;
+    }
+
     const globals = '__nimma_globals__';
     const code = this.sourceCode
       .replace('export default function', `return function`)
       .replace(IMPORT_DECLARATIONS_REGEXP, `const $1 = ${globals};`)
       .replace(RegExp(IMPORT_DECLARATIONS_REGEXP.source, 'g'), '');
 
-    Function(
+    (this.#compiledFn = Function(
       globals,
       ...(this.#fallback === null
         ? []
@@ -92,6 +99,6 @@ export default class Nimma {
       ...(this.#fallback === null
         ? []
         : Array.from(this.#fallback.runtimeDeps.values())),
-    )(input, callbacks);
+    ))(input, callbacks);
   }
 }
