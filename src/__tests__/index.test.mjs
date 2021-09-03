@@ -691,6 +691,89 @@ describe('Nimma', () => {
   });
 
   it('works #24', () => {
+    const document = {
+      channels: [
+        {
+          publish: {
+            foo: { payload: 2 },
+            bar: { schemaFormat: 2, payload: 4 },
+          },
+        },
+      ],
+    };
+
+    const collected = collect(document, [
+      '$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload',
+    ]);
+
+    expect(collected).to.deep.eq({
+      '$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload':
+        [[2, ['channels', 0, 'publish', 'foo', 'payload']]],
+    });
+  });
+
+  it('works #25', () => {
+    const document = {
+      continents: [
+        {
+          id: '1',
+          name: 'Europe',
+          countries: [
+            {
+              id: '4',
+              name: 'Austria',
+            },
+            {
+              id: '5',
+              name: 'Belgium',
+            },
+            {
+              id: '6',
+              name: 'Croatia',
+            },
+          ],
+        },
+        {
+          id: '2',
+          name: 'Asia',
+          cities: [
+            {
+              id: '7',
+              name: 'Japan',
+            },
+            {
+              id: '8',
+              name: 'Indonesia',
+            },
+          ],
+        },
+      ],
+    };
+
+    const collected = collect(document, [
+      '$.continents[:-1].countries[0:2].name',
+      '$.continents[:1].countries[::2].name',
+      '$.continents[:1].countries[0,1,2].name',
+    ]);
+
+    expect(collected).to.deep.eq({
+      '$.continents[:1].countries[0,1,2].name': [
+        ['Austria', ['continents', 0, 'countries', 0, 'name']],
+        ['Belgium', ['continents', 0, 'countries', 1, 'name']],
+        ['Croatia', ['continents', 0, 'countries', 2, 'name']],
+      ],
+      '$.continents[:-1].countries[0:2].name': [
+        ['Austria', ['continents', 0, 'countries', 0, 'name']],
+        ['Belgium', ['continents', 0, 'countries', 1, 'name']],
+      ],
+      '$.continents[:1].countries[::2].name': [
+        ['Austria', ['continents', 0, 'countries', 0, 'name']],
+        ['Croatia', ['continents', 0, 'countries', 2, 'name']],
+      ],
+    });
+  });
+
+  it('works #26', () => {
     const document = [
       'Moscow',
       'Saint Petersburg',

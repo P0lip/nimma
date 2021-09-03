@@ -59,6 +59,36 @@ const zonesRegistry = new WeakMap();
 
 const traps = {
   get(target, key) {
+    if (key === 'length' && Array.isArray(target)) {
+      const stored = zonesRegistry.get(target);
+      if (stored === void 0) {
+        return 0;
+      }
+
+      if ('*' in stored) {
+        for (const item of target) {
+          if (isObject(item)) {
+            zonesRegistry.set(item, stored['*']);
+          }
+        }
+
+        return target.length;
+      }
+
+      const keys = Object.keys(stored);
+
+      for (const key of keys) {
+        const value = target[key];
+        if (isObject(value)) {
+          zonesRegistry.set(value, stored[key]);
+        }
+      }
+
+      return Number.isInteger(Number(keys[keys.length - 1]))
+        ? Math.min(target.length, Number(keys[keys.length - 1]) + 1)
+        : target.length;
+    }
+
     const value = target[key];
     if (!isObject(value)) {
       return value;
