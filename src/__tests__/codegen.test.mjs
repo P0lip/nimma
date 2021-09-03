@@ -628,17 +628,17 @@ const tree = {
   },
   "$[1:5:3]": function (scope, fn) {
     if (scope.depth !== 0) return;
-    if (typeof scope.path[0] !== "number" || scope.path[0] < 1 || scope.path[0] >= 5 || scope.path[0] % 3 !== 1) return;
+    if (typeof scope.path[0] !== "number" || scope.path[0] < 1 || scope.path[0] >= 5 || scope.path[0] !== 1 && scope.path[0] % 3 !== 1) return;
     scope.emit(fn, 0, false);
   },
   "$[::2]": function (scope, fn) {
     if (scope.depth !== 0) return;
-    if (typeof scope.path[0] !== "number" || scope.path[0] % 2 !== 0) return;
+    if (typeof scope.path[0] !== "number" || scope.path[0] !== 0 && scope.path[0] % 2 !== 0) return;
     scope.emit(fn, 0, false);
   },
   "$[1::2]": function (scope, fn) {
     if (scope.depth !== 0) return;
-    if (typeof scope.path[0] !== "number" || scope.path[0] < 1 || scope.path[0] % 2 !== 1) return;
+    if (typeof scope.path[0] !== "number" || scope.path[0] < 1 || scope.path[0] !== 1 && scope.path[0] % 2 !== 1) return;
     scope.emit(fn, 0, false);
   },
   "$[1:-5:-2]": function (scope, fn) {

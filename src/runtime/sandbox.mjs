@@ -48,16 +48,16 @@ export class Sandbox {
     return this.at(-1);
   }
 
-  destroy() {
-    this.#history.length = 0;
-  }
-
   get parentValue() {
     return this.at(-2)?.value;
   }
 
   get parentProperty() {
     return this.at(-2)?.property;
+  }
+
+  destroy() {
+    this.#history.length = 0;
   }
 
   push() {
@@ -82,13 +82,13 @@ export class Sandbox {
   }
 
   at(pos) {
-    if (Math.abs(pos) >= this.#history.length) {
+    if (Math.abs(pos) > this.#history.length) {
       return null;
     }
 
     const actualPos = (pos < 0 ? this.#history.length : 0) + pos;
-
     const history = this.#history.slice(0, actualPos + 1);
+
     return new Sandbox(
       this.#path.slice(0, history[history.length - 1][0]),
       history[history.length - 1][1],

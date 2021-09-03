@@ -689,4 +689,47 @@ describe('Nimma', () => {
       '$.foo^.info': [[{ bar: false }, ['info']]],
     });
   });
+
+  it('works #24', () => {
+    const document = [
+      'Moscow',
+      'Saint Petersburg',
+      'Kazan',
+      'Novosibirsk',
+      'Krasnoyarsk',
+      'Omsk',
+      'Tula',
+      'Nizhny Novgorod',
+      'Norilsk',
+      'Kaliningrad',
+      'Ryazan',
+    ];
+
+    const collected = collect(document, [
+      '$[1::2]',
+      '$[1:-5:2]',
+      '$[10::2]',
+      '$[1:5:3]',
+    ]);
+
+    expect(collected).to.deep.eq({
+      '$[1:-5:2]': [
+        ['Saint Petersburg', [1]],
+        ['Novosibirsk', [3]],
+        ['Omsk', [5]],
+      ],
+      '$[1::2]': [
+        ['Saint Petersburg', [1]],
+        ['Novosibirsk', [3]],
+        ['Omsk', [5]],
+        ['Nizhny Novgorod', [7]],
+        ['Kaliningrad', [9]],
+      ],
+      '$[10::2]': [['Ryazan', [10]]],
+      '$[1:5:3]': [
+        ['Saint Petersburg', [1]],
+        ['Krasnoyarsk', [4]],
+      ],
+    });
+  });
 });

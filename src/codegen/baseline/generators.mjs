@@ -160,7 +160,9 @@ export function generateSliceExpression(iterator, node, tree) {
       b.unaryExpression(
         '!',
         b.callExpression(IN_BOUNDS_IDENTIFIER, [
-          sandbox.parentValue,
+          iterator.state.absolutePos === 0
+            ? sandbox.parentValue
+            : remapSandbox(sandbox.value, iterator.state.absolutePos),
           b.memberExpression(
             scope.path,
             iterator.feedback.bailed
@@ -203,7 +205,15 @@ export function generateSliceExpression(iterator, node, tree) {
       '||',
       merged,
       operator === '%'
-        ? b.binaryExpression('!==', expression, b.numericLiteral(node.value[0]))
+        ? b.logicalExpression(
+            '&&',
+            b.binaryExpression('!==', path, b.numericLiteral(node.value[0])),
+            b.binaryExpression(
+              '!==',
+              expression,
+              b.numericLiteral(node.value[0]),
+            ),
+          )
         : expression,
     );
   }, isNumberBinaryExpression);
