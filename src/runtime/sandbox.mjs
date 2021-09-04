@@ -49,11 +49,19 @@ export class Sandbox {
   }
 
   get parentValue() {
-    return this.at(-2)?.value;
+    if (this.#history.length < 2) {
+      return void 0;
+    }
+
+    return this.#history[this.#history.length - 2][1];
   }
 
   get parentProperty() {
-    return this.at(-2)?.property;
+    if (this.#history.length < 3) {
+      return void 0;
+    }
+
+    return this.#path[this.#history[this.#history.length - 3][0]];
   }
 
   destroy() {
