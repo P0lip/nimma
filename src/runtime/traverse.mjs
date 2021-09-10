@@ -51,8 +51,12 @@ export function bailedTraverse(cb, deps) {
 }
 
 export function zonedTraverse(cb, zones) {
-  zonesRegistry.set(this.root, zones);
-  _traverse(new Proxy(this.root, traps), this, cb, null);
+  if (isSaneObject(this.root)) {
+    zonesRegistry.set(this.root, zones);
+    _traverse(new Proxy(this.root, traps), this, cb, null);
+  } else {
+    _traverse(this.root, this, cb, null);
+  }
 }
 
 const zonesRegistry = new WeakMap();
@@ -92,6 +96,10 @@ const traps = {
 
     const value = target[key];
     if (!isObject(value)) {
+      return value;
+    }
+
+    if (!isSaneObject(value)) {
       return value;
     }
 
@@ -150,3 +158,11 @@ const traps = {
     return actualKeys;
   },
 };
+
+function isSaneObject(object) {
+  return !(
+    Object.isFrozen(object) ||
+    Object.isSealed(object) ||
+    !Object.isExtensible(object)
+  );
+}

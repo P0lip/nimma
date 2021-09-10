@@ -1,11 +1,15 @@
+/* global it */
 import chai from 'chai';
+import each from 'it-each';
 import mocha from 'mocha';
 
 import { jsonPathPlus } from '../fallbacks/index.mjs';
 import Nimma from '../index.mjs';
 
-const { describe, it } = mocha;
+const { describe } = mocha;
 const { expect } = chai;
+
+each({ testPerIteration: true });
 
 function collect(input, expressions, fallback = null) {
   const collected = {};
@@ -828,4 +832,44 @@ describe('Nimma', () => {
       "$['size']": [['xl', ['size']]],
     });
   });
+
+  it.each(
+    [
+      Object.preventExtensions({
+        shirts: Object.seal({
+          color: 'red',
+          size: 'xl',
+          a: Object.freeze({
+            size: 'xl',
+          }),
+          b: Object.freeze({
+            size: 'm',
+          }),
+        }),
+      }),
+      {
+        shirts: {
+          color: 'red',
+          size: 'xl',
+          a: Object.seal({
+            size: 'xl',
+          }),
+          b: {
+            size: 'm',
+          },
+        },
+      },
+    ],
+    'frozen/sealed/non-extensible',
+    document => {
+      const collected = collect(document, ['$.shirts[a,b].size']);
+
+      expect(collected).to.deep.eq({
+        '$.shirts[a,b].size': [
+          ['xl', ['shirts', 'a', 'size']],
+          ['m', ['shirts', 'b', 'size']],
+        ],
+      });
+    },
+  );
 });
