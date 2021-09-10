@@ -18,7 +18,7 @@ function print(expr) {
 }
 
 describe('parseFilterExpression', () => {
-  it('@.access', () => {
+  it('at member expression', () => {
     expect(print(`?(@.schema || @.ex)`)).to.eq(
       `!(scope.sandbox.value.schema || scope.sandbox.value.ex)`,
     );
@@ -26,9 +26,13 @@ describe('parseFilterExpression', () => {
     expect(print(`?(@.schema['d'] || @.ex.baz)`)).to.eq(
       `!(scope.sandbox.value.schema['d'] || scope.sandbox.value.ex.baz)`,
     );
+
+    expect(print(`?(!@.summary)`)).to.eq(
+      `!!scope.sandbox.value.summary`,
+    );
   });
 
-  it('at in string', () => {
+  it('at in a string', () => {
     expect(print(`?(@property === "@.schema")`)).to.eq(
       `!(scope.sandbox.property === "@.schema")`,
     );

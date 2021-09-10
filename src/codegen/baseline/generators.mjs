@@ -321,6 +321,7 @@ export function rewriteESTree(node, pos) {
 
       break;
     case 'UnaryExpression':
+      node.argument = rewriteESTree(node.argument, pos);
       assertDefinedIdentifier(node.argument);
       return node;
     case 'MemberExpression':
