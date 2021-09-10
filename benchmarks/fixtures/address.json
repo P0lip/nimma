@@ -1,0 +1,58 @@
+{
+  "type": "array",
+  "items": {
+    "type": "object",
+    "minProperties": 5000,
+    "maxProperties": 5000,
+    "additionalProperties": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "locations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Address"
+          }
+        }
+      },
+      "required": ["locations"]
+    }
+  },
+  "$defs": {
+    "Address": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "country": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "postal-code": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "street": {
+          "type": "object",
+          "properties": {
+            "line-1": {
+              "type": "string"
+            },
+            "line-2": {
+              "type": "string"
+            },
+            "number": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "required": ["country", "city"]
+    }
+  }
+}

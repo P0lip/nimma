@@ -6,3 +6,4 @@ coverage/
 *.log
 src/index.cjs
 dist/
+.gen/

@@ -7,3 +7,4 @@ ignore:
   - dist
   - node_modules
   - rollup.config.js
+  - benchmarks
