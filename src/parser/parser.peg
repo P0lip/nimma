@@ -33,7 +33,7 @@ Modifier = KeyExpression / ParentExpression
 
 Descendant = [.][.]?
 
-Identifier = $([$_] / Char ([$_] / Char / Digit / [-])*)
+Identifier = $([$_-] / Char / Digit)+
 MemberIdentifier = Number / Identifier / (("\"" $([^"]*) "\"") / ("'" $([^']*) "'")) { return text().slice(1, -1) }
 Number = "-"? Digit+ { return Number(text()); }
 
