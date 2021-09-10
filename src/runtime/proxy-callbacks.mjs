@@ -1,30 +1,28 @@
-function safeCall(target, args) {
+function safeCall(errors, target, args) {
   try {
-    // Reflect.apply(target, null, args);
     target(...args);
   } catch (ex) {
-    this.errors.push(ex);
+    errors.push(ex);
   }
 }
 
-export default function proxyCallbacks(callbacks, map) {
+export default function proxyCallbacks(errors, callbacks, map) {
   const _callbacks = {};
   for (const key of Object.keys(callbacks)) {
-    const mappedValues = Reflect.get(map, key);
-    const value = Reflect.get(callbacks, key, callbacks);
-    if (typeof value !== 'function') {
-      _callbacks[key] = value;
+    const mappedValues = map[key];
+    const fn = callbacks[key];
+
+    if (Array.isArray(mappedValues)) {
+      _callbacks[key] = (...args) => {
+        safeCall(errors, fn, args);
+        for (const value of mappedValues) {
+          _callbacks[value](...args);
+        }
+      };
     } else {
-      _callbacks[key] = new Proxy(value, {
-        apply: (target, thisArg, args) => {
-          safeCall.call(this, target, args);
-          if (Array.isArray(mappedValues)) {
-            for (const value of mappedValues) {
-              safeCall.call(this, value, args);
-            }
-          }
-        },
-      });
+      _callbacks[key] = (...args) => {
+        safeCall(errors, fn, args);
+      };
     }
   }
 

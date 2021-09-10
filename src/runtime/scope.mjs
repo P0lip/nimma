@@ -105,8 +105,8 @@ export default class Scope {
     bailedTraverse.call(scope, fn, deps);
   }
 
-  proxyCallbacks() {
-    return proxyCallbacks.apply(this, arguments);
+  proxyCallbacks(callbacks, map) {
+    return proxyCallbacks(this.errors, callbacks, map);
   }
 
   registerTree(tree) {

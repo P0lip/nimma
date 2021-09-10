@@ -815,4 +815,17 @@ describe('Nimma', () => {
       ],
     });
   });
+
+  it('works #27', () => {
+    const document = {
+      size: 'xl',
+    };
+
+    const collected = collect(document, ['$.size', "$['size']"]);
+
+    expect(collected).to.deep.eq({
+      '$.size': [['xl', ['size']]],
+      "$['size']": [['xl', ['size']]],
+    });
+  });
 });
