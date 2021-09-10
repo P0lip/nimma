@@ -5,10 +5,6 @@ export default class TraversalZones {
   #isDestroyed = false;
   #zones = [];
 
-  destroy() {
-    this.#isDestroyed = true;
-  }
-
   get root() {
     if (this.#isDestroyed || this.#zones.length === 0) {
       return null;
@@ -22,6 +18,10 @@ export default class TraversalZones {
         toObjectLiteral(mergeZones(this.#zones)),
       ),
     ]);
+  }
+
+  destroy() {
+    this.#isDestroyed = true;
   }
 
   attach(zone) {
@@ -54,7 +54,8 @@ class Zone {
   expand(property) {
     let i = 0;
     for (const value of this.#localZones) {
-      value[property] = {};
+      if (value === null) continue;
+      value[property] = property === '**' ? null : {};
       this.#localZones[i++] = value[property];
     }
 
@@ -64,9 +65,13 @@ class Zone {
   expandMultiple(properties) {
     const root = this.#localZones[0];
 
+    if (root === null) {
+      return this;
+    }
+
     let i = 0;
     for (const property of properties) {
-      root[property] = {};
+      root[property] = property === '**' ? null : {};
       if (this.#localZones.length < i) {
         this.#localZones.push(root[property]);
       } else {
@@ -79,6 +84,10 @@ class Zone {
 
   resize() {
     return this.expand('*');
+  }
+
+  allIn() {
+    return this.expand('**');
   }
 }
 

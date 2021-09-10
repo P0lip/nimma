@@ -801,6 +801,48 @@ export default function (input, callbacks) {
 `);
   });
 
+  describe('zones', () => {
+    it('nested deep', () => {
+      expect(generate(['$.store..[price,bar,baz]', '$.book'])).to
+        .eq(`import {Scope, isObject} from "nimma/runtime";
+const zones = {
+  "store": {
+    "**": null
+  }
+};
+const tree = {
+  "$.store..[price,bar,baz]": function (scope, fn) {
+    if (scope.depth < 1) return;
+    let pos = 0;
+    if (scope.path[0] !== "store") return;
+    if ((scope.depth < pos + 1 || (pos = scope.property !== "price" ? -1 : scope.depth, pos === -1)) && (scope.depth < pos + 1 || (pos = scope.property !== "bar" ? -1 : scope.depth, pos === -1)) && (scope.depth < pos + 1 || (pos = scope.property !== "baz" ? -1 : scope.depth, pos === -1))) return;
+    if (scope.depth !== pos) return;
+    scope.emit(fn, 0, false);
+  },
+  "$.book": function (scope, fn) {
+    const value = scope.sandbox.root;
+    if (isObject(value)) {
+      scope.fork(["book"])?.emit(fn, 0, false);
+    }
+  }
+};
+export default function (input, callbacks) {
+  const scope = new Scope(input);
+  const _tree = scope.registerTree(tree);
+  const _callbacks = scope.proxyCallbacks(callbacks, {});
+  try {
+    _tree["$.book"](scope, _callbacks["$.book"]);
+    scope.traverse(() => {
+      _tree["$.store..[price,bar,baz]"](scope, _callbacks["$.store..[price,bar,baz]"]);
+    }, zones);
+  } finally {
+    scope.destroy();
+  }
+}
+`);
+    });
+  });
+
   describe('fast paths', () => {
     it('root', () => {
       expect(generate(['$'])).to.eq(`import {Scope} from "nimma/runtime";

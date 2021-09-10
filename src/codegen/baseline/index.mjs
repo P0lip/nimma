@@ -1,5 +1,6 @@
 import * as b from '../ast/builders.mjs';
 import fastPaths from '../fast-paths/index.mjs';
+import { isDeep } from '../guards.mjs';
 import Iterator from '../iterator.mjs';
 import generateEmitCall from '../templates/emit-call.mjs';
 import scope from '../templates/scope.mjs';
@@ -40,7 +41,7 @@ export default function baseline(jsonPaths, format) {
       continue;
     }
 
-    if (!iterator.feedback.fixed) {
+    if (iterator.feedback.bailed || (nodes.length > 0 && isDeep(nodes[0]))) {
       tree.traversalZones.destroy();
     }
 
@@ -76,9 +77,13 @@ export default function baseline(jsonPaths, format) {
               ]),
         );
 
-    const zone = iterator.feedback.fixed ? tree.traversalZones.create() : null;
+    const zone = iterator.feedback.bailed ? null : tree.traversalZones.create();
 
     for (const node of iterator) {
+      if (isDeep(node)) {
+        zone?.allIn();
+      }
+
       let treeNode;
 
       switch (node.type) {

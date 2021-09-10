@@ -61,6 +61,7 @@ const traps = {
   get(target, key) {
     if (key === 'length' && Array.isArray(target)) {
       const stored = zonesRegistry.get(target);
+
       if (stored === void 0) {
         return 0;
       }
@@ -102,7 +103,8 @@ const traps = {
       }
     }
 
-    return new Proxy(value, traps);
+    const stored = zonesRegistry.get(value);
+    return '**' in stored ? value : new Proxy(value, traps);
   },
 
   ownKeys(target) {
@@ -113,6 +115,10 @@ const traps = {
     }
 
     zonesRegistry.delete(target);
+
+    if ('**' in stored) {
+      return Object.keys(target);
+    }
 
     if ('*' in stored) {
       const actualKeys = Object.keys(target);
