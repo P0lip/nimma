@@ -10,8 +10,8 @@
       "properties": {
         "book": {
           "type": "array",
-          "minItems": 100,
-          "maxItems": 125,
+          "minItems": 2000000,
+          "maxItems": 2100000,
           "items": {
             "type": "object",
             "additionalProperties": false,

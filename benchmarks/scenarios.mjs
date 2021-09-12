@@ -26,7 +26,7 @@ export default [
       '$.store.*',
       '$.store..price',
       '$..book[2]',
-      // '$..book[(@.length-1)]', jsonpath-plus throws
+      '$..book[(@.length-1)]', // jsonpath-plus throws
       '$..book[-1:]',
       '$..book[0,1]',
       '$..book[:2]',
@@ -34,5 +34,26 @@ export default [
       '$..book[?(@.price<10)]',
     ],
     filepath: './fixtures/goessner.json',
+  },
+  {
+    expressions: [
+      '$.store.book[*].author',
+      '$..author',
+      '$.store.*',
+      '$.store..price',
+      '$..book[2]',
+      // '$..book[(@.length-1)]', // jsonpath-plus throws
+      '$..book[-1:]',
+      '$..book[0,1]',
+      '$..book[:2]',
+      '$..book[10:15]',
+      '$..book[?(@.isbn)]',
+      '$..book[?(@.title)]',
+      '$..book[?(@.price<10)]',
+      '$..book[?(@.price>100)]',
+      '$..book[?(@.price && @.price.toString() === "10.20")]',
+    ],
+    filepath: './fixtures/goessner.json',
+    name: 'goessner-extended',
   },
 ];

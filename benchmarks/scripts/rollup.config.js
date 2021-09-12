@@ -1,63 +1,75 @@
+import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import scenarios from '../scenarios.mjs';
-
-function sanitizeExpression(expr) {
-  return expr
-    .replaceAll('$', '')
-    .replaceAll('*', '-wildcard-')
-    .replaceAll('.', '-dot-')
-    .replaceAll('[', '-left-bracket-')
-    .replaceAll(']', '-right-bracket-')
-    .replaceAll('(', '-left-parenthesis-')
-    .replaceAll('(', '-right-parenthesis-')
-    .replaceAll('?', '-question-mark-')
-    .replace(/[^A-Za-z0-9\s-]/g, '')
-    .slice(0, 30);
-}
+import expressionToFilePath from './utils/expression-to-file-path.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const dist = path.join(__dirname, '../.gen');
+const dist = path.join(__dirname, '../.gen/suites');
 
 function getIntro(filepath, expressions) {
+  const filename = path.basename(filepath, path.extname(filepath));
   return `import * as fs from 'node:fs';
-import precompiledNimma from './${sanitizeExpression(
+
+import precompiledNimma from '../../nimma/${filename}/${expressionToFilePath(
     expressions.join('-'),
   )}.mjs';
 
 const JSON_PATHS = ${JSON.stringify(expressions)};
+
 const DOCUMENT = JSON.parse(
-  await fs.promises.readFile('${path.join(__dirname, '..', filepath)}', 'utf8'),
+  await fs.promises.readFile('${path.join(
+    __dirname,
+    '../.gen/documents/',
+    `${filename}.json`,
+  )}', 'utf8'),
 );`;
 }
 
-export default scenarios.flatMap(scenario => [
-  {
-    input: path.join(__dirname, '../benchmark-template.mjs'),
-    output: {
-      dir: path.join(
-        dist,
-        path.basename(scenario.filepath, path.extname(scenario.filepath)),
-      ),
-      entryFileNames: 'all.mjs',
-      format: 'es',
-      intro: getIntro(scenario.filepath, scenario.expressions),
-    },
-    treeshake: false,
-  },
+const pkg = JSON.parse(
+  fs.readFileSync(path.join(__dirname, '../../package.json'), 'utf8'),
+);
 
-  ...scenario.expressions.map((expression, i) => ({
-    input: path.join(__dirname, '../benchmark-template.mjs'),
-    output: {
-      dir: path.join(
-        dist,
-        path.basename(scenario.filepath, path.extname(scenario.filepath)),
-      ),
-      entryFileNames: `${i}.mjs`,
-      format: 'es',
-      intro: getIntro(scenario.filepath, [expression]),
+const external = [
+  /^node:/,
+  ...Object.keys({
+    ...pkg.dependencies,
+    ...pkg.optionalDependencies,
+    ...pkg.devDependencies,
+  }),
+];
+
+export default scenarios.flatMap(scenario => {
+  const dir = path.join(
+    dist,
+    scenario.name ??
+      path.basename(scenario.filepath, path.extname(scenario.filepath)),
+  );
+
+  return [
+    {
+      external,
+      input: path.join(__dirname, '../benchmark-template.mjs'),
+      output: {
+        dir,
+        entryFileNames: 'all.mjs',
+        format: 'es',
+        intro: getIntro(scenario.filepath, scenario.expressions),
+      },
+      treeshake: false,
     },
-    treeshake: false,
-  })),
-]);
+
+    ...scenario.expressions.map((expression, i) => ({
+      external,
+      input: path.join(__dirname, '../benchmark-template.mjs'),
+      output: {
+        dir,
+        entryFileNames: `${i}.mjs`,
+        format: 'es',
+        intro: getIntro(scenario.filepath, [expression]),
+      },
+      treeshake: false,
+    })),
+  ];
+});

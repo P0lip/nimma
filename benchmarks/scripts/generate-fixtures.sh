@@ -3,6 +3,6 @@ cd benchmarks/scripts
 mkdir -p ../.gen
 export NODE_ENV=production
 npx rollup -c ./rollup.config.js
-# node ./generate-schema-fixtures.mjs --force="${1:-false}"
+node ./generate-schema-fixtures.mjs
 node ./compile-nimma.mjs
 

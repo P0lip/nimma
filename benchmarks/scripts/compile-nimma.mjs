@@ -4,26 +4,13 @@ import { fileURLToPath } from 'node:url';
 
 import Nimma from '../../dist/esm/index.mjs';
 import scenarios from '../scenarios.mjs';
+import expressionToFilePath from './utils/expression-to-file-path.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const dist = path.join(__dirname, '../.gen');
+const dist = path.join(__dirname, '../.gen/nimma');
 
 function printCode(code) {
-  return code.replace(/nimma\/([a-z]+)/, '../../../dist/esm/$1/index.mjs');
-}
-
-export function sanitizeExpression(expr) {
-  return expr
-    .replaceAll('$', '')
-    .replaceAll('*', '-wildcard-')
-    .replaceAll('.', '-dot-')
-    .replaceAll('[', '-left-bracket-')
-    .replaceAll(']', '-right-bracket-')
-    .replaceAll('(', '-left-parenthesis-')
-    .replaceAll('(', '-right-parenthesis-')
-    .replaceAll('?', '-question-mark-')
-    .replace(/[^A-Za-z0-9\s-]/g, '')
-    .slice(0, 30);
+  return code.replace(/nimma\/([a-z]+)/, '../../../../dist/esm/$1/index.mjs');
 }
 
 for (const { expressions, filepath } of scenarios) {
@@ -34,15 +21,17 @@ for (const { expressions, filepath } of scenarios) {
     path.basename(filepath, path.extname(filepath)),
   );
 
+  await fs.promises.mkdir(actualDist, { recursive: true });
+
   await fs.promises.writeFile(
-    path.join(actualDist, `${sanitizeExpression(expressions.join('-'))}.mjs`),
+    path.join(actualDist, `${expressionToFilePath(expressions.join('-'))}.mjs`),
     printCode(sourceCode),
   );
 
   for (const expression of expressions) {
     const { sourceCode } = new Nimma([expression]);
     await fs.promises.writeFile(
-      path.join(actualDist, `${sanitizeExpression(expression)}.mjs`),
+      path.join(actualDist, `${expressionToFilePath(expression)}.mjs`),
       printCode(sourceCode),
     );
   }
