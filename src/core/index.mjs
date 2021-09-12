@@ -47,10 +47,10 @@ export default class Nimma {
       }
     }
 
-    const tree = codegen(
+    const tree = (this.tree = codegen(
       mappedExpressions,
       output === 'auto' ? getOutputFormat() : output,
-    );
+    ));
 
     if (fallback !== null && erroredExpressions.length > 0) {
       const path = b.identifier('path');
