@@ -975,12 +975,13 @@ export default function (input, callbacks) {
 `);
   });
 
-  it('fallback', () => {
-    expect(
-      generate(['$.foo^.info'], {
-        fallback: jsonPathPlus,
-      }),
-    ).to.eq(`import {Scope} from "nimma/runtime";
+  describe('given fallback', () => {
+    it('and errored expressions, should include whatever fallback specified', () => {
+      expect(
+        generate(['$.foo^.info'], {
+          fallback: jsonPathPlus,
+        }),
+      ).to.eq(`import {Scope} from "nimma/runtime";
 import {JSONPath as nimma_JSONPath} from "jsonpath-plus";
 import {default as nimma_toPath} from "lodash.topath";
 const fallback = Function(\`return (input, path, fn) => {
@@ -1010,5 +1011,33 @@ export default function (input, callbacks) {
   }
 }
 `);
+    });
+
+    it('and no errored expressions, should keep code untouched', () => {
+      expect(
+        generate(['$.foo.info'], {
+          fallback: jsonPathPlus,
+        }),
+      ).to.eq(`import {Scope, isObject} from "nimma/runtime";
+const tree = {
+  "$.foo.info": function (scope, fn) {
+    const value = scope.sandbox.root?.["foo"];
+    if (isObject(value)) {
+      scope.fork(["foo", "info"])?.emit(fn, 0, false);
+    }
+  }
+};
+export default function (input, callbacks) {
+  const scope = new Scope(input);
+  const _tree = scope.registerTree(tree);
+  const _callbacks = scope.proxyCallbacks(callbacks, {});
+  try {
+    _tree["$.foo.info"](scope, _callbacks["$.foo.info"]);
+  } finally {
+    scope.destroy();
+  }
+}
+`);
+    });
   });
 });

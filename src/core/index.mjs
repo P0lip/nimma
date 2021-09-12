@@ -52,7 +52,7 @@ export default class Nimma {
       output === 'auto' ? getOutputFormat() : output,
     );
 
-    if (fallback !== null) {
+    if (fallback !== null && erroredExpressions.length > 0) {
       const path = b.identifier('path');
       const fb = fallback.attach(tree);
       tree.push(
