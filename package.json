@@ -1,6 +1,6 @@
 {
   "name": "nimma",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "JSONPath engine that scales.",
   "keywords": [
     "json",
@@ -29,8 +29,8 @@
       "require": "./dist/cjs/runtime/index.js"
     },
     "./parser": {
-      "import": "./dist/esm/parser/index.mjs",
-      "require": "./dist/cjs/parser/index.js"
+      "import": "./dist/esm/parser/parser.mjs",
+      "require": "./dist/cjs/parser/parser.js"
     },
     "./fallbacks": {
       "import": "./dist/esm/fallbacks/index.mjs",
@@ -62,7 +62,7 @@
     "postbuild": "(cd dist/legacy && sed -i \"s/nimma\\/runtime/nimma\\/legacy\\/runtime/\" cjs/codegen/tree/tree.js esm/codegen/tree/tree.mjs) && node ./scripts/copy-types.mjs",
     "lint": "ls-lint && eslint --cache --cache-location .cache/ src/**/*.mjs",
     "test": "NODE_ENV=test c8 mocha --experimental-modules --config .mocharc ./**/__tests__/**/*.test.mjs",
-    "prepublish": "npm run lint && npm run test && npm run build"
+    "prepublish": "npm run lint && npm run test && npm run build && (stat ./dist/esm/parser/parser.mjs && stat ./dist/cjs/parser/parser.js) >> /dev/null"
   },
   "devDependencies": {
     "@babel/core": "^7.15.0",
