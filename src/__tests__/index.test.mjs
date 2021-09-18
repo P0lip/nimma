@@ -11,14 +11,14 @@ const { expect } = chai;
 
 each({ testPerIteration: true });
 
-function collect(input, expressions, fallback = null) {
+function _collect(input, expressions, opts) {
   const collected = {};
   const _ = (expr, scope) => {
     collected[expr] ??= [];
     collected[expr].push([scope.value, [...scope.path]]);
   };
 
-  const n = new Nimma(expressions, { fallback });
+  const n = new Nimma(expressions, opts);
 
   n.query(
     input,
@@ -29,6 +29,17 @@ function collect(input, expressions, fallback = null) {
   );
 
   return collected;
+}
+
+function collect(input, expressions, fallback = null) {
+  const auto = _collect(input, expressions, { fallback });
+  const esnext = _collect(input, expressions, { fallback, output: 'ES2021' });
+  const es2018 = _collect(input, expressions, { fallback, output: 'ES2018' });
+
+  expect(auto).to.deep.eq(esnext);
+  expect(esnext).to.deep.eq(es2018);
+
+  return esnext;
 }
 
 describe('Nimma', () => {
