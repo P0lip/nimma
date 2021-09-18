@@ -78,9 +78,10 @@ export default function baseline(jsonPaths, format) {
         );
 
     const zone = iterator.feedback.bailed ? null : tree.traversalZones.create();
+    const inverseAt = iterator.feedback.inverseAt;
 
     for (const node of iterator) {
-      if (isDeep(node)) {
+      if (isDeep(node) || inverseAt === iterator.state.absolutePos) {
         zone?.allIn();
       }
 

@@ -833,6 +833,57 @@ describe('Nimma', () => {
     });
   });
 
+  it('works #28', () => {
+    const document = {
+      Europe: {
+        East: {
+          Poland: {
+            cities: ['Poznań'],
+          },
+        },
+        West: {},
+      },
+    };
+
+    const collected = collect(document, ['$.Europe[*]..cities[?(@ ~= "^P")]']);
+
+    expect(collected).to.deep.eq({
+      '$.Europe[*]..cities[?(@ ~= "^P")]': [
+        ['Poznań', ['Europe', 'East', 'Poland', 'cities', 0]],
+      ],
+    });
+  });
+
+  it('works #29', () => {
+    const document = {
+      paths: {
+        '/some-url/{someId}': {
+          parameters: [
+            {
+              name: 'someId',
+              schema: {
+                type: 'integer',
+              },
+            },
+          ],
+        },
+      },
+    };
+
+    const collected = collect(document, [
+      '$.paths..parameters[?(@.name ~= "^id$|_?(id|Id)$")].schema',
+    ]);
+
+    expect(collected).to.deep.eq({
+      '$.paths..parameters[?(@.name ~= "^id$|_?(id|Id)$")].schema': [
+        [
+          { type: 'integer' },
+          ['paths', '/some-url/{someId}', 'parameters', 0, 'schema'],
+        ],
+      ],
+    });
+  });
+
   it.each(
     [
       Object.preventExtensions({

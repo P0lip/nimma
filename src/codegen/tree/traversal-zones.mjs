@@ -39,23 +39,37 @@ export default class TraversalZones {
 
 class Zone {
   #zones;
-  #localZones = [];
+  #localZones;
+  #relationships;
 
   constructor(zones) {
     this.#zones = zones;
     this.root = {};
     this.#localZones = [this.root];
+    this.#relationships = new Map();
   }
-
   attach() {
     this.#zones.attach(this.root);
+    this.#relationships.clear();
   }
 
   expand(property) {
     let i = 0;
     for (const value of this.#localZones) {
       if (value === null) continue;
-      value[property] = property === '**' ? null : {};
+      if (property === '**') {
+        const parent = this.#relationships.get(value);
+        if ('*' in parent) {
+          delete parent['*'];
+          parent['**'] = null;
+          continue;
+        }
+
+        value[property] = null;
+      } else {
+        value[property] = {};
+        this.#relationships.set(value[property], value);
+      }
       this.#localZones[i++] = value[property];
     }
 

@@ -841,6 +841,40 @@ export default function (input, callbacks) {
 }
 `);
     });
+
+    it('with inversion', () => {
+      expect(generate(['$.Europe[*]..cities[?(@ ~= "^P")]'])).to.eq(
+        `import {Scope} from "nimma/runtime";
+const zones = {
+  "Europe": {
+    "**": null
+  }
+};
+const tree = {
+  "$.Europe[*]..cities[?(@ ~= \\"^P\\")]": function (scope, fn) {
+    if (scope.depth < 3) return;
+    let pos = 0;
+    if (scope.path[0] !== "Europe") return;
+    if (!(/^P/.test(scope.sandbox.value) === true)) return;
+    if (scope.path[scope.depth - 1] !== "cities") return;
+    scope.emit(fn, 0, false);
+  }
+};
+export default function (input, callbacks) {
+  const scope = new Scope(input);
+  const _tree = scope.registerTree(tree);
+  const _callbacks = scope.proxyCallbacks(callbacks, {});
+  try {
+    scope.traverse(() => {
+      _tree["$.Europe[*]..cities[?(@ ~= \\"^P\\")]"](scope, _callbacks["$.Europe[*]..cities[?(@ ~= \\"^P\\")]"]);
+    }, zones);
+  } finally {
+    scope.destroy();
+  }
+}
+`,
+      );
+    });
   });
 
   describe('fast paths', () => {
