@@ -4,7 +4,7 @@
   "include": [
     "src/**/*.mjs"
   ],
-  "exclude": ["src/parser", "**/__tests__/**"],
+  "exclude": ["src/parser", "**/__tests__/**", "src/process.mjs", "src/runtime/aggregate-error.mjs"],
   "reporter": [
     "text"
   ],
