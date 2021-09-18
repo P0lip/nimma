@@ -10,6 +10,7 @@ export default class Scope {
   #parent;
   #tree;
   #output;
+  #emittedPaths;
 
   constructor(root, parent = null) {
     this.root = root;
@@ -18,6 +19,7 @@ export default class Scope {
     this.path = [];
     this.errors = [];
     this.sandbox = new Sandbox(this.path, root, null);
+    this.#emittedPaths = new Set();
 
     const self = this;
     this.#output = {
@@ -151,6 +153,7 @@ export default class Scope {
     this.path.length = 0;
     this.sandbox.destroy();
     this.sandbox = null;
+    this.#emittedPaths.clear();
 
     if (this.errors.length > 0) {
       throw new AggregateError(this.errors);

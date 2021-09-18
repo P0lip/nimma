@@ -1,3 +1,4 @@
+import allParents from './all-parents.mjs';
 import deepSingleMember from './deep-single-member.mjs';
 import deepWildcard from './deep-wildcard.mjs';
 import fixed from './fixed.mjs';
@@ -12,4 +13,5 @@ export default [
   deepWildcard,
   topLevelWildcard,
   fixed,
+  allParents,
 ];

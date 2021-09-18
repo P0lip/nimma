@@ -297,7 +297,7 @@ describe('Compatibility tests', () => {
       compare(json, '$..*');
     });
 
-    xit('all parent components of a JSON structure', () => {
+    it('all parent components of a JSON structure', () => {
       compare(json, '$..');
     });
 

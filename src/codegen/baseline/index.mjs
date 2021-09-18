@@ -22,6 +22,9 @@ export default function baseline(jsonPaths, format) {
 
   traverse: for (const [id, nodes] of jsonPaths) {
     const hash = JSON.stringify(nodes);
+    // todo: put modifies aside, and combine calls if needed, i.e.
+    // scope.emit(fn, 0, true);
+    // scope.emit(fn, 1, false);
     const existingHash = hashes.get(hash);
 
     if (existingHash !== void 0) {

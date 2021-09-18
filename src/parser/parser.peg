@@ -1,7 +1,7 @@
 JSONPath = Root
-  nodes:(deep:Descendant? step:(Node) { return { ...step, deep: deep !== null && deep[1] !== null } })*
+  nodes:(AllParentExpression / deep:Descendant? step:(Node) { return { ...step, deep: deep !== null && deep[1] !== null } })*
   modifiers:(Modifier+)?
-  { return [...nodes].concat(Array.isArray(modifiers) ? modifiers : modifiers === null ? [] : modifiers) }
+  { return nodes.concat(Array.isArray(modifiers) ? modifiers : modifiers === null ? [] : modifiers) }
 
 Root = "$"
 
@@ -13,6 +13,7 @@ Node =  MemberExpression
         / "[" value:(value:MemberIdentifier ","? { return value })* "]" { return { type: "MultipleMemberExpression", value: [...new Set(value)] } }
         / "[" expression:SliceExpression "]" { return expression }
 
+AllParentExpression = & { return /^\$\.{2}[~^]*$/.test(input) } '..' { return { type: 'AllParentExpression' } }
 MemberExpression = value:((value:Identifier) / "[" value:(MemberIdentifier) "]" { return value }) { return { type: "MemberExpression", value } }
 ScriptExpression = "(" value:EvalExpression ")" { return value }
 ScriptFilterExpression = "?(" value:JSScript ")" { return { type: "ScriptFilterExpression", value } }

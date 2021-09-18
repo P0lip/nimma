@@ -892,6 +892,38 @@ export default function (input, callbacks) {
 `);
     });
 
+    it('all parent members', () => {
+      expect(generate(['$..', '$..^', '$..~'])).to
+        .eq(`import {Scope, isObject} from "nimma/runtime";
+const tree = {
+  "$..": function (scope, fn) {
+    if (isObject(scope.sandbox.value)) scope.emit(fn, 0, false);
+  },
+  "$..^": function (scope, fn) {
+    if (isObject(scope.sandbox.value)) scope.emit(fn, 1, false);
+  },
+  "$..~": function (scope, fn) {
+    if (isObject(scope.sandbox.value)) scope.emit(fn, 0, true);
+  }
+};
+export default function (input, callbacks) {
+  const scope = new Scope(input);
+  const _tree = scope.registerTree(tree);
+  const _callbacks = scope.proxyCallbacks(callbacks, {});
+  try {
+    scope.emit(_callbacks["$.."], 0, false);
+    scope.traverse(() => {
+      _tree["$.."](scope, _callbacks["$.."]);
+      _tree["$..^"](scope, _callbacks["$..^"]);
+      _tree["$..~"](scope, _callbacks["$..~"]);
+    }, null);
+  } finally {
+    scope.destroy();
+  }
+}
+`);
+    });
+
     it('top-level-wildcard', () => {
       expect(generate(['$[*]', '$.*', '$[*]^', '$[*]~'])).to
         .eq(`import {Scope} from "nimma/runtime";
