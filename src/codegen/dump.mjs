@@ -1,7 +1,5 @@
 import * as astring from 'astring';
 
-const QUOTE = /"/g;
-
 const customGenerator = {
   ...astring.baseGenerator,
   BooleanLiteral(node, state) {
@@ -40,7 +38,7 @@ const customGenerator = {
     state.write(`/${node.pattern}/${node.flags}`, node);
   },
   StringLiteral(node, state) {
-    state.write(`"${node.value.replace(QUOTE, '\\"')}"`, node);
+    state.write(JSON.stringify(node.value), node);
   },
 };
 

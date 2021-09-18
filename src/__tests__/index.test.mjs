@@ -895,6 +895,29 @@ describe('Nimma', () => {
     });
   });
 
+  it('works #30', () => {
+    const document = {
+      Europe: {
+        East: {
+          Poland: {
+            cities: ['Poznań', 'P.Zdrój'],
+          },
+        },
+        West: {},
+      },
+    };
+
+    const collected = collect(document, [
+      '$.Europe[*]..cities[?(@ ~= "^P\\\\.")]',
+    ]);
+
+    expect(collected).to.deep.eq({
+      '$.Europe[*]..cities[?(@ ~= "^P\\\\.")]': [
+        ['P.Zdrój', ['Europe', 'East', 'Poland', 'cities', 1]],
+      ],
+    });
+  });
+
   it.each(
     [
       Object.preventExtensions({
