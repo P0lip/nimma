@@ -1,6 +1,7 @@
 import * as b from '../ast/builders.mjs';
 import astring from '../dump.mjs';
 import fnParams from '../templates/fn-params.mjs';
+import internalScope from '../templates/internal-scope.mjs';
 import scope from '../templates/scope.mjs';
 import treeMethodCall from '../templates/tree-method-call.mjs';
 import TraversalZones from './traversal-zones.mjs';
@@ -105,7 +106,7 @@ export default class ESTree {
   toString() {
     const proxyTree = b.variableDeclaration('const', [
       b.variableDeclarator(
-        b.identifier('_tree'),
+        internalScope.tree,
         b.callExpression(scope.registerTree, [b.identifier('tree')]),
       ),
     ]);
@@ -138,9 +139,9 @@ export default class ESTree {
                   this.#tree.properties.length === 0 ? null : proxyTree,
                   b.variableDeclaration('const', [
                     b.variableDeclarator(
-                      b.identifier('_callbacks'),
+                      internalScope.callbacks,
                       b.callExpression(scope.proxyCallbacks, [
-                        b.identifier('callbacks'),
+                        params[1],
                         this.#callbacks ?? b.objectExpression([]),
                       ]),
                     ),

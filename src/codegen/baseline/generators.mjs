@@ -1,9 +1,8 @@
 import jsep from '../../parser/jsep/index.mjs';
 import * as b from '../ast/builders.mjs';
+import internalScope from '../templates/internal-scope.mjs';
 import sandbox from '../templates/sandbox.mjs';
 import scope from '../templates/scope.mjs';
-
-const pos = b.identifier('pos');
 
 export function generateMemberExpression(iterator, { deep, value }) {
   if (iterator.feedback.bailed) {
@@ -35,7 +34,7 @@ export function generateMemberExpression(iterator, { deep, value }) {
     const right = b.sequenceExpression([
       b.assignmentExpression(
         '=',
-        pos,
+        internalScope.pos,
         isLastNode
           ? b.conditionalExpression(
               b.binaryExpression('!==', scope.property, b.literal(value)),
@@ -47,12 +46,16 @@ export function generateMemberExpression(iterator, { deep, value }) {
               [
                 b.literal(value),
                 iterator.state.pos === 0
-                  ? pos
-                  : b.binaryExpression('+', pos, b.numericLiteral(1)),
+                  ? internalScope.pos
+                  : b.binaryExpression(
+                      '+',
+                      internalScope.pos,
+                      b.numericLiteral(1),
+                    ),
               ],
             ),
       ),
-      b.binaryExpression('===', pos, b.numericLiteral(-1)),
+      b.binaryExpression('===', internalScope.pos, b.numericLiteral(-1)),
     ]);
 
     if (isLastNode) {
@@ -62,10 +65,10 @@ export function generateMemberExpression(iterator, { deep, value }) {
           '<',
           scope.depth,
           iterator.state.pos === 0
-            ? pos
+            ? internalScope.pos
             : b.binaryExpression(
                 '+',
-                pos,
+                internalScope.pos,
                 b.numericLiteral(iterator.state.pos),
               ),
         ),
@@ -83,8 +86,12 @@ export function generateMemberExpression(iterator, { deep, value }) {
       '<',
       scope.depth,
       iterator.state.pos === 0
-        ? pos
-        : b.binaryExpression('+', pos, b.numericLiteral(iterator.state.pos)),
+        ? internalScope.pos
+        : b.binaryExpression(
+            '+',
+            internalScope.pos,
+            b.numericLiteral(iterator.state.pos),
+          ),
     );
   }
 
@@ -96,7 +103,11 @@ export function generateMemberExpression(iterator, { deep, value }) {
         ? b.numericLiteral(0)
         : iterator.feedback.fixed
         ? b.numericLiteral(iterator.state.pos)
-        : b.binaryExpression('+', pos, b.numericLiteral(iterator.state.pos)),
+        : b.binaryExpression(
+            '+',
+            internalScope.pos,
+            b.numericLiteral(iterator.state.pos),
+          ),
       true,
     ),
     b.literal(value),
@@ -136,7 +147,11 @@ export function generateSliceExpression(iterator, node, tree) {
     ? b.numericLiteral(0)
     : iterator.feedback.fixed
     ? b.numericLiteral(iterator.state.pos)
-    : b.binaryExpression('+', pos, b.numericLiteral(iterator.state.pos));
+    : b.binaryExpression(
+        '+',
+        internalScope.pos,
+        b.numericLiteral(iterator.state.pos),
+      );
 
   const path = iterator.feedback.bailed
     ? scope.property
@@ -226,7 +241,7 @@ export function generateWildcardExpression(iterator) {
     return b.sequenceExpression([
       b.assignmentExpression(
         '=',
-        b.identifier('pos'),
+        internalScope.pos,
         b.conditionalExpression(
           b.binaryExpression(
             '<',
@@ -237,7 +252,7 @@ export function generateWildcardExpression(iterator) {
           scope.depth,
         ),
       ),
-      b.binaryExpression('===', b.identifier('pos'), b.numericLiteral(-1)),
+      b.binaryExpression('===', internalScope.pos, b.numericLiteral(-1)),
     ]);
   } else {
     return null;
@@ -266,10 +281,10 @@ export function generateFilterScriptExpression(iterator, { deep, value }) {
   const assignment = b.sequenceExpression([
     b.assignmentExpression(
       '=',
-      b.identifier('pos'),
+      internalScope.pos,
       b.conditionalExpression(node, b.numericLiteral(-1), scope.depth),
     ),
-    b.binaryExpression('===', pos, b.numericLiteral(-1)),
+    b.binaryExpression('===', internalScope.pos, b.numericLiteral(-1)),
   ]);
 
   if (iterator.state.pos === 0) return assignment;
@@ -280,8 +295,12 @@ export function generateFilterScriptExpression(iterator, { deep, value }) {
       '<',
       scope.depth,
       iterator.state.pos === 0
-        ? pos
-        : b.binaryExpression('+', pos, b.numericLiteral(iterator.state.pos)),
+        ? internalScope.pos
+        : b.binaryExpression(
+            '+',
+            internalScope.pos,
+            b.numericLiteral(iterator.state.pos),
+          ),
     ),
     assignment,
   );

@@ -3,6 +3,7 @@
 
 import * as b from '../ast/builders.mjs';
 import generateEmitCall from '../templates/emit-call.mjs';
+import internalScope from '../templates/internal-scope.mjs';
 import sandbox from '../templates/sandbox.mjs';
 
 const IS_OBJECT_IDENTIFIER = b.identifier('isObject');
@@ -16,7 +17,7 @@ const EMIT_ROOT_CALL_EXPRESSION = generateEmitCall({
 });
 
 EMIT_ROOT_CALL_EXPRESSION.expression.arguments[0] = b.memberExpression(
-  b.identifier('_callbacks'),
+  internalScope.callbacks,
   b.stringLiteral('$..'),
   true,
 );

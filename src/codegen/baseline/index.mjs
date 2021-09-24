@@ -3,6 +3,7 @@ import fastPaths from '../fast-paths/index.mjs';
 import { isDeep } from '../guards.mjs';
 import Iterator from '../iterator.mjs';
 import generateEmitCall from '../templates/emit-call.mjs';
+import internalScope from '../templates/internal-scope.mjs';
 import scope from '../templates/scope.mjs';
 import ESTree from '../tree/tree.mjs';
 import {
@@ -13,12 +14,14 @@ import {
   generateWildcardExpression,
 } from './generators.mjs';
 
+const POS_VARIABLE_DECLARATION = b.variableDeclaration('let', [
+  b.variableDeclarator(internalScope.pos, b.numericLiteral(0)),
+]);
+
 export default function baseline(jsonPaths, format) {
   const tree = new ESTree({ format });
   const hashes = new Map();
   const callbacks = new Map();
-
-  const _callbacks = b.identifier('_callbacks');
 
   traverse: for (const [id, nodes] of jsonPaths) {
     const hash = JSON.stringify(nodes);
@@ -72,13 +75,7 @@ export default function baseline(jsonPaths, format) {
             ),
             b.returnStatement(),
           ),
-        ].concat(
-          iterator.feedback.fixed
-            ? []
-            : b.variableDeclaration('let', [
-                b.variableDeclarator(b.identifier('pos'), b.numericLiteral(0)),
-              ]),
-        );
+        ].concat(iterator.feedback.fixed ? [] : POS_VARIABLE_DECLARATION);
 
     const zone = iterator.feedback.bailed ? null : tree.traversalZones.create();
     const inverseAt = iterator.feedback.inverseAt;
@@ -145,10 +142,10 @@ export default function baseline(jsonPaths, format) {
             '!==',
             scope.depth,
             iterator.state.pos === 0
-              ? b.identifier('pos')
+              ? internalScope.pos
               : b.binaryExpression(
                   '+',
-                  b.identifier('pos'),
+                  internalScope.pos,
                   b.numericLiteral(iterator.state.pos),
                 ),
           ),
@@ -182,14 +179,14 @@ export default function baseline(jsonPaths, format) {
       tree.push(
         b.expressionStatement(
           b.callExpression(
-            b.memberExpression(
-              b.identifier('_tree'),
-              b.stringLiteral(id),
-              true,
-            ),
+            b.memberExpression(internalScope.tree, b.stringLiteral(id), true),
             [
               scope._,
-              b.memberExpression(_callbacks, b.stringLiteral(id), true),
+              b.memberExpression(
+                internalScope.callbacks,
+                b.stringLiteral(id),
+                true,
+              ),
             ],
           ),
         ),

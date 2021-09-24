@@ -1,4 +1,5 @@
 import * as b from '../ast/builders.mjs';
+import internalScope from './internal-scope.mjs';
 import scope from './scope.mjs';
 
 export default function treeMethodCall(id) {
@@ -6,7 +7,7 @@ export default function treeMethodCall(id) {
   return b.expressionStatement(
     b.callExpression(
       b.memberExpression(b.identifier('_tree'), property, true),
-      [scope._, b.memberExpression(b.identifier('_callbacks'), property, true)],
+      [scope._, b.memberExpression(internalScope.callbacks, property, true)],
     ),
   );
 }

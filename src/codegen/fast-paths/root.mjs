@@ -2,6 +2,7 @@
 
 import * as b from '../ast/builders.mjs';
 import generateEmitCall from '../templates/emit-call.mjs';
+import internalScope from '../templates/internal-scope.mjs';
 
 const EMIT_ROOT_CALL_EXPRESSION = generateEmitCall({
   keyed: false,
@@ -9,7 +10,7 @@ const EMIT_ROOT_CALL_EXPRESSION = generateEmitCall({
 });
 
 EMIT_ROOT_CALL_EXPRESSION.expression.arguments[0] = b.memberExpression(
-  b.identifier('_callbacks'),
+  internalScope.callbacks,
   b.identifier('$'),
 );
 
