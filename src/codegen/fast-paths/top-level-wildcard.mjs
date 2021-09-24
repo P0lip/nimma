@@ -7,10 +7,9 @@ import { isDeep, isWildcardExpression } from '../guards.mjs';
 import generateEmitCall from '../templates/emit-call.mjs';
 import scope from '../templates/scope.mjs';
 
-const BINARY_EXPRESSION = b.binaryExpression(
-  '===',
-  scope.depth,
-  b.numericLiteral(0),
+const IS_NOT_ZERO_DEPTH_IF_STATEMENT = b.ifStatement(
+  b.binaryExpression('!==', scope.depth, b.numericLiteral(0)),
+  b.returnStatement(),
 );
 
 export default (nodes, tree, ctx) => {
@@ -24,10 +23,8 @@ export default (nodes, tree, ctx) => {
 
   tree.push(
     b.blockStatement([
-      b.ifStatement(
-        BINARY_EXPRESSION,
-        b.blockStatement([generateEmitCall(ctx.iterator.modifiers)]),
-      ),
+      IS_NOT_ZERO_DEPTH_IF_STATEMENT,
+      generateEmitCall(ctx.id, ctx.iterator.modifiers),
     ]),
     'tree-method',
   );

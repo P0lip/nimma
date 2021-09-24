@@ -3,24 +3,21 @@
 
 import * as b from '../ast/builders.mjs';
 import generateEmitCall from '../templates/emit-call.mjs';
-import internalScope from '../templates/internal-scope.mjs';
 import sandbox from '../templates/sandbox.mjs';
 
 const IS_OBJECT_IDENTIFIER = b.identifier('isObject');
-const IS_OBJECT_CALL_EXPRESSION = b.callExpression(IS_OBJECT_IDENTIFIER, [
-  sandbox.value,
-]);
+const IS_NOT_OBJECT_IF_STATEMENT = b.ifStatement(
+  b.unaryExpression(
+    '!',
+    b.callExpression(IS_OBJECT_IDENTIFIER, [sandbox.value]),
+  ),
+  b.returnStatement(),
+);
 
-const EMIT_ROOT_CALL_EXPRESSION = generateEmitCall({
+const EMIT_ROOT_CALL_EXPRESSION = generateEmitCall('$..', {
   keyed: false,
   parents: 0,
 });
-
-EMIT_ROOT_CALL_EXPRESSION.expression.arguments[0] = b.memberExpression(
-  internalScope.callbacks,
-  b.stringLiteral('$..'),
-  true,
-);
 
 export default (nodes, tree, ctx) => {
   if (nodes.length !== 1 || nodes[0].type !== 'AllParentExpression') {
@@ -31,10 +28,8 @@ export default (nodes, tree, ctx) => {
 
   tree.push(
     b.blockStatement([
-      b.ifStatement(
-        IS_OBJECT_CALL_EXPRESSION,
-        generateEmitCall(ctx.iterator.modifiers),
-      ),
+      IS_NOT_OBJECT_IF_STATEMENT,
+      generateEmitCall(ctx.id, ctx.iterator.modifiers),
     ]),
     'tree-method',
   );

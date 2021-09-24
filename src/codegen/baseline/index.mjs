@@ -3,6 +3,7 @@ import fastPaths from '../fast-paths/index.mjs';
 import { isDeep } from '../guards.mjs';
 import Iterator from '../iterator.mjs';
 import generateEmitCall from '../templates/emit-call.mjs';
+import fnParams from '../templates/fn-params.mjs';
 import internalScope from '../templates/internal-scope.mjs';
 import scope from '../templates/scope.mjs';
 import ESTree from '../tree/tree.mjs';
@@ -24,10 +25,13 @@ export default function baseline(jsonPaths, format) {
   const callbacks = new Map();
 
   traverse: for (const [id, nodes] of jsonPaths) {
-    const hash = JSON.stringify(nodes);
-    // todo: put modifies aside, and combine calls if needed, i.e.
-    // scope.emit(fn, 0, true);
-    // scope.emit(fn, 1, false);
+    const iterator = new Iterator(nodes);
+
+    if (iterator.length === -1) {
+      continue;
+    }
+
+    const hash = JSON.stringify(iterator.nodes);
     const existingHash = hashes.get(hash);
 
     if (existingHash !== void 0) {
@@ -36,15 +40,21 @@ export default function baseline(jsonPaths, format) {
         callbacks.set(existingHash, [id])
       );
 
+      const method = tree.getMethodByHash(existingHash);
+      if (method === void 0) {
+        break;
+      }
+
+      let body = method.body.body;
+
+      if (iterator.feedback.bailed) {
+        body = body[0].expression.arguments[1].body.body;
+      }
+
+      body.push(generateEmitCall(id, iterator.modifiers));
       continue;
-    }
-
-    hashes.set(hash, id);
-
-    const iterator = new Iterator(nodes);
-
-    if (iterator.length === -1) {
-      continue;
+    } else {
+      hashes.set(hash, id);
     }
 
     if (iterator.feedback.bailed || (nodes.length > 0 && isDeep(nodes[0]))) {
@@ -165,14 +175,18 @@ export default function baseline(jsonPaths, format) {
             b.stringLiteral(id),
             b.arrowFunctionExpression(
               [scope._],
-              generateEmitCall(iterator.modifiers).expression,
+              b.blockStatement([
+                b.expressionStatement(
+                  generateEmitCall(ctx.id, iterator.modifiers).expression,
+                ),
+              ]),
             ),
             b.arrayExpression([...branch]),
           ]),
         ),
       );
     } else {
-      branch.push(generateEmitCall(iterator.modifiers));
+      branch.push(generateEmitCall(ctx.id, iterator.modifiers));
     }
 
     if (placement === 'body') {
@@ -180,14 +194,7 @@ export default function baseline(jsonPaths, format) {
         b.expressionStatement(
           b.callExpression(
             b.memberExpression(internalScope.tree, b.stringLiteral(id), true),
-            [
-              scope._,
-              b.memberExpression(
-                internalScope.callbacks,
-                b.stringLiteral(id),
-                true,
-              ),
-            ],
+            fnParams,
           ),
         ),
         placement,
@@ -200,18 +207,6 @@ export default function baseline(jsonPaths, format) {
 
     zone?.attach();
   }
-
-  tree.push(
-    b.objectExpression(
-      Array.from(callbacks.entries()).map(([key, values]) =>
-        b.objectProperty(
-          b.stringLiteral(key),
-          b.arrayExpression(values.map(value => b.stringLiteral(value))),
-        ),
-      ),
-    ),
-    'callbacks',
-  );
 
   return tree;
 }

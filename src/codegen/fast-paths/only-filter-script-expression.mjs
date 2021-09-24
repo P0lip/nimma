@@ -30,7 +30,7 @@ export default (nodes, tree, ctx) => {
       b.blockStatement([
         ...(isDeep(nodes[0]) ? [] : [TOP_LEVEL_DEPTH_IF_STATEMENT]),
         b.ifStatement(condition, b.returnStatement()),
-        generateEmitCall(ctx.iterator.modifiers),
+        generateEmitCall(ctx.id, ctx.iterator.modifiers),
       ]),
       'tree-method',
     ],

@@ -16,7 +16,7 @@ export default (nodes, tree, ctx) => {
   }
 
   tree.push(
-    b.blockStatement([generateEmitCall(ctx.iterator.modifiers)]),
+    b.blockStatement([generateEmitCall(ctx.id, ctx.iterator.modifiers)]),
     'tree-method',
   );
 

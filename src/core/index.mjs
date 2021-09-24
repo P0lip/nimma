@@ -1,7 +1,7 @@
 import * as b from '../codegen/ast/builders.mjs';
 import codegen from '../codegen/index.mjs';
 import Iterator from '../codegen/iterator.mjs';
-import internalScope from '../codegen/templates/internal-scope.mjs';
+import scope from '../codegen/templates/scope.mjs';
 import * as parser from '../parser/parser.cjs';
 import * as runtime from '../runtime/index.mjs';
 
@@ -66,7 +66,7 @@ export default class Nimma {
             b.callExpression(fb, [
               b.identifier('input'),
               path,
-              b.memberExpression(internalScope.callbacks, path, true),
+              b.memberExpression(scope.callbacks, path, true),
             ]),
           ]),
         ),

@@ -45,18 +45,18 @@ function isBailable(nodes) {
 }
 
 export default class Iterator {
-  #nodes;
+  nodes;
   #i;
 
   constructor(nodes) {
     this.modifiers = Iterator.trim(nodes);
-    this.#nodes = Iterator.compact(nodes);
+    this.nodes = Iterator.compact(nodes);
     this.#i = -1;
     this.feedback = Iterator.analyze(
-      this.#nodes,
+      this.nodes,
       this.modifiers.keyed || this.modifiers.parents > 0,
     );
-    this.length = this.#nodes.length;
+    this.length = this.nodes.length;
     this.state = {
       absolutePos: -1,
       fixed: true,
@@ -70,7 +70,7 @@ export default class Iterator {
   }
 
   get nextNode() {
-    return this.#i + 1 < this.#nodes.length ? this.#nodes[this.#i + 1] : null;
+    return this.#i + 1 < this.nodes.length ? this.nodes[this.#i + 1] : null;
   }
 
   static compact(nodes) {
@@ -164,14 +164,14 @@ export default class Iterator {
 
   *[Symbol.iterator]() {
     if (this.feedback.bailed) {
-      return yield* this.#nodes;
+      return yield* this.nodes;
     }
 
     const { ...feedback } = this.feedback;
 
     let order = 1;
     const nodes =
-      this.feedback.inverseAt !== -1 ? this.#nodes.slice() : this.#nodes;
+      this.feedback.inverseAt !== -1 ? this.nodes.slice() : this.nodes;
 
     for (let i = 0; i < nodes.length; i++) {
       if (this.feedback.inverseAt !== -1 && i === this.feedback.inverseAt) {

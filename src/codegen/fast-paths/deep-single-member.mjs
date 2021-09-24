@@ -4,8 +4,8 @@
 
 import * as b from '../ast/builders.mjs';
 import { isDeep, isMemberExpression } from '../guards.mjs';
-import scope from '../templates/scope.mjs';
 import generateEmitCall from '../templates/emit-call.mjs';
+import scope from '../templates/scope.mjs';
 
 export default (nodes, tree, ctx) => {
   if (
@@ -20,12 +20,13 @@ export default (nodes, tree, ctx) => {
     b.blockStatement([
       b.ifStatement(
         b.binaryExpression(
-          '===',
+          '!==',
           scope.property,
           b.stringLiteral(nodes[0].value),
         ),
-        b.blockStatement([generateEmitCall(ctx.iterator.modifiers)]),
+        b.returnStatement(),
       ),
+      generateEmitCall(ctx.id, ctx.iterator.modifiers),
     ]),
     'tree-method',
   );

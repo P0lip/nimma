@@ -13,7 +13,7 @@
 
 import * as b from '../ast/builders.mjs';
 import { isDeep, isMemberExpression } from '../guards.mjs';
-import { fnIdentifier } from '../templates/fn-params.mjs';
+import generateEmitCall from '../templates/emit-call.mjs';
 import sandbox from '../templates/sandbox.mjs';
 import scope from '../templates/scope.mjs';
 import treeMethodCall from '../templates/tree-method-call.mjs';
@@ -22,18 +22,18 @@ const VALUE_IDENTIFIER = b.identifier('value');
 const IS_OBJECT_IDENTIFIER = b.identifier('isObject');
 const GET_IDENTIFIER = b.identifier('get');
 
-const IS_OBJECT_CALL_EXPRESSION = b.callExpression(IS_OBJECT_IDENTIFIER, [
-  VALUE_IDENTIFIER,
-]);
-
-const DUMP_SCOPE_OBJECT_EXPRESSION = b.variableDeclaration('const', [
-  b.variableDeclarator(
-    b.identifier('emptyScope'),
-    b.objectExpression([
-      b.objectMethod('method', scope.emit.property, [], b.blockStatement([])),
-    ]),
+const IS_NOT_OBJECT_IF_STATEMENT = b.ifStatement(
+  b.unaryExpression(
+    '!',
+    b.callExpression(IS_OBJECT_IDENTIFIER, [VALUE_IDENTIFIER]),
   ),
-]);
+  b.returnStatement(),
+);
+
+const IS_NULL_SCOPE_IF_STATEMENT = b.ifStatement(
+  b.binaryExpression('===', scope._, b.nullLiteral()),
+  b.returnStatement(),
+);
 
 function toLiteral(node) {
   return b.literal(node.value);
@@ -68,40 +68,26 @@ export default (nodes, tree, ctx) => {
 
   tree.addRuntimeDependency(IS_OBJECT_IDENTIFIER.name);
 
-  const emitCall = b.memberExpression(
-    b.callExpression(scope.fork, [b.arrayExpression(nodes.map(toLiteral))]),
-    scope.emit.property,
-    false,
-    true,
-  );
-
   if (tree.format === 'ES2018') {
     tree.addRuntimeDependency(GET_IDENTIFIER.name);
-    tree.push(DUMP_SCOPE_OBJECT_EXPRESSION, 'program');
-    emitCall.optional = false;
-    emitCall.object = b.logicalExpression(
-      '||',
-      emitCall.object,
-      DUMP_SCOPE_OBJECT_EXPRESSION.declarations[0].id,
-    );
   }
 
   tree.pushAll([
     [
       b.blockStatement([
         valueVariableDeclaration,
-        b.ifStatement(
-          IS_OBJECT_CALL_EXPRESSION,
-          b.blockStatement([
-            b.expressionStatement(
-              b.callExpression(emitCall, [
-                fnIdentifier,
-                b.numericLiteral(ctx.iterator.modifiers.parents),
-                b.booleanLiteral(ctx.iterator.modifiers.keyed),
-              ]),
-            ),
-          ]),
+        IS_NOT_OBJECT_IF_STATEMENT,
+        b.expressionStatement(
+          b.assignmentExpression(
+            '=',
+            scope._,
+            b.callExpression(scope.fork, [
+              b.arrayExpression(nodes.map(toLiteral)),
+            ]),
+          ),
         ),
+        IS_NULL_SCOPE_IF_STATEMENT,
+        generateEmitCall(ctx.id, ctx.iterator.modifiers),
       ]),
       'tree-method',
     ],

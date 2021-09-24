@@ -12,7 +12,7 @@ export default class Scope {
   #output;
   #emittedPaths;
 
-  constructor(root, parent = null) {
+  constructor(root, callbacks, parent = null) {
     this.root = root;
     this.#parent = parent;
     this.#tree = null;
@@ -20,6 +20,7 @@ export default class Scope {
     this.errors = [];
     this.sandbox = new Sandbox(this.path, root, null);
     this.#emittedPaths = new Set();
+    this.callbacks = proxyCallbacks(callbacks, this.errors);
 
     const self = this;
     this.#output = {
@@ -82,7 +83,7 @@ export default class Scope {
   }
 
   fork(path) {
-    const newScope = new Scope(this.root, this);
+    const newScope = new Scope(this.root, this.callbacks, this);
 
     for (const segment of path) {
       newScope.enter(segment);
@@ -107,16 +108,14 @@ export default class Scope {
     bailedTraverse.call(scope, fn, deps);
   }
 
-  proxyCallbacks(callbacks, map) {
-    return proxyCallbacks(this.errors, callbacks, map);
-  }
-
   registerTree(tree) {
     this.#tree = { ...tree };
     return this.#tree;
   }
 
-  emit(fn, pos, withKeys) {
+  emit(id, pos, withKeys) {
+    const fn = this.callbacks[id];
+
     if (pos === 0 && !withKeys) {
       return void fn(this.#output);
     }

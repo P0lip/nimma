@@ -9,10 +9,7 @@ import TraversalZones from './traversal-zones.mjs';
 const params = [b.identifier('input'), b.identifier('callbacks')];
 
 const NEW_SCOPE_VARIABLE_DECLARATION = b.variableDeclaration('const', [
-  b.variableDeclarator(
-    scope._,
-    b.newExpression(b.identifier('Scope'), [params[0]]),
-  ),
+  b.variableDeclarator(scope._, b.newExpression(b.identifier('Scope'), params)),
 ]);
 
 /*
@@ -25,7 +22,7 @@ const tree = {};
 // placement: program
 
 export default function (input, callbacks) {
-  const scope = new Scope(input);
+  const scope = new Scope(input, callbacks);
 
   try {
     // placement: body
@@ -45,7 +42,6 @@ export default class ESTree {
   #program = new Set();
   #body = new Set();
   #traverse = new Set();
-  #callbacks = null;
 
   constructor({ format }) {
     this.format = format;
@@ -57,6 +53,10 @@ export default class ESTree {
     if (!this.#runtimeDependencies.has(specifier)) {
       this.#runtimeDependencies.add(specifier);
     }
+  }
+
+  getMethodByHash(hash) {
+    return this.#tree.properties.find(prop => prop.key.value === hash);
   }
 
   push(node, placement) {
@@ -87,9 +87,6 @@ export default class ESTree {
           this.#body.add(node);
         }
 
-        break;
-      case 'callbacks':
-        this.#callbacks = node;
         break;
       case 'traverse':
         this.#traverse.add(treeMethodCall(node.value));
@@ -137,15 +134,6 @@ export default class ESTree {
                 [
                   NEW_SCOPE_VARIABLE_DECLARATION,
                   this.#tree.properties.length === 0 ? null : proxyTree,
-                  b.variableDeclaration('const', [
-                    b.variableDeclarator(
-                      internalScope.callbacks,
-                      b.callExpression(scope.proxyCallbacks, [
-                        params[1],
-                        this.#callbacks ?? b.objectExpression([]),
-                      ]),
-                    ),
-                  ]),
                   b.tryStatement(
                     b.blockStatement(
                       [
