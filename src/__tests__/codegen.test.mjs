@@ -124,19 +124,18 @@ const tree = {
 };
 export default function (input, callbacks) {
   const scope = new Scope(input, callbacks);
-  const _tree = scope.registerTree(tree);
   try {
-    _tree["$.info"](scope);
-    _tree["$.info.contact"](scope);
-    _tree["$.bar['children']"](scope);
-    _tree["$.bar['0']"](scope);
-    _tree["$.bar['children.bar']"](scope);
+    tree["$.info"](scope);
+    tree["$.info.contact"](scope);
+    tree["$.bar['children']"](scope);
+    tree["$.bar['0']"](scope);
+    tree["$.bar['children.bar']"](scope);
     scope.traverse(() => {
-      _tree["$.info.contact.*"](scope);
-      _tree["$.servers[*].url"](scope);
-      _tree["$.servers[0:2]"](scope);
-      _tree["$.servers[:5]"](scope);
-      _tree["$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload"](scope);
+      tree["$.info.contact.*"](scope);
+      tree["$.servers[*].url"](scope);
+      tree["$.servers[0:2]"](scope);
+      tree["$.servers[:5]"](scope);
+      tree["$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload"](scope);
     }, zones);
   } finally {
     scope.destroy();
@@ -260,19 +259,18 @@ const tree = {
 };
 export default function (input, callbacks) {
   const scope = new Scope(input, callbacks);
-  const _tree = scope.registerTree(tree);
   try {
-    _tree["$.info"](scope);
-    _tree["$.info.contact"](scope);
-    _tree["$.bar['children']"](scope);
-    _tree["$.bar['0']"](scope);
-    _tree["$.bar['children.bar']"](scope);
+    tree["$.info"](scope);
+    tree["$.info.contact"](scope);
+    tree["$.bar['children']"](scope);
+    tree["$.bar['0']"](scope);
+    tree["$.bar['children.bar']"](scope);
     scope.traverse(() => {
-      _tree["$.info.contact.*"](scope);
-      _tree["$.servers[*].url"](scope);
-      _tree["$.servers[0:2]"](scope);
-      _tree["$.servers[:5]"](scope);
-      _tree["$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload"](scope);
+      tree["$.info.contact.*"](scope);
+      tree["$.servers[*].url"](scope);
+      tree["$.servers[0:2]"](scope);
+      tree["$.servers[:5]"](scope);
+      tree["$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload"](scope);
     }, zones);
   } finally {
     scope.destroy();
@@ -315,12 +313,11 @@ const tree = {
 };
 export default function (input, callbacks) {
   const scope = new Scope(input, callbacks);
-  const _tree = scope.registerTree(tree);
   try {
-    _tree["$.info~"](scope);
+    tree["$.info~"](scope);
     scope.traverse(() => {
-      _tree["$.servers[*].url~"](scope);
-      _tree["$.servers[:5]~"](scope);
+      tree["$.servers[*].url~"](scope);
+      tree["$.servers[:5]~"](scope);
     }, zones);
   } finally {
     scope.destroy();
@@ -364,12 +361,11 @@ const tree = {
 };
 export default function (input, callbacks) {
   const scope = new Scope(input, callbacks);
-  const _tree = scope.registerTree(tree);
   try {
-    _tree["$.info^"](scope);
+    tree["$.info^"](scope);
     scope.traverse(() => {
-      _tree["$.servers[*].url^^"](scope);
-      _tree["$..baz^^"](scope);
+      tree["$.servers[*].url^^"](scope);
+      tree["$..baz^^"](scope);
     }, null);
   } finally {
     scope.destroy();
@@ -500,22 +496,21 @@ const tree = {
 };
 export default function (input, callbacks) {
   const scope = new Scope(input, callbacks);
-  const _tree = scope.registerTree(tree);
   try {
     scope.traverse(() => {
-      _tree["$..empty"](scope);
-      _tree["$.baz..baz"](scope);
-      _tree["$.baz.bar..baz"](scope);
-      _tree["$..foo..bar..baz"](scope);
-      _tree["$..baz..baz"](scope);
-      _tree["$..[?( @property === 'get' || @property === 'put' || @property === 'post' )]"](scope);
-      _tree["$..paths..[?( @property === 'get' || @property === 'put' || @property === 'post' )]"](scope);
-      _tree["$.components.schemas..[?(@property !== 'properties' && @ && (@ && @.example !== void 0 || @.default !== void 0))]"](scope);
-      _tree["$..address.street[?(@.number > 20)]"](scope);
-      _tree["$.bar..[?(@.example && @.schema)].test"](scope);
-      _tree["$..[?(@.name && @.name.match(/1_1$/))].name^^"](scope);
-      _tree["$.bar[?( @property >= 400 )]..foo"](scope);
-      _tree["$.paths..content.*.examples"](scope);
+      tree["$..empty"](scope);
+      tree["$.baz..baz"](scope);
+      tree["$.baz.bar..baz"](scope);
+      tree["$..foo..bar..baz"](scope);
+      tree["$..baz..baz"](scope);
+      tree["$..[?( @property === 'get' || @property === 'put' || @property === 'post' )]"](scope);
+      tree["$..paths..[?( @property === 'get' || @property === 'put' || @property === 'post' )]"](scope);
+      tree["$.components.schemas..[?(@property !== 'properties' && @ && (@ && @.example !== void 0 || @.default !== void 0))]"](scope);
+      tree["$..address.street[?(@.number > 20)]"](scope);
+      tree["$.bar..[?(@.example && @.schema)].test"](scope);
+      tree["$..[?(@.name && @.name.match(/1_1$/))].name^^"](scope);
+      tree["$.bar[?( @property >= 400 )]..foo"](scope);
+      tree["$.paths..content.*.examples"](scope);
     }, null);
   } finally {
     scope.destroy();
@@ -569,13 +564,12 @@ const tree = {
 };
 export default function (input, callbacks) {
   const scope = new Scope(input, callbacks);
-  const _tree = scope.registerTree(tree);
   try {
-    _tree["$..examples..*"](scope);
+    tree["$..examples..*"](scope);
     scope.traverse(() => {
-      _tree["$..examples.*"](scope);
-      _tree["$.examples..*"](scope);
-      _tree["$.examples.*"](scope);
+      tree["$..examples.*"](scope);
+      tree["$.examples..*"](scope);
+      tree["$.examples.*"](scope);
     }, null);
   } finally {
     scope.destroy();
@@ -632,15 +626,14 @@ const tree = {
 };
 export default function (input, callbacks) {
   const scope = new Scope(input, callbacks);
-  const _tree = scope.registerTree(tree);
   try {
     scope.traverse(() => {
-      _tree["$[0:2]"](scope);
-      _tree["$[:5]"](scope);
-      _tree["$[1:5:3]"](scope);
-      _tree["$[::2]"](scope);
-      _tree["$[1::2]"](scope);
-      _tree["$[1:-5:-2]"](scope);
+      tree["$[0:2]"](scope);
+      tree["$[:5]"](scope);
+      tree["$[1:5:3]"](scope);
+      tree["$[::2]"](scope);
+      tree["$[1::2]"](scope);
+      tree["$[1:-5:-2]"](scope);
     }, zones);
   } finally {
     scope.destroy();
@@ -715,12 +708,11 @@ const tree = {
 };
 export default function (input, callbacks) {
   const scope = new Scope(input, callbacks);
-  const _tree = scope.registerTree(tree);
   try {
-    _tree["$..[?(@.example && @.schema)]..[?(@.example && @.schema)]"](scope);
-    _tree["$..[?( @property >= 400 )]..foo"](scope);
-    _tree["$..foo..[?( @property >= 900 )]..foo"](scope);
-    _tree["$.paths..content.bar..examples"](scope);
+    tree["$..[?(@.example && @.schema)]..[?(@.example && @.schema)]"](scope);
+    tree["$..[?( @property >= 400 )]..foo"](scope);
+    tree["$..foo..[?( @property >= 900 )]..foo"](scope);
+    tree["$.paths..content.bar..examples"](scope);
   } finally {
     scope.destroy();
   }
@@ -773,14 +765,13 @@ const tree = {
 };
 export default function (input, callbacks) {
   const scope = new Scope(input, callbacks);
-  const _tree = scope.registerTree(tree);
   try {
     scope.traverse(() => {
-      _tree["$.info..[?(@property.startsWith('foo'))]"](scope);
-      _tree["$.info.*[?(@property.startsWith('foo'))]"](scope);
-      _tree["$..headers..[?(@.example && @.schema)]"](scope);
-      _tree["$..[?(@ && @.example)]"](scope);
-      _tree["$[?(@ && @.example)]"](scope);
+      tree["$.info..[?(@property.startsWith('foo'))]"](scope);
+      tree["$.info.*[?(@property.startsWith('foo'))]"](scope);
+      tree["$..headers..[?(@.example && @.schema)]"](scope);
+      tree["$..[?(@ && @.example)]"](scope);
+      tree["$[?(@ && @.example)]"](scope);
     }, null);
   } finally {
     scope.destroy();
@@ -817,11 +808,10 @@ const tree = {
 };
 export default function (input, callbacks) {
   const scope = new Scope(input, callbacks);
-  const _tree = scope.registerTree(tree);
   try {
-    _tree["$.book"](scope);
+    tree["$.book"](scope);
     scope.traverse(() => {
-      _tree["$.store..[price,bar,baz]"](scope);
+      tree["$.store..[price,bar,baz]"](scope);
     }, zones);
   } finally {
     scope.destroy();
@@ -850,10 +840,9 @@ const tree = {
 };
 export default function (input, callbacks) {
   const scope = new Scope(input, callbacks);
-  const _tree = scope.registerTree(tree);
   try {
     scope.traverse(() => {
-      _tree["$.Europe[*]..cities[?(@ ~= \\"^P\\")]"](scope);
+      tree["$.Europe[*]..cities[?(@ ~= \\"^P\\")]"](scope);
     }, zones);
   } finally {
     scope.destroy();
@@ -891,11 +880,10 @@ const tree = {
 };
 export default function (input, callbacks) {
   const scope = new Scope(input, callbacks);
-  const _tree = scope.registerTree(tree);
   try {
     scope.emit("$..", 0, false);
     scope.traverse(() => {
-      _tree["$.."](scope);
+      tree["$.."](scope);
     }, null);
   } finally {
     scope.destroy();
@@ -921,10 +909,9 @@ const tree = {
 };
 export default function (input, callbacks) {
   const scope = new Scope(input, callbacks);
-  const _tree = scope.registerTree(tree);
   try {
     scope.traverse(() => {
-      _tree["$[*]"](scope);
+      tree["$[*]"](scope);
     }, zones);
   } finally {
     scope.destroy();
@@ -966,12 +953,11 @@ const tree = {
 };
 export default function (input, callbacks) {
   const scope = new Scope(input, callbacks);
-  const _tree = scope.registerTree(tree);
   try {
     scope.traverse(() => {
-      _tree["$[?(index(@)=='key')]"](scope);
-      _tree["$[?(@ in ['red','green','blue'])]"](scope);
-      _tree["$[?(@ ~= 'test')]"](scope);
+      tree["$[?(index(@)=='key')]"](scope);
+      tree["$[?(@ in ['red','green','blue'])]"](scope);
+      tree["$[?(@ ~= 'test')]"](scope);
     }, zones);
   } finally {
     scope.destroy();
@@ -997,9 +983,8 @@ const tree = {
 };
 export default function (input, callbacks) {
   const scope = new Scope(input, callbacks);
-  const _tree = scope.registerTree(tree);
   try {
-    _tree["$.info.contact"](scope);
+    tree["$.info.contact"](scope);
   } finally {
     scope.destroy();
   }
@@ -1030,9 +1015,8 @@ const tree = {
 };
 export default function (input, callbacks) {
   const scope = new Scope(input, callbacks);
-  const _tree = scope.registerTree(tree);
   try {
-    _tree["$.info.contact"](scope);
+    tree["$.info.contact"](scope);
   } finally {
     scope.destroy();
   }
@@ -1094,9 +1078,8 @@ const tree = {
 };
 export default function (input, callbacks) {
   const scope = new Scope(input, callbacks);
-  const _tree = scope.registerTree(tree);
   try {
-    _tree["$.foo.info"](scope);
+    tree["$.foo.info"](scope);
   } finally {
     scope.destroy();
   }

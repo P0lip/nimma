@@ -71,11 +71,6 @@ export default class ESTree {
           ),
         );
         break;
-      case 'tree-property':
-        this.#tree.properties.push(
-          b.objectProperty(b.stringLiteral(this.ctx.id), node),
-        );
-        break;
       case 'program':
         if (!this.#program.has(node)) {
           this.#program.add(node);
@@ -101,13 +96,6 @@ export default class ESTree {
   }
 
   toString() {
-    const proxyTree = b.variableDeclaration('const', [
-      b.variableDeclarator(
-        internalScope.tree,
-        b.callExpression(scope.registerTree, [b.identifier('tree')]),
-      ),
-    ]);
-
     const traversalZones = this.traversalZones.root;
 
     return astring(
@@ -124,7 +112,7 @@ export default class ESTree {
           this.#tree.properties.length === 0
             ? null
             : b.variableDeclaration('const', [
-                b.variableDeclarator(b.identifier('tree'), this.#tree),
+                b.variableDeclarator(internalScope.tree, this.#tree),
               ]),
           b.exportDefaultDeclaration(
             b.functionDeclaration(
@@ -133,7 +121,6 @@ export default class ESTree {
               b.blockStatement(
                 [
                   NEW_SCOPE_VARIABLE_DECLARATION,
-                  this.#tree.properties.length === 0 ? null : proxyTree,
                   b.tryStatement(
                     b.blockStatement(
                       [

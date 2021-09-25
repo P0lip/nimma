@@ -33,11 +33,6 @@ export function literal(value) {
       return stringLiteral(value);
     case 'boolean':
       return booleanLiteral(value);
-    default:
-      return {
-        type: 'Literal',
-        value,
-      };
   }
 }
 
@@ -309,10 +304,6 @@ export function tryStatement(block, handler = null, finalizer = null) {
     handler,
     finalizer,
   };
-}
-
-export function emptyStatement() {
-  return { type: 'EmptyStatement' };
 }
 
 export function templateElement(value, tail = false) {

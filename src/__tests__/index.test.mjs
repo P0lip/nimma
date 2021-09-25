@@ -1,9 +1,10 @@
+/* eslint-disable no-undef */
 /* global it */
 import chai from 'chai';
 import each from 'it-each';
 import mocha from 'mocha';
 
-import { jsonPathPlus } from '../fallbacks/index.mjs';
+import jsonPathPlus from '../fallbacks/jsonpath-plus.mjs';
 import Nimma from '../index.mjs';
 
 const { describe } = mocha;
@@ -957,4 +958,23 @@ describe('Nimma', () => {
       });
     },
   );
+
+  it('given runtime errors, throws AggregateError', () => {
+    const n = new Nimma(['$.a', '$.b']);
+
+    expect(
+      n.query.bind(
+        n,
+        { a: {}, b: {} },
+        {
+          '$.a'() {
+            throw new Error('Woops');
+          },
+          '$.b'() {
+            throw new Error('Ah!');
+          },
+        },
+      ),
+    ).to.throw(AggregateError);
+  });
 });

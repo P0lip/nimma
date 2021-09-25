@@ -1,5 +1,5 @@
 import * as b from '../ast/builders.mjs';
-import toObjectLiteral from '../templates/to-object-literal.mjs';
+import buildJson from '../templates/build-json.mjs';
 
 export default class TraversalZones {
   #isDestroyed = false;
@@ -13,10 +13,7 @@ export default class TraversalZones {
     const zonesIdentifier = b.identifier('zones');
 
     return b.variableDeclaration('const', [
-      b.variableDeclarator(
-        zonesIdentifier,
-        toObjectLiteral(mergeZones(this.#zones)),
-      ),
+      b.variableDeclarator(zonesIdentifier, buildJson(mergeZones(this.#zones))),
     ]);
   }
 

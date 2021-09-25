@@ -8,18 +8,14 @@ import { bailedTraverse, traverse, zonedTraverse } from './traverse.mjs';
 export default class Scope {
   #ticks = 0;
   #parent;
-  #tree;
   #output;
-  #emittedPaths;
 
   constructor(root, callbacks, parent = null) {
     this.root = root;
     this.#parent = parent;
-    this.#tree = null;
     this.path = [];
     this.errors = [];
     this.sandbox = new Sandbox(this.path, root, null);
-    this.#emittedPaths = new Set();
     this.callbacks = proxyCallbacks(callbacks, this.errors);
 
     const self = this;
@@ -108,11 +104,6 @@ export default class Scope {
     bailedTraverse.call(scope, fn, deps);
   }
 
-  registerTree(tree) {
-    this.#tree = { ...tree };
-    return this.#tree;
-  }
-
   emit(id, pos, withKeys) {
     const fn = this.callbacks[id];
 
@@ -152,7 +143,6 @@ export default class Scope {
     this.path.length = 0;
     this.sandbox.destroy();
     this.sandbox = null;
-    this.#emittedPaths.clear();
 
     if (this.errors.length > 0) {
       throw new AggregateError(this.errors);

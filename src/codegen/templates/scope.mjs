@@ -13,10 +13,6 @@ export default {
   fork: b.memberExpression(SCOPE_IDENTIFIER, b.identifier('fork')),
   path: b.memberExpression(SCOPE_IDENTIFIER, b.identifier('path')),
   property: b.memberExpression(SCOPE_IDENTIFIER, b.identifier('property')),
-  registerTree: b.memberExpression(
-    SCOPE_IDENTIFIER,
-    b.identifier('registerTree'),
-  ),
   sandbox: b.memberExpression(SCOPE_IDENTIFIER, b.identifier('sandbox')),
   traverse: b.memberExpression(SCOPE_IDENTIFIER, b.identifier('traverse')),
   value: b.memberExpression(SCOPE_IDENTIFIER, b.identifier('value')),
