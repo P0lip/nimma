@@ -1,8 +1,6 @@
 // covers: $
 
-import * as b from '../ast/builders.mjs';
 import generateEmitCall from '../templates/emit-call.mjs';
-import internalScope from '../templates/internal-scope.mjs';
 
 const EMIT_ROOT_CALL_EXPRESSION = generateEmitCall('$', {
   keyed: false,

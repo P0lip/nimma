@@ -1,11 +1,11 @@
-import forEach from 'mocha-each';
-import mocha from 'mocha';
 import chai from 'chai';
+import mocha from 'mocha';
+import forEach from 'mocha-each';
 
-import { generateFilterScriptExpression } from '../generators.mjs';
 import * as parser from '../../../parser/parser.cjs';
-import Iterator from '../../iterator.mjs';
 import astring from '../../dump.mjs';
+import Iterator from '../../iterator.mjs';
+import { generateFilterScriptExpression } from '../generators.mjs';
 
 const { describe, describe: context, it } = mocha;
 const { expect } = chai;
@@ -27,8 +27,12 @@ describe('parseFilterExpression', () => {
       `!(scope.sandbox.value.schema['d'] || scope.sandbox.value.ex.baz)`,
     );
 
-    expect(print(`?(!@.summary)`)).to.eq(
-      `!!scope.sandbox.value.summary`,
+    expect(print(`?(!@.summary)`)).to.eq(`!!scope.sandbox.value.summary`);
+  });
+
+  it('"unknown" identifier', () => {
+    expect(print(`?(@.schema === undefined)`)).to.eq(
+      `!(scope.sandbox.value.schema === void 0)`,
     );
   });
 

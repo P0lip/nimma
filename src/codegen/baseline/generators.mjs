@@ -382,6 +382,10 @@ export function rewriteESTree(node, pos) {
         return processAtIdentifier(node.name, pos);
       }
 
+      if (node.name === 'undefined') {
+        return b.unaryExpression('void', b.numericLiteral(0));
+      }
+
       if (node.name === 'index') {
         return sandbox.index;
       }
