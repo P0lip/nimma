@@ -112,7 +112,6 @@ function pullAll(target) {
 function _mergeZones(target, source) {
   if ('*' in source) {
     target['*'] = pullAll(target);
-    mergeZones(target['*'], source['*']);
   } else {
     for (const key of Object.keys(source)) {
       if (key in target) {
