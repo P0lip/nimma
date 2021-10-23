@@ -1033,11 +1033,12 @@ import {JSONPath as nimma_JSONPath} from "jsonpath-plus";
 import {default as nimma_toPath} from "lodash.topath";
 const fallback = Function(\`return (input, path, fn) => {
     this.JSONPath({
-      callback: result =>
-        void fn({
+      callback: result => {
+        fn({
           path: this.toPath(result.path.slice(1)),
           value: result.value,
-        }),
+        });
+      },
       json: input,
       path,
       resultType: 'all',

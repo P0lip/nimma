@@ -8,14 +8,29 @@ function safeIdentifier(name) {
   return b.identifier(safeName(name));
 }
 
-const FN_DECLARATION_REGEXP = /(?:function\s*)?\(([^)]+)\)\s*(?:=>)?\s*{?/;
+function getFunctionBody(fn) {
+  const source = Reflect.apply(Function.toString, fn, []);
+  const paramsDefEnd = source.indexOf(')') + 1;
+  const body = source.slice(paramsDefEnd).replace(/^\s*(=>\s*)?/, '');
+
+  const arr = source
+    .slice(source.indexOf('('), paramsDefEnd)
+    .split(/[,\s]+/)
+    .splice(0, 3);
+
+  return `${arr.join(', ')} => ${body}`;
+}
 
 export default class Fallback {
   #modules = new Set();
   #deps = new Map();
+  #fn;
+  #extraCode = '';
   runtimeDeps = new Map();
 
   constructor(deps, fn) {
+    this.#fn = fn;
+
     for (const [source, specifiers] of Object.entries(deps)) {
       const importSpecifiers = [];
       for (const { imported, local, value } of specifiers) {
@@ -31,15 +46,12 @@ export default class Fallback {
         );
       }
     }
+  }
 
-    this.extraCode = Reflect.apply(Function.toString, fn, []).replace(
-      FN_DECLARATION_REGEXP,
-      (_, args) => {
-        const arr = args.split(/[,\s]+/);
-        arr.length = 3;
-        return `(${arr.join(', ')}) => {`;
-      },
-    );
+  get extraCode() {
+    this.#extraCode ||= getFunctionBody(this.#fn);
+
+    return this.#extraCode;
   }
 
   attach(tree) {

@@ -12,11 +12,12 @@ export default new Fallback(
   },
   function (input, path, fn) {
     this.JSONPath({
-      callback: result =>
-        void fn({
+      callback: result => {
+        fn({
           path: this.toPath(result.path.slice(1)),
           value: result.value,
-        }),
+        });
+      },
       json: input,
       path,
       resultType: 'all',
