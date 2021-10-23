@@ -4,6 +4,6 @@ node_modules/
 .nyc_output/
 coverage/
 *.log
-src/index.cjs
 dist/
 .gen/
+src/parser/parser.cjs
