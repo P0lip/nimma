@@ -57,7 +57,7 @@
     "url": "https://github.com/P0lip/nimma"
   },
   "scripts": {
-    "prebuild": "pegjs --optimize speed -o src/parser/parser.cjs src/parser/parser.peg",
+    "prebuild": "peggy --format es -o src/parser/parser.mjs src/parser/parser.peg",
     "build": "export NODE_ENV=production; rollup -c && BABEL_ENV=legacy rollup -c",
     "postbuild": "(cd dist/legacy && sed -i \"s/nimma\\/runtime/nimma\\/legacy\\/runtime/\" cjs/codegen/tree/tree.js esm/codegen/tree/tree.mjs) && node ./scripts/copy-types.mjs",
     "lint": "ls-lint && eslint --cache --cache-location .cache/ src/**/*.mjs",
@@ -94,7 +94,7 @@
     "lodash.topath": "^4.5.2",
     "mocha": "^8.0.1",
     "mocha-each": "^2.0.1",
-    "pegjs": "0.10.0",
+    "peggy": "^1.2.0",
     "prettier": "^2.3.2",
     "rollup": "^2.56.2"
   },

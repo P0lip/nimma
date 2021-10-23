@@ -6,4 +6,4 @@ coverage/
 *.log
 dist/
 .gen/
-src/parser/parser.cjs
+src/parser/parser.mjs

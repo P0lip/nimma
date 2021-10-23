@@ -1,4 +1,4 @@
-import * as parser from './parser.cjs';
+import * as parser from './parser.mjs';
 
 const { parse } = parser;
 

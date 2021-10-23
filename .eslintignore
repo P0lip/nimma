@@ -1,2 +1,1 @@
-src/parser/parser.cjs
-src/parser/jsep/**
+src/parser/parser.mjs
