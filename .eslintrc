@@ -37,7 +37,8 @@
       "files": ["src/**/__tests__/*.test.mjs"],
       "extends": ["plugin:chai-expect/recommended"],
       "env": {
-        "node": true
+        "node": true,
+        "mocha": true
       },
       "plugins": [
         "chai-expect",

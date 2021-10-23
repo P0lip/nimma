@@ -1,14 +1,9 @@
-/* global it */
 import chai from 'chai';
-import each from 'it-each';
-import mocha from 'mocha';
+import forEach from 'mocha-each';
 
 import parse from '../../parser/index.mjs';
 
-const { describe } = mocha;
 const { expect } = chai;
-
-each({ testPerIteration: true });
 
 describe('Parser', () => {
   it('goessner samples', () => {
@@ -58,18 +53,13 @@ describe('Parser', () => {
     ]);
   });
 
-  it.each(
-    ['$$ref', '$ref', '0abc', 'bar-baz'].map(member => ({ member })),
-    '%s',
-    ['member'],
-    ({ member }) => {
-      expect(parse(`$..${member}`)).to.deep.equal([
-        {
-          type: 'MemberExpression',
-          value: member,
-          deep: true,
-        },
-      ]);
-    },
-  );
+  forEach(['$$ref', '$ref', '0abc', 'bar-baz']).it('%s', member => {
+    expect(parse(`$..${member}`)).to.deep.equal([
+      {
+        type: 'MemberExpression',
+        value: member,
+        deep: true,
+      },
+    ]);
+  });
 });

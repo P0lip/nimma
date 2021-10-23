@@ -1,14 +1,7 @@
-/* eslint-disable sort-keys */
-/* global it */
 // tests based on https://github.com/JSONPath-Plus/JSONPath
-import each from 'it-each';
-import mocha from 'mocha';
+import forEach from 'mocha-each';
 
 import { compare } from './__helpers__/jsonpath.mjs';
-
-const { describe, xit } = mocha;
-
-each({ testPerIteration: true });
 
 const json = {
   store: {
@@ -48,14 +41,9 @@ const json = {
 };
 
 describe('Compatibility tests', () => {
-  it.each(
-    ['$.store.bicycle', "$['store']['bicycle']"].map(path => ({ path })),
-    '%s',
-    ['path'],
-    ({ path }) => {
-      compare(json, path);
-    },
-  );
+  forEach(['$.store.bicycle', "$['store']['bicycle']"]).it('%s', path => {
+    compare(json, path);
+  });
 
   describe('JSONPath - Array', function () {
     const json = {
@@ -77,13 +65,9 @@ describe('Compatibility tests', () => {
       },
     };
 
-    it.each(
-      ['$.store.book', '$.store.books', '$.store.books[*].author'].map(
-        path => ({ path }),
-      ),
+    forEach(['$.store.book', '$.store.books', '$.store.books[*].author']).it(
       '%s',
-      ['path'],
-      ({ path }) => {
+      path => {
         compare(json, path);
       },
     );

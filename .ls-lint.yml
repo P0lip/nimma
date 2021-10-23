@@ -7,4 +7,5 @@ ignore:
   - dist
   - node_modules
   - rollup.config.js
+  - karma.conf.js
   - benchmarks

@@ -1,5 +1,4 @@
 import chai from 'chai';
-import mocha from 'mocha';
 import forEach from 'mocha-each';
 
 import parse from '../../../parser/index.mjs';
@@ -7,7 +6,6 @@ import astring from '../../dump.mjs';
 import Iterator from '../../iterator.mjs';
 import { generateFilterScriptExpression } from '../generators.mjs';
 
-const { describe, describe: context, it } = mocha;
 const { expect } = chai;
 
 function print(expr) {

@@ -4,8 +4,9 @@
   "include": [
     "src/**/*.mjs"
   ],
-  "exclude": ["src/parser/parser.mjs", "**/__tests__/**", "src/process.mjs", "src/runtime/aggregate-error.mjs"],
+  "exclude": ["src/parser/parser.mjs", "**/__tests__/**", "src/runtime/aggregate-error.mjs"],
   "reporter": [
+    "lcovonly",
     "text"
   ],
   "branches": 80,

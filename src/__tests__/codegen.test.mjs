@@ -1,10 +1,8 @@
 import chai from 'chai';
-import mocha from 'mocha';
 
 import Nimma from '../core/index.mjs';
 import { jsonPathPlus } from '../fallbacks/index.mjs';
 
-const { describe, it } = mocha;
 const { expect } = chai;
 
 function generate(expressions, opts) {

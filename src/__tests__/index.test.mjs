@@ -1,16 +1,11 @@
 /* eslint-disable no-undef */
-/* global it */
 import chai from 'chai';
-import each from 'it-each';
-import mocha from 'mocha';
+import forEach from 'mocha-each';
 
 import jsonPathPlus from '../fallbacks/jsonpath-plus.mjs';
 import Nimma from '../index.mjs';
 
-const { describe } = mocha;
 const { expect } = chai;
-
-each({ testPerIteration: true });
 
 function _collect(input, expressions, opts) {
   const collected = {};
@@ -919,45 +914,41 @@ describe('Nimma', () => {
     });
   });
 
-  it.each(
-    [
-      Object.preventExtensions({
-        shirts: Object.seal({
-          color: 'red',
+  forEach([
+    Object.preventExtensions({
+      shirts: Object.seal({
+        color: 'red',
+        size: 'xl',
+        a: Object.freeze({
           size: 'xl',
-          a: Object.freeze({
-            size: 'xl',
-          }),
-          b: Object.freeze({
-            size: 'm',
-          }),
+        }),
+        b: Object.freeze({
+          size: 'm',
         }),
       }),
-      {
-        shirts: {
-          color: 'red',
+    }),
+    {
+      shirts: {
+        color: 'red',
+        size: 'xl',
+        a: Object.seal({
           size: 'xl',
-          a: Object.seal({
-            size: 'xl',
-          }),
-          b: {
-            size: 'm',
-          },
+        }),
+        b: {
+          size: 'm',
         },
       },
-    ],
-    'frozen/sealed/non-extensible',
-    document => {
-      const collected = collect(document, ['$.shirts[a,b].size']);
-
-      expect(collected).to.deep.eq({
-        '$.shirts[a,b].size': [
-          ['xl', ['shirts', 'a', 'size']],
-          ['m', ['shirts', 'b', 'size']],
-        ],
-      });
     },
-  );
+  ]).it('frozen/sealed/non-extensible', document => {
+    const collected = collect(document, ['$.shirts[a,b].size']);
+
+    expect(collected).to.deep.eq({
+      '$.shirts[a,b].size': [
+        ['xl', ['shirts', 'a', 'size']],
+        ['m', ['shirts', 'b', 'size']],
+      ],
+    });
+  });
 
   it('given runtime errors, throws AggregateError', () => {
     const n = new Nimma(['$.a', '$.b']);

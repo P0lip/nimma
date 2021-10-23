@@ -1,10 +1,8 @@
 import chai from 'chai';
-import mocha from 'mocha';
 
 import dump from '../../dump.mjs';
 import buildJson from '../build-json.mjs';
 
-const { describe, it } = mocha;
 const { expect } = chai;
 
 function compare(input) {
