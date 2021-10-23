@@ -3,8 +3,6 @@ import isObject from './codegen-functions/is-object.mjs';
 function _traverseBody(key, curObj, scope, cb, deps) {
   const value = curObj[key];
   const pos = scope.enter(key);
-  scope.next();
-
   const matched = deps !== null && deps.length > 0 && !deps[0].fn(scope);
 
   if (deps === null || (deps.length === 1 && matched)) {

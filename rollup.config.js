@@ -1,4 +1,3 @@
-import alias from '@rollup/plugin-alias';
 import { babel } from '@rollup/plugin-babel';
 import commonjs from '@rollup/plugin-commonjs';
 import * as fs from 'node:fs';
@@ -40,12 +39,6 @@ export default [
         preserveModules: true,
       },
     ],
-    plugins: [
-      alias({
-        entries: [{ find: 'node:process', replacement: './src/process.mjs' }],
-      }),
-      babel({ babelHelpers: 'bundled' }),
-      commonjs(),
-    ],
+    plugins: [babel({ babelHelpers: 'bundled' }), commonjs()],
   },
 ];

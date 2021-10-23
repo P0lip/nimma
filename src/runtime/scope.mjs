@@ -1,12 +1,9 @@
-import process from 'node:process';
-
 import AggregateError from './aggregate-error.mjs';
 import proxyCallbacks from './proxy-callbacks.mjs';
 import { Sandbox } from './sandbox.mjs';
 import { bailedTraverse, traverse, zonedTraverse } from './traverse.mjs';
 
 export default class Scope {
-  #ticks = 0;
   #parent;
   #output;
 
@@ -27,17 +24,6 @@ export default class Scope {
     };
   }
 
-  get ticks() {
-    return this.#ticks;
-  }
-
-  set ticks(value) {
-    this.#ticks = value;
-    if (this.#parent !== null) {
-      this.#parent.ticks++;
-    }
-  }
-
   get depth() {
     return this.path.length - 1;
   }
@@ -51,20 +37,10 @@ export default class Scope {
   }
 
   enter(key) {
-    if (process.env.NODE_ENV !== 'production') {
-      this.ticks += 1;
-    }
-
     this.path.push(key);
     this.sandbox = this.sandbox.push();
 
     return this.path.length;
-  }
-
-  next() {
-    if (process.env.NODE_ENV !== 'production') {
-      this.ticks += 1;
-    }
   }
 
   exit(depth) {
