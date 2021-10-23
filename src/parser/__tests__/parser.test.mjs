@@ -3,7 +3,7 @@ import chai from 'chai';
 import each from 'it-each';
 import mocha from 'mocha';
 
-import * as parser from '../../parser/parser.cjs';
+import parse from '../../parser/index.mjs';
 
 const { describe } = mocha;
 const { expect } = chai;
@@ -12,7 +12,7 @@ each({ testPerIteration: true });
 
 describe('Parser', () => {
   it('goessner samples', () => {
-    expect(parser.parse('$.store.book[foo,bar].author')).to.deep.equal([
+    expect(parse('$.store.book[foo,bar].author')).to.deep.equal([
       {
         type: 'MemberExpression',
         value: 'store',
@@ -35,7 +35,7 @@ describe('Parser', () => {
       },
     ]);
 
-    expect(parser.parse('$.store.book[*].author')).to.deep.equal([
+    expect(parse('$.store.book[*].author')).to.deep.equal([
       {
         type: 'MemberExpression',
         value: 'store',
@@ -63,7 +63,7 @@ describe('Parser', () => {
     '%s',
     ['member'],
     ({ member }) => {
-      expect(parser.parse(`$..${member}`)).to.deep.equal([
+      expect(parse(`$..${member}`)).to.deep.equal([
         {
           type: 'MemberExpression',
           value: member,

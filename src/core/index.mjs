@@ -2,7 +2,7 @@ import * as b from '../codegen/ast/builders.mjs';
 import codegen from '../codegen/index.mjs';
 import Iterator from '../codegen/iterator.mjs';
 import scope from '../codegen/templates/scope.mjs';
-import * as parser from '../parser/parser.cjs';
+import parse from '../parser/index.mjs';
 import * as runtime from '../runtime/index.mjs';
 
 const IMPORT_DECLARATIONS_REGEXP =
@@ -33,7 +33,7 @@ export default class Nimma {
 
     for (const expression of new Set(expressions)) {
       try {
-        const parsed = parser.parse(expression);
+        const parsed = parse(expression);
         if (unsafe === false && Iterator.analyze(parsed).bailed) {
           throw SyntaxError('Bail');
         }

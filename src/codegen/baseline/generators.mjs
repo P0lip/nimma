@@ -1,4 +1,4 @@
-import jsep from '../../parser/jsep/index.mjs';
+import jsep from '../../parser/jsep.mjs';
 import * as b from '../ast/builders.mjs';
 import internalScope from '../templates/internal-scope.mjs';
 import sandbox from '../templates/sandbox.mjs';

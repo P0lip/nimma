@@ -2,7 +2,7 @@ import chai from 'chai';
 import mocha from 'mocha';
 import forEach from 'mocha-each';
 
-import * as parser from '../../../parser/parser.cjs';
+import parse from '../../../parser/index.mjs';
 import astring from '../../dump.mjs';
 import Iterator from '../../iterator.mjs';
 import { generateFilterScriptExpression } from '../generators.mjs';
@@ -11,7 +11,7 @@ const { describe, describe: context, it } = mocha;
 const { expect } = chai;
 
 function print(expr) {
-  const ast = parser.parse(`$[${expr}]`);
+  const ast = parse(`$[${expr}]`);
   const iterator = new Iterator(ast);
   const { value: node } = iterator[Symbol.iterator]().next();
   return astring(generateFilterScriptExpression(iterator, node));

@@ -2,7 +2,7 @@
 // $..[?(@.bar])
 // $[?(@.bar])
 
-import jsep from '../../parser/jsep/index.mjs';
+import jsep from '../../parser/jsep.mjs';
 import * as b from '../ast/builders.mjs';
 import { rewriteESTree } from '../baseline/generators.mjs';
 import { isDeep, isScriptFilterExpression } from '../guards.mjs';

@@ -103,6 +103,9 @@
     "lodash.topath": "^4.5.2"
   },
   "dependencies": {
-    "astring": "^1.7.5"
+    "astring": "^1.7.5",
+    "jsep": "^1.1.2",
+    "@jsep-plugin/regex": "^1.0.1",
+    "@jsep-plugin/ternary": "^1.0.2"
   }
 }
