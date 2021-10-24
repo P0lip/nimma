@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-cd benchmarks/scripts
+cd $(dirname $0)
 mkdir -p ../.gen
 export NODE_ENV=production
 npx rollup -c ./rollup.config.js

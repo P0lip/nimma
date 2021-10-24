@@ -88,8 +88,8 @@ suite.on('cycle', function (event) {
   process.stdout.write('\n');
   results = [];
 });
-suite.on('error', function (e) {
-  process.stderr.write(e);
+suite.on('error', function (event) {
+  process.stderr.write(event.target.error.message);
 });
 suite.on('complete', function () {
   process.stdout.write('Fastest is ' + this.filter('fastest').map('name'));
