@@ -1,5 +1,1 @@
-import baseline from './baseline/index.mjs';
-
-export default function (expressions, format) {
-  return baseline(expressions, format);
-}
+export { default } from './baseline/index.mjs';

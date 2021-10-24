@@ -19,8 +19,8 @@ const POS_VARIABLE_DECLARATION = b.variableDeclaration('let', [
   b.variableDeclarator(internalScope.pos, b.numericLiteral(0)),
 ]);
 
-export default function baseline(jsonPaths, format) {
-  const tree = new ESTree({ format });
+export default function baseline(jsonPaths, opts) {
+  const tree = new ESTree(opts);
   const hashes = new Map();
   const callbacks = new Map();
 

@@ -23,7 +23,12 @@ export default class Nimma {
 
   constructor(
     expressions,
-    { fallback = null, unsafe = true, output = 'auto' } = {},
+    {
+      fallback = null,
+      unsafe = true,
+      output = 'auto',
+      npmProvider = null,
+    } = {},
   ) {
     this.#fallback = fallback;
     this.#compiledFn = null;
@@ -48,10 +53,10 @@ export default class Nimma {
       }
     }
 
-    const tree = (this.tree = codegen(
-      mappedExpressions,
-      output === 'auto' ? getOutputFormat() : output,
-    ));
+    const tree = (this.tree = codegen(mappedExpressions, {
+      format: output === 'auto' ? getOutputFormat() : output,
+      npmProvider,
+    }));
 
     if (fallback !== null && erroredExpressions.length > 0) {
       const path = b.identifier('path');

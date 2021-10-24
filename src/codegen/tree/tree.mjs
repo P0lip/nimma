@@ -43,8 +43,9 @@ export default class ESTree {
   #body = new Set();
   #traverse = new Set();
 
-  constructor({ format }) {
+  constructor({ format, npmProvider }) {
     this.format = format;
+    this.npmProvider = npmProvider;
     this.ctx = null;
     this.traversalZones = new TraversalZones();
   }
@@ -105,7 +106,7 @@ export default class ESTree {
             [...this.#runtimeDependencies].map(dep =>
               b.importSpecifier(b.identifier(dep), b.identifier(dep)),
             ),
-            b.stringLiteral('nimma/runtime'),
+            b.stringLiteral(`${this.npmProvider ?? ''}nimma/runtime`),
           ),
           ...this.#program,
           traversalZones,

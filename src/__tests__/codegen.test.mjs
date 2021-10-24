@@ -1022,6 +1022,33 @@ export default function (input, callbacks) {
 `);
   });
 
+  it('should support custom npm provider', () => {
+    expect(
+      generate(['$.hello'], {
+        npmProvider: 'https://cdn.skypack.dev/',
+      }),
+    ).to
+      .eq(`import {Scope, isObject} from "https://cdn.skypack.dev/nimma/runtime";
+const tree = {
+  "$.hello": function (scope) {
+    const value = scope.sandbox.root;
+    if (!isObject(value)) return;
+    scope = scope.fork(["hello"]);
+    if (scope === null) return;
+    scope.emit("$.hello", 0, false);
+  }
+};
+export default function (input, callbacks) {
+  const scope = new Scope(input, callbacks);
+  try {
+    tree["$.hello"](scope);
+  } finally {
+    scope.destroy();
+  }
+}
+`);
+  });
+
   describe('given fallback', () => {
     it('and errored expressions, should include whatever fallback specified', () => {
       expect(

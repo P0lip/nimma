@@ -4,7 +4,7 @@
   "include": [
     "src/**/*.mjs"
   ],
-  "exclude": ["src/parser/parser.mjs", "**/__tests__/**", "src/runtime/aggregate-error.mjs"],
+  "exclude": ["src/parser/parser.mjs", "**/__*__/**", "src/runtime/aggregate-error.mjs"],
   "reporter": [
     "lcovonly",
     "text"
