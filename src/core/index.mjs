@@ -40,7 +40,9 @@ export default class Nimma {
       try {
         const parsed = parse(expression);
         if (unsafe === false && Iterator.analyze(parsed).bailed) {
-          throw SyntaxError('Bail');
+          throw SyntaxError(
+            'Unsafe expressions are ignored, but no fallback was specified',
+          );
         }
 
         mappedExpressions.push([expression, parsed]);
