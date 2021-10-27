@@ -778,7 +778,7 @@ export default function (input, callbacks) {
 `);
   });
 
-  describe('zones', () => {
+  describe('traversal zones', () => {
     it('nested deep', () => {
       expect(generate(['$.store..[price,bar,baz]', '$.book'])).to
         .eq(`import {Scope, isObject} from "nimma/runtime";
@@ -848,6 +848,97 @@ export default function (input, callbacks) {
 }
 `,
       );
+    });
+
+    it('subsequently nested wildcard expressions', () => {
+      expect(
+        generate([
+          '$.paths[*][*].tags[*]',
+          '$.paths[*][*].operationId',
+          '$.abc[*][*][*].abc',
+          '$.abc[*][*].bar',
+          '$.abc[*][*][*][*].baz',
+          '$.abc[*][*][*][*].bar',
+        ]),
+      ).to.eq(`import {Scope} from "nimma/runtime";
+const zones = {
+  "paths": {
+    "*": {
+      "*": {
+        "tags": {
+          "*": {}
+        },
+        "operationId": {}
+      }
+    }
+  },
+  "abc": {
+    "*": {
+      "*": {
+        "*": {
+          "*": {
+            "baz": {},
+            "bar": {}
+          }
+        }
+      }
+    }
+  }
+};
+const tree = {
+  "$.paths[*][*].tags[*]": function (scope) {
+    if (scope.depth !== 4) return;
+    if (scope.path[0] !== "paths") return;
+    if (scope.path[3] !== "tags") return;
+    scope.emit("$.paths[*][*].tags[*]", 0, false);
+  },
+  "$.paths[*][*].operationId": function (scope) {
+    if (scope.depth !== 3) return;
+    if (scope.path[0] !== "paths") return;
+    if (scope.path[3] !== "operationId") return;
+    scope.emit("$.paths[*][*].operationId", 0, false);
+  },
+  "$.abc[*][*][*].abc": function (scope) {
+    if (scope.depth !== 4) return;
+    if (scope.path[0] !== "abc") return;
+    if (scope.path[4] !== "abc") return;
+    scope.emit("$.abc[*][*][*].abc", 0, false);
+  },
+  "$.abc[*][*].bar": function (scope) {
+    if (scope.depth !== 3) return;
+    if (scope.path[0] !== "abc") return;
+    if (scope.path[3] !== "bar") return;
+    scope.emit("$.abc[*][*].bar", 0, false);
+  },
+  "$.abc[*][*][*][*].baz": function (scope) {
+    if (scope.depth !== 5) return;
+    if (scope.path[0] !== "abc") return;
+    if (scope.path[5] !== "baz") return;
+    scope.emit("$.abc[*][*][*][*].baz", 0, false);
+  },
+  "$.abc[*][*][*][*].bar": function (scope) {
+    if (scope.depth !== 5) return;
+    if (scope.path[0] !== "abc") return;
+    if (scope.path[5] !== "bar") return;
+    scope.emit("$.abc[*][*][*][*].bar", 0, false);
+  }
+};
+export default function (input, callbacks) {
+  const scope = new Scope(input, callbacks);
+  try {
+    scope.traverse(() => {
+      tree["$.paths[*][*].tags[*]"](scope);
+      tree["$.paths[*][*].operationId"](scope);
+      tree["$.abc[*][*][*].abc"](scope);
+      tree["$.abc[*][*].bar"](scope);
+      tree["$.abc[*][*][*][*].baz"](scope);
+      tree["$.abc[*][*][*][*].bar"](scope);
+    }, zones);
+  } finally {
+    scope.destroy();
+  }
+}
+`);
     });
   });
 

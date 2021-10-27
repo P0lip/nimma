@@ -914,6 +914,40 @@ describe('Nimma', () => {
     });
   });
 
+  it('works #31', () => {
+    const document = {
+      paths: {
+        '/orders': {
+          get: {
+            tags: ['Orders'],
+            operationId: '',
+          },
+          post: {
+            tags: ['Orders'],
+            operationId: 'insert',
+          },
+        },
+      },
+    };
+
+    const collected = collect(document, [
+      "$.paths.*[?( @property === 'get' || @property === 'post' )].tags[*]",
+      "$.paths.*[?( @property === 'get' || @property === 'post' )].operationId",
+    ]);
+
+    expect(collected).to.deep.eq({
+      "$.paths.*[?( @property === 'get' || @property === 'post' )].tags[*]": [
+        ['Orders', ['paths', '/orders', 'get', 'tags', 0]],
+        ['Orders', ['paths', '/orders', 'post', 'tags', 0]],
+      ],
+      "$.paths.*[?( @property === 'get' || @property === 'post' )].operationId":
+        [
+          ['', ['paths', '/orders', 'get', 'operationId']],
+          ['insert', ['paths', '/orders', 'post', 'operationId']],
+        ],
+    });
+  });
+
   forEach([
     Object.preventExtensions({
       shirts: Object.seal({
