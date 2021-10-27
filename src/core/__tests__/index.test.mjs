@@ -20,4 +20,20 @@ describe('Core', () => {
       'Unsafe expressions are ignored, but no fallback was specified',
     );
   });
+
+  it('should be able to query multiple times', () => {
+    const n = new Nimma(['$']);
+    const values = [];
+    function $(scope) {
+      values.push([scope.path, scope.value]);
+    }
+
+    n.query({ doc: true }, { $ });
+    n.query({ foo: false }, { $ });
+
+    expect(values).to.deep.eq([
+      [[], { doc: true }],
+      [[], { foo: false }],
+    ]);
+  });
 });

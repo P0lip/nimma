@@ -61,7 +61,7 @@
     "build": "export NODE_ENV=production; rollup -c && BABEL_ENV=legacy rollup -c",
     "postbuild": "(cd dist/legacy && sed -i \"s/nimma\\/runtime/nimma\\/legacy\\/runtime/\" cjs/codegen/tree/tree.js esm/codegen/tree/tree.mjs) && node ./scripts/copy-types.mjs",
     "lint": "ls-lint && eslint --cache --cache-location .cache/ src/**/*.mjs",
-    "test": "export NODE_ENV=test; c8 mocha --experimental-modules --config .mocharc ./**/__tests__/**/*.test.mjs && karma start",
+    "test": "export NODE_ENV=test; c8 mocha --config .mocharc ./**/__tests__/**/*.test.mjs && karma start",
     "prepublish": "npm run lint && npm run test && npm run build && (stat ./dist/esm/parser/parser.mjs && stat ./dist/cjs/parser/parser.js) >> /dev/null"
   },
   "devDependencies": {
