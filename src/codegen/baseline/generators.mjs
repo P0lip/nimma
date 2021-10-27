@@ -176,7 +176,7 @@ export function generateSliceExpression(iterator, node, tree) {
         '!',
         b.callExpression(IN_BOUNDS_IDENTIFIER, [
           iterator.state.absolutePos === 0
-            ? sandbox.parentValue
+            ? remapSandbox(sandbox.value, iterator.state.absolutePos - 2)
             : remapSandbox(sandbox.value, iterator.state.absolutePos),
           b.memberExpression(
             scope.path,

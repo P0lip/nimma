@@ -40,28 +40,20 @@ export class Sandbox {
     return unwrapOrNull(this.#path, this.depth);
   }
 
-  get parent() {
-    if (this.#history.length === 0) {
-      return null;
-    }
-
-    return this.at(-1);
-  }
-
-  get parentValue() {
-    if (this.#history.length < 2) {
-      return void 0;
-    }
-
-    return this.#history[this.#history.length - 2][1];
-  }
-
-  get parentProperty() {
+  get #parent() {
     if (this.#history.length < 3) {
       return void 0;
     }
 
-    return this.#path[this.#history[this.#history.length - 3][0]];
+    return this.#history[this.#history.length - 3];
+  }
+
+  get parentValue() {
+    return this.#parent?.[1];
+  }
+
+  get parentProperty() {
+    return this.#path[this.#parent?.[0]];
   }
 
   destroy() {

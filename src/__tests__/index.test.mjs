@@ -531,6 +531,7 @@ describe('Nimma', () => {
     };
     const collected = collect(document, [
       "$..[?((@parentProperty === 'foo' || @parentProperty === 'bar') && @.name)]",
+      "$..[?(@parent && @parent.user && @parent.user.name === 'Eva')]",
     ]);
     expect(collected).to.deep.equal({
       "$..[?((@parentProperty === 'foo' || @parentProperty === 'bar') && @.name)]":
@@ -538,6 +539,9 @@ describe('Nimma', () => {
           [{ name: 'Eva' }, ['bar', 'user']],
           [{ name: 'John' }, ['foo', 'user']],
         ],
+      "$..[?(@parent && @parent.user && @parent.user.name === 'Eva')]": [
+        ['Eva', ['bar', 'user', 'name']],
+      ],
     });
   });
 
@@ -911,40 +915,6 @@ describe('Nimma', () => {
       '$.Europe[*]..cities[?(@ ~= "^P\\\\.")]': [
         ['P.Zdrój', ['Europe', 'East', 'Poland', 'cities', 1]],
       ],
-    });
-  });
-
-  it('works #31', () => {
-    const document = {
-      paths: {
-        '/orders': {
-          get: {
-            tags: ['Orders'],
-            operationId: '',
-          },
-          post: {
-            tags: ['Orders'],
-            operationId: 'insert',
-          },
-        },
-      },
-    };
-
-    const collected = collect(document, [
-      "$.paths.*[?( @property === 'get' || @property === 'post' )].tags[*]",
-      "$.paths.*[?( @property === 'get' || @property === 'post' )].operationId",
-    ]);
-
-    expect(collected).to.deep.eq({
-      "$.paths.*[?( @property === 'get' || @property === 'post' )].tags[*]": [
-        ['Orders', ['paths', '/orders', 'get', 'tags', 0]],
-        ['Orders', ['paths', '/orders', 'post', 'tags', 0]],
-      ],
-      "$.paths.*[?( @property === 'get' || @property === 'post' )].operationId":
-        [
-          ['', ['paths', '/orders', 'get', 'operationId']],
-          ['insert', ['paths', '/orders', 'post', 'operationId']],
-        ],
     });
   });
 

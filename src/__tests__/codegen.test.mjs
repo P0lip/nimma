@@ -618,7 +618,7 @@ const tree = {
   },
   "$[1:-5:-2]": function (scope) {
     if (scope.depth !== 0) return;
-    if (typeof scope.path[0] !== "number" || !inBounds(scope.sandbox.parentValue, scope.path[0], 1, -5, -2)) return;
+    if (typeof scope.path[0] !== "number" || !inBounds(scope.sandbox.at(-2).value, scope.path[0], 1, -5, -2)) return;
     scope.emit("$[1:-5:-2]", 0, false);
   }
 };

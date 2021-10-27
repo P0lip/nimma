@@ -78,6 +78,12 @@ describe('parseFilterExpression', () => {
       );
     });
 
+    it('@parent', () => {
+      expect(print(`?(@parent.version === 1)`)).to.eq(
+        `!(scope.sandbox.parentValue.version === 1)`,
+      );
+    });
+
     forEach(['string', 'boolean', 'number']).it('@%s', kind => {
       expect(print(`?(@${kind}())`)).to.eq(
         `!(typeof scope.sandbox.value === "${kind}")`,
