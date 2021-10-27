@@ -64,10 +64,6 @@ const traps = {
     if (key === 'length' && Array.isArray(target)) {
       const stored = zonesRegistry.get(target);
 
-      if (stored === void 0) {
-        return 0;
-      }
-
       if ('*' in stored) {
         for (const item of target) {
           if (isObject(item)) {
@@ -115,16 +111,7 @@ const traps = {
 
   ownKeys(target) {
     const stored = zonesRegistry.get(target);
-
-    if (stored === void 0) {
-      return [];
-    }
-
     zonesRegistry.delete(target);
-
-    if ('**' in stored) {
-      return Object.keys(target);
-    }
 
     if ('*' in stored) {
       const actualKeys = Object.keys(target);
