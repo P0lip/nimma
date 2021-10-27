@@ -10,6 +10,9 @@ export default new Fallback(
     ],
     'lodash.topath': [{ imported: 'default', local: 'toPath', value: toPath }],
   },
+  // this part is tested, but cannot be covered because we never get to execute the actual fn
+  // what we do is we get the source code of it and construct a new fn based on that code
+  /* c8 ignore start */
   function (input, path, fn) {
     this.JSONPath({
       callback: result => {
@@ -23,4 +26,5 @@ export default new Fallback(
       resultType: 'all',
     });
   },
+  /* c8 ignore stop */
 );
