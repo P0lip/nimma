@@ -1,3 +1,4 @@
+import { isObject } from '../../runtime/index.mjs';
 import * as b from '../ast/builders.mjs';
 import buildJson from '../templates/build-json.mjs';
 
@@ -116,10 +117,10 @@ function _mergeZones(target, source) {
     target['*'] = '*' in pulled ? { '*': pulled['*'] } : pulled;
   } else {
     for (const key of Object.keys(source)) {
-      if (key in target) {
-        _mergeZones(target[key], source[key]);
-      } else {
+      if (!(key in target)) {
         target[key] = source[key];
+      } else if (isObject(source[key])) {
+        _mergeZones(target[key], source[key]);
       }
     }
   }

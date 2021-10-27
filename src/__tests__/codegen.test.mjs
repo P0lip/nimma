@@ -818,6 +818,52 @@ export default function (input, callbacks) {
 `);
     });
 
+    it('nested deep #2', () => {
+      expect(
+        generate([
+          '$.paths[*][*]..content[*].examples[*]',
+          '$.paths[*][*]..parameters[*].examples[*]',
+        ]),
+      ).to.eq(`import {Scope} from "nimma/runtime";
+const zones = {
+  "paths": {
+    "*": {
+      "**": null
+    }
+  }
+};
+const tree = {
+  "$.paths[*][*]..content[*].examples[*]": function (scope) {
+    if (scope.depth < 6) return;
+    let pos = 0;
+    if (scope.path[0] !== "paths") return;
+    if (scope.path[scope.depth - 1] !== "examples") return;
+    if (scope.path[scope.depth - 3] !== "content") return;
+    scope.emit("$.paths[*][*]..content[*].examples[*]", 0, false);
+  },
+  "$.paths[*][*]..parameters[*].examples[*]": function (scope) {
+    if (scope.depth < 6) return;
+    let pos = 0;
+    if (scope.path[0] !== "paths") return;
+    if (scope.path[scope.depth - 1] !== "examples") return;
+    if (scope.path[scope.depth - 3] !== "parameters") return;
+    scope.emit("$.paths[*][*]..parameters[*].examples[*]", 0, false);
+  }
+};
+export default function (input, callbacks) {
+  const scope = new Scope(input, callbacks);
+  try {
+    scope.traverse(() => {
+      tree["$.paths[*][*]..content[*].examples[*]"](scope);
+      tree["$.paths[*][*]..parameters[*].examples[*]"](scope);
+    }, zones);
+  } finally {
+    scope.destroy();
+  }
+}
+`);
+    });
+
     it('with inversion', () => {
       expect(generate(['$.Europe[*]..cities[?(@ ~= "^P")]'])).to.eq(
         `import {Scope} from "nimma/runtime";
