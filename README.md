@@ -1,7 +1,7 @@
 # nimma
 
 [![npm](https://img.shields.io/npm/v/nimma)](https://www.npmjs.com/package/nimma)
-[![MinZipped Size](https://img.shields.io/bundlephobia/minzip/nimma)](https://bundlephobia.com/package/nimma@0.1.4)
+[![MinZipped Size](https://img.shields.io/bundlephobia/minzip/nimma)](https://bundlephobia.com/package/nimma)
 [![Dependencies](https://img.shields.io/librariesio/release/npm/nimma)](https://libraries.io/npm/nimma)
 [![Coverage](https://img.shields.io/codecov/c/github/p0lip/nimma)](https://app.codecov.io/gh/P0lip/nimma/)
 [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=P0lip_nimma&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=P0lip_nimma)
