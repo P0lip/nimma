@@ -41,10 +41,6 @@ export default function baseline(jsonPaths, opts) {
       );
 
       const method = tree.getMethodByHash(existingHash);
-      if (method === void 0) {
-        break;
-      }
-
       let body = method.body.body;
 
       if (iterator.feedback.bailed) {
@@ -122,8 +118,6 @@ export default function baseline(jsonPaths, opts) {
           }
 
           break;
-        default:
-          throw new SyntaxError('Unsupported');
       }
 
       if (iterator.feedback.bailed) {
