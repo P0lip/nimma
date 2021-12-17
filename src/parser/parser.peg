@@ -1,5 +1,5 @@
 JSONPath = Root
-  nodes:(AllParentExpression / deep:Descendant? step:(Node) { return { ...step, deep: deep !== null && deep[1] !== null } })*
+  nodes:(AllParentExpression / deep:Descendant step:(Node) { return { ...step, deep } })*
   modifiers:(Modifier+)?
   { return nodes.concat(Array.isArray(modifiers) ? modifiers : modifiers === null ? [] : modifiers) }
 
@@ -32,7 +32,7 @@ KeyExpression = "~" { return { type: "KeyExpression" } }
 ParentExpression = "^" { return { type: "ParentExpression" } }
 Modifier = KeyExpression / ParentExpression
 
-Descendant = [.][.]?
+Descendant = ".." { return true } / "." { return false } / & [@[] { return false };
 
 Identifier = $([$_-] / Char / Digit)+
 MemberIdentifier = Number / Identifier / (("\"" $([^"]*) "\"") / ("'" $([^']*) "'")) { return text().slice(1, -1) }

@@ -62,4 +62,8 @@ describe('Parser', () => {
       },
     ]);
   });
+
+  forEach(['$info']).it('should refuse to parse %s', expr => {
+    expect(parse.bind(null, expr)).to.throw();
+  });
 });
