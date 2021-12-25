@@ -1,6 +1,4 @@
 export default function (value, pos, start, end, step) {
-  if (!Array.isArray(value)) return false;
-
   const actualStart =
     start < 0
       ? Math.max(0, start + value.length)
@@ -8,5 +6,10 @@ export default function (value, pos, start, end, step) {
   const actualEnd =
     end < 0 ? Math.max(0, end + value.length) : Math.min(value.length, end);
 
-  return pos >= actualStart && pos < actualEnd && (pos + start) % step === 0;
+  return (
+    pos >= actualStart &&
+    pos < actualEnd &&
+    (step === 1 ||
+      (actualEnd - Math.abs(step) > 0 && (pos + start) % step === 0))
+  );
 }

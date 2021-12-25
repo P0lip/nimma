@@ -32,7 +32,7 @@ KeyExpression = "~" { return { type: "KeyExpression" } }
 ParentExpression = "^" { return { type: "ParentExpression" } }
 Modifier = KeyExpression / ParentExpression
 
-Descendant = ".." { return true } / "." { return false } / & [@[] { return false };
+Descendant = ".." { return true } / "." { return false } / & [@[] { return false }
 
 Identifier = $([$_-] / Char / Digit)+
 MemberIdentifier = Number / Identifier / (("\"" $([^"]*) "\"") / ("'" $([^']*) "'")) { return text().slice(1, -1) }

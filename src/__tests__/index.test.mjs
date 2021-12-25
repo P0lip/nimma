@@ -918,6 +918,31 @@ describe('Nimma', () => {
     });
   });
 
+  it('works #31', () => {
+    const document = {
+      Asia: ['Malaysia', 'Indonesia', 'Thailand', 'Laos', 'Myanmar', 'Vietnam'],
+      Europe: ['Austria', 'Belgium', 'Czechia', 'France', 'Germany'],
+    };
+
+    const collected = collect(document, [
+      '$.Europe[2:-2:2]',
+      '$.Asia[0:5]',
+      '$.Europe[2:-1:-5]',
+      '$.Asia[0:-3:-3]',
+    ]);
+
+    expect(collected).to.deep.eq({
+      '$.Europe[2:-2:2]': [['Czechia', ['Europe', 2]]],
+      '$.Asia[0:5]': [
+        ['Malaysia', ['Asia', 0]],
+        ['Indonesia', ['Asia', 1]],
+        ['Thailand', ['Asia', 2]],
+        ['Laos', ['Asia', 3]],
+        ['Myanmar', ['Asia', 4]],
+      ],
+    });
+  });
+
   forEach([
     Object.preventExtensions({
       shirts: Object.seal({

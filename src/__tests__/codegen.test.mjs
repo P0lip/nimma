@@ -864,6 +864,35 @@ export default function (input, callbacks) {
 `);
     });
 
+    it('arrays', () => {
+      expect(generate(['$.countries[0:5]'])).to
+        .eq(`import {Scope} from "nimma/runtime";
+const zones = {
+  "countries": {
+    "*": {}
+  }
+};
+const tree = {
+  "$.countries[0:5]": function (scope) {
+    if (scope.depth !== 1) return;
+    if (scope.path[0] !== "countries") return;
+    if (typeof scope.path[1] !== "number" || scope.path[1] >= 5) return;
+    scope.emit("$.countries[0:5]", 0, false);
+  }
+};
+export default function (input, callbacks) {
+  const scope = new Scope(input, callbacks);
+  try {
+    scope.traverse(() => {
+      tree["$.countries[0:5]"](scope);
+    }, zones);
+  } finally {
+    scope.destroy();
+  }
+}
+`);
+    });
+
     it('with inversion', () => {
       expect(generate(['$.Europe[*]..cities[?(@ ~= "^P")]'])).to.eq(
         `import {Scope} from "nimma/runtime";
