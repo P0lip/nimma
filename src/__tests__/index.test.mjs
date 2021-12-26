@@ -4,6 +4,7 @@ import forEach from 'mocha-each';
 
 import jsonPathPlus from '../fallbacks/jsonpath-plus.mjs';
 import Nimma from '../index.mjs';
+import { RuntimeError } from '../runtime/errors/index.mjs';
 
 const { expect } = chai;
 
@@ -980,21 +981,42 @@ describe('Nimma', () => {
   });
 
   it('given runtime errors, throws AggregateError', () => {
-    const n = new Nimma(['$.a', '$.b']);
+    const n = new Nimma(['$.a', '$.b', '$.c', '$.d']);
 
-    expect(
-      n.query.bind(
-        n,
-        { a: {}, b: {} },
-        {
-          '$.a'() {
-            throw new Error('Woops');
-          },
-          '$.b'() {
-            throw new Error('Ah!');
-          },
+    const fn = n.query.bind(
+      n,
+      { a: {}, b: {}, c: {}, d: {} },
+      {
+        '$.a'() {
+          throw 'Oops';
         },
-      ),
-    ).to.throw(AggregateError);
+        '$.b'() {
+          throw {};
+        },
+        '$.c'() {
+          throw new Error('Ah!');
+        },
+        '$.d'() {
+          throw new TypeError('{}.c is not a function');
+        },
+      },
+    );
+
+    expect(fn).to.throw(AggregateError, 'Error running Nimma');
+
+    try {
+      fn();
+    } catch (e) {
+      expect(e.errors[0]).to.be.instanceof(RuntimeError);
+      expect(e.errors[1]).to.be.instanceof(RuntimeError);
+      expect(e.errors[2]).to.be.instanceof(RuntimeError);
+      expect(e.errors[3]).to.be.instanceof(RuntimeError);
+      expect(e.errors[0].message).to.eq('$.a threw: "Oops"');
+      expect(e.errors[1].message).to.eq('$.b threw: unknown');
+      expect(e.errors[2].message).to.eq('$.c threw: Error("Ah!")');
+      expect(e.errors[3].message).to.eq(
+        '$.d threw: TypeError("{}.c is not a function")',
+      );
+    }
   });
 });

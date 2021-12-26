@@ -1,4 +1,4 @@
-import AggregateError from './aggregate-error.mjs';
+import AggregateError from './errors/aggregate-error.mjs';
 import proxyCallbacks from './proxy-callbacks.mjs';
 import { Sandbox } from './sandbox.mjs';
 import { bailedTraverse, traverse, zonedTraverse } from './traverse.mjs';
@@ -121,7 +121,7 @@ export default class Scope {
     this.sandbox = null;
 
     if (this.errors.length > 0) {
-      throw new AggregateError(this.errors);
+      throw new AggregateError(this.errors, 'Error running Nimma');
     }
   }
 }

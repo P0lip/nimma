@@ -32,6 +32,10 @@
       "import": "./dist/esm/parser/parser.mjs",
       "require": "./dist/cjs/parser/parser.js"
     },
+    "./errors": {
+      "import": "./dist/esm/runtime/errors/index.mjs",
+      "require": "./dist/cjs/runtime/errors/index.js"
+    },
     "./fallbacks": {
       "import": "./dist/esm/fallbacks/index.mjs",
       "require": "./dist/cjs/fallbacks/index.js"

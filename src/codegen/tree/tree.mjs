@@ -1,5 +1,6 @@
 import * as b from '../ast/builders.mjs';
 import astring from '../dump.mjs';
+import generateFallbackExpressions from '../templates/fallback-expressions.mjs';
 import fnParams from '../templates/fn-params.mjs';
 import internalScope from '../templates/internal-scope.mjs';
 import scope from '../templates/scope.mjs';
@@ -54,6 +55,13 @@ export default class ESTree {
     if (!this.#runtimeDependencies.has(specifier)) {
       this.#runtimeDependencies.add(specifier);
     }
+  }
+
+  attachFallbackExpressions(fallback, expressions) {
+    this.push(
+      generateFallbackExpressions(fallback.attach(this), expressions),
+      'body',
+    );
   }
 
   getMethodByHash(hash) {

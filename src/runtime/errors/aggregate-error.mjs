@@ -1,5 +1,5 @@
 // based on https://github.com/niksy/aggregate-error-ponyfill
-import { isObject } from './codegen-functions/index.mjs';
+import { isObject } from '../codegen-functions/index.mjs';
 
 function isIterable(value) {
   return isObject(value) && typeof value[Symbol.iterator] === 'function';

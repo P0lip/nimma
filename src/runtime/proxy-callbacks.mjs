@@ -1,3 +1,21 @@
+import { RuntimeError } from './errors/index.mjs';
+
+function printPrimitive(value) {
+  if (typeof value === 'string' || typeof value === 'number') {
+    return JSON.stringify(value);
+  }
+
+  return 'unknown';
+}
+
+function printError(e) {
+  if (e instanceof Error) {
+    return `${e.constructor.name}(${printPrimitive(e.message)})`;
+  }
+
+  return printPrimitive(e);
+}
+
 export default function proxyCallbacks(callbacks, errors) {
   const _callbacks = {};
 
@@ -6,8 +24,9 @@ export default function proxyCallbacks(callbacks, errors) {
     _callbacks[key] = (...args) => {
       try {
         fn(...args);
-      } catch (ex) {
-        errors.push(ex);
+      } catch (e) {
+        const message = `${fn.name} threw: ${printError(e)}`;
+        errors.push(new RuntimeError(message, { cause: e }));
       }
     };
   }

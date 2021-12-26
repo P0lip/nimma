@@ -22,7 +22,11 @@ export default [
       id.startsWith('@babel/runtime') ||
       Object.keys(pkg.dependencies).includes(id) ||
       Object.keys(pkg.optionalDependencies).includes(id),
-    input: ['./src/index.mjs', './src/fallbacks/index.mjs'],
+    input: [
+      './src/index.mjs',
+      './src/fallbacks/index.mjs',
+      './src/runtime/errors/index.mjs',
+    ],
     output: [
       {
         dir: path.join(BASE_DIR, './cjs'),
