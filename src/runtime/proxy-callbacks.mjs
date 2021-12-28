@@ -25,7 +25,7 @@ export default function proxyCallbacks(callbacks, errors) {
       try {
         fn(...args);
       } catch (e) {
-        const message = `${fn.name} threw: ${printError(e)}`;
+        const message = `${fn.name || key} threw: ${printError(e)}`;
         errors.push(new RuntimeError(message, { cause: e }));
       }
     };

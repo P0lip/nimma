@@ -1,6 +1,6 @@
 {
   "name": "nimma",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Scalable JSONPath engine.",
   "keywords": [
     "json",
@@ -64,7 +64,7 @@
     "prebuild": "peggy --format es -o src/parser/parser.mjs src/parser/parser.peg",
     "build": "export NODE_ENV=production; rollup -c && BABEL_ENV=legacy rollup -c",
     "postbuild": "(cd dist/legacy && sed -i \"s/nimma\\/runtime/nimma\\/legacy\\/runtime/\" cjs/codegen/tree/tree.js esm/codegen/tree/tree.mjs) && node ./scripts/copy-types.mjs",
-    "lint": "ls-lint && eslint --cache --cache-location .cache/ src/**/*.mjs",
+    "lint": "ls-lint && eslint --cache --cache-location .cache/ --ext .js,.mjs src",
     "test": "export NODE_ENV=test; c8 mocha --config .mocharc ./**/__tests__/**/*.test.mjs && karma start",
     "prepublishOnly": "npm run lint && npm run test && npm run build && (stat ./dist/esm/parser/parser.mjs && stat ./dist/cjs/parser/parser.js) >> /dev/null"
   },

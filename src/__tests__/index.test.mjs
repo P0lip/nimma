@@ -1020,11 +1020,11 @@ describe('Nimma', () => {
   });
 
   it('given runtime errors, throws AggregateError', () => {
-    const n = new Nimma(['$.a', '$.b', '$.c', '$.d']);
+    const n = new Nimma(['$.a', '$.b', '$.c', '$.d', '$.e', '$.f']);
 
     const fn = n.query.bind(
       n,
-      { a: {}, b: {}, c: {}, d: {} },
+      { a: {}, b: {}, c: {}, d: {}, e: {}, f: {} },
       {
         '$.a'() {
           throw 'Oops';
@@ -1038,6 +1038,12 @@ describe('Nimma', () => {
         '$.d'() {
           throw new TypeError('{}.c is not a function');
         },
+        '$.e': (() => () => {
+          throw new Error('I have no name!');
+        })(),
+        '$.f': function coolName() {
+          throw new Error('That is a really cool name');
+        },
       },
     );
 
@@ -1046,15 +1052,22 @@ describe('Nimma', () => {
     try {
       fn();
     } catch (e) {
+      expect(e.errors).to.have.length(6);
       expect(e.errors[0]).to.be.instanceof(RuntimeError);
       expect(e.errors[1]).to.be.instanceof(RuntimeError);
       expect(e.errors[2]).to.be.instanceof(RuntimeError);
       expect(e.errors[3]).to.be.instanceof(RuntimeError);
+      expect(e.errors[4]).to.be.instanceof(RuntimeError);
+      expect(e.errors[5]).to.be.instanceof(RuntimeError);
       expect(e.errors[0].message).to.eq('$.a threw: "Oops"');
       expect(e.errors[1].message).to.eq('$.b threw: unknown');
       expect(e.errors[2].message).to.eq('$.c threw: Error("Ah!")');
       expect(e.errors[3].message).to.eq(
         '$.d threw: TypeError("{}.c is not a function")',
+      );
+      expect(e.errors[4].message).to.eq('$.e threw: Error("I have no name!")');
+      expect(e.errors[5].message).to.eq(
+        'coolName threw: Error("That is a really cool name")',
       );
     }
   });
