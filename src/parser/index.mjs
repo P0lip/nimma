@@ -7,6 +7,6 @@ export default function (input) {
   try {
     return parse(input);
   } catch (e) {
-    throw new ParserError(e.message, { cause: e });
+    throw new ParserError(e.message, input, { cause: e });
   }
 }
