@@ -944,6 +944,45 @@ describe('Nimma', () => {
     });
   });
 
+  it('works #32', () => {
+    const document = [
+      {
+        country: 'Poland',
+        languages: [],
+      },
+    ];
+
+    const collected = collect(document, ['$[2][country,languages]']);
+
+    expect(collected).to.deep.eq({});
+  });
+
+  it('works #33', () => {
+    const document = [
+      {
+        country: 'Poland',
+        languages: [],
+      },
+      {
+        country: 'Czech Republic',
+        languages: [],
+      },
+      {
+        country: 'Slovakia',
+        languages: [],
+      },
+    ];
+
+    const collected = collect(document, ['$[1][country,languages]']);
+
+    expect(collected).to.deep.eq({
+      '$[1][country,languages]': [
+        ['Czech Republic', [1, 'country']],
+        [[], [1, 'languages']],
+      ],
+    });
+  });
+
   forEach([
     Object.preventExtensions({
       shirts: Object.seal({

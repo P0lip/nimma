@@ -60,35 +60,22 @@ export function zonedTraverse(cb, zones) {
 const zonesRegistry = new WeakMap();
 
 const traps = {
-  get(target, key) {
-    if (key === 'length' && Array.isArray(target)) {
-      const stored = zonesRegistry.get(target);
+  get(target, prop) {
+    const value = target[prop];
 
-      if ('*' in stored) {
-        for (const item of target) {
-          if (isObject(item)) {
-            zonesRegistry.set(item, stored['*']);
-          }
-        }
-
+    if (Array.isArray(target)) {
+      if (prop === 'length') {
         return target.length;
       }
 
-      const keys = Object.keys(stored);
-
-      for (const key of keys) {
-        const value = target[key];
-        if (isObject(value)) {
-          zonesRegistry.set(value, stored[key]);
-        }
+      const stored = zonesRegistry.get(target);
+      if (prop in stored && isObject(value)) {
+        zonesRegistry.set(value, stored[prop]);
       }
 
-      return Number.isInteger(Number(keys[keys.length - 1]))
-        ? Math.min(target.length, Number(keys[keys.length - 1]) + 1)
-        : target.length;
+      return value;
     }
 
-    const value = target[key];
     if (!isObject(value)) {
       return value;
     }
@@ -123,7 +110,7 @@ const traps = {
         }
       }
 
-      return Array.isArray(target) ? actualKeys.map(Number) : actualKeys;
+      return actualKeys;
     }
 
     const actualKeys = Object.keys(stored);
