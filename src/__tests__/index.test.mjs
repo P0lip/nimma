@@ -983,6 +983,38 @@ describe('Nimma', () => {
     });
   });
 
+  it('works #34', () => {
+    const document = {
+      data: {
+        geo: {
+          countries: {
+            city: {
+              id: 123,
+              code: {
+                id: 456,
+              },
+            },
+            street: {
+              name: {
+                id: 789,
+              },
+            },
+          },
+        },
+      },
+    };
+
+    const collected = collect(document, ['$.data[*][*][city,street]..id']);
+
+    expect(collected).to.deep.eq({
+      '$.data[*][*][city,street]..id': [
+        [123, ['data', 'geo', 'countries', 'city', 'id']],
+        [456, ['data', 'geo', 'countries', 'city', 'code', 'id']],
+        [789, ['data', 'geo', 'countries', 'street', 'name', 'id']],
+      ],
+    });
+  });
+
   forEach([
     Object.preventExtensions({
       shirts: Object.seal({

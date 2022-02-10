@@ -46,6 +46,7 @@ class Zone {
     this.#localZones = [this.root];
     this.#relationships = new Map();
   }
+
   attach() {
     this.#zones.attach(this.root);
     this.#relationships.clear();
@@ -57,7 +58,7 @@ class Zone {
       if (value === null) continue;
       if (property === '**') {
         const parent = this.#relationships.get(value);
-        if ('*' in parent) {
+        if (parent !== void 0 && '*' in parent) {
           delete parent['*'];
           parent['**'] = null;
           continue;

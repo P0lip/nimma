@@ -864,65 +864,45 @@ export default function (input, callbacks) {
 `);
     });
 
-    it('arrays', () => {
-      expect(generate(['$.countries[0:5]'])).to
+    it('nested deep #3', () => {
+      expect(generate(['$.data[*][*][city,street]..id'])).to
         .eq(`import {Scope} from "nimma/runtime";
 const zones = {
-  "countries": {
-    "*": {}
+  "data": {
+    "*": {
+      "*": {
+        "city": {
+          "**": null
+        },
+        "street": {
+          "**": null
+        }
+      }
+    }
   }
 };
 const tree = {
-  "$.countries[0:5]": function (scope) {
-    if (scope.depth !== 1) return;
-    if (scope.path[0] !== "countries") return;
-    if (typeof scope.path[1] !== "number" || scope.path[1] >= 5) return;
-    scope.emit("$.countries[0:5]", 0, false);
+  "$.data[*][*][city,street]..id": function (scope) {
+    if (scope.depth < 4) return;
+    let pos = 0;
+    if (scope.path[0] !== "data") return;
+    if ((scope.depth < pos + 3 || scope.path[pos + 3] !== "city") && (scope.depth < pos + 3 || scope.path[pos + 3] !== "street")) return;
+    if (scope.depth < pos + 4 || (pos = scope.property !== "id" ? -1 : scope.depth, pos === -1)) return;
+    if (scope.depth !== pos) return;
+    scope.emit("$.data[*][*][city,street]..id", 0, false);
   }
 };
 export default function (input, callbacks) {
   const scope = new Scope(input, callbacks);
   try {
     scope.traverse(() => {
-      tree["$.countries[0:5]"](scope);
+      tree["$.data[*][*][city,street]..id"](scope);
     }, zones);
   } finally {
     scope.destroy();
   }
 }
 `);
-    });
-
-    it('with inversion', () => {
-      expect(generate(['$.Europe[*]..cities[?(@ ~= "^P")]'])).to.eq(
-        `import {Scope} from "nimma/runtime";
-const zones = {
-  "Europe": {
-    "**": null
-  }
-};
-const tree = {
-  "$.Europe[*]..cities[?(@ ~= \\"^P\\")]": function (scope) {
-    if (scope.depth < 3) return;
-    let pos = 0;
-    if (scope.path[0] !== "Europe") return;
-    if (!(/^P/.test(scope.sandbox.value) === true)) return;
-    if (scope.path[scope.depth - 1] !== "cities") return;
-    scope.emit("$.Europe[*]..cities[?(@ ~= \\"^P\\")]", 0, false);
-  }
-};
-export default function (input, callbacks) {
-  const scope = new Scope(input, callbacks);
-  try {
-    scope.traverse(() => {
-      tree["$.Europe[*]..cities[?(@ ~= \\"^P\\")]"](scope);
-    }, zones);
-  } finally {
-    scope.destroy();
-  }
-}
-`,
-      );
     });
 
     it('subsequently nested wildcard expressions', () => {
