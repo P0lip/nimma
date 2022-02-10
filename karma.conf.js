@@ -6,7 +6,11 @@ module.exports = function (config) {
     frameworks: ['mocha'],
     moduleResolverPreprocessor: {
       customResolver: path =>
-        path.startsWith('.') ? path : `https://cdn.skypack.dev/${path}`,
+        path.startsWith('.')
+          ? path
+          : path === 'chai'
+          ? `https://cdn.skypack.dev/chai@4.3.4`
+          : `https://cdn.skypack.dev/${path}`,
       ecmaVersion: 2022,
     },
     preprocessors: {
