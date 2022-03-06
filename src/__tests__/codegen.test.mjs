@@ -398,19 +398,15 @@ const tree = {
   },
   "$.baz..baz": function (scope) {
     if (scope.depth < 1) return;
-    let pos = 0;
     if (scope.path[0] !== "baz") return;
-    if (scope.depth < pos + 1 || (pos = scope.property !== "baz" ? -1 : scope.depth, pos === -1)) return;
-    if (scope.depth !== pos) return;
+    if (scope.property !== "baz") return;
     scope.emit("$.baz..baz", 0, false);
   },
   "$.baz.bar..baz": function (scope) {
     if (scope.depth < 2) return;
-    let pos = 0;
     if (scope.path[0] !== "baz") return;
-    if (scope.depth < pos + 1 || scope.path[pos + 1] !== "bar") return;
-    if (scope.depth < pos + 2 || (pos = scope.property !== "baz" ? -1 : scope.depth, pos === -1)) return;
-    if (scope.depth !== pos) return;
+    if (scope.path[1] !== "bar") return;
+    if (scope.property !== "baz") return;
     scope.emit("$.baz.bar..baz", 0, false);
   },
   "$..foo..bar..baz": function (scope) {
@@ -444,16 +440,13 @@ const tree = {
   },
   "$.components.schemas..[?(@property !== 'properties' && @ && (@ && @.example !== void 0 || @.default !== void 0))]": function (scope) {
     if (scope.depth < 2) return;
-    let pos = 0;
     if (scope.path[0] !== "components") return;
-    if (scope.depth < pos + 1 || scope.path[pos + 1] !== "schemas") return;
-    if (scope.depth < pos + 2 || (pos = !(scope.sandbox.property !== 'properties' && scope.sandbox.value && (scope.sandbox.value && scope.sandbox.value.example !== void 0 || scope.sandbox.value.default !== void 0)) ? -1 : scope.depth, pos === -1)) return;
-    if (scope.depth !== pos) return;
+    if (scope.path[1] !== "schemas") return;
+    if (!(scope.sandbox.property !== 'properties' && scope.sandbox.value && (scope.sandbox.value && scope.sandbox.value.example !== void 0 || scope.sandbox.value.default !== void 0))) return;
     scope.emit("$.components.schemas..[?(@property !== 'properties' && @ && (@ && @.example !== void 0 || @.default !== void 0))]", 0, false);
   },
   "$..address.street[?(@.number > 20)]": function (scope) {
     if (scope.depth < 2) return;
-    let pos = 0;
     if (!(scope.sandbox.value.number > 20)) return;
     if (scope.path[scope.depth - 1] !== "street") return;
     if (scope.path[scope.depth - 2] !== "address") return;
@@ -461,7 +454,6 @@ const tree = {
   },
   "$.bar..[?(@.example && @.schema)].test": function (scope) {
     if (scope.depth < 2) return;
-    let pos = 0;
     if (scope.path[0] !== "bar") return;
     if (scope.property !== "test") return;
     if (!(scope.sandbox.at(-2).value.example && scope.sandbox.at(-2).value.schema)) return;
@@ -469,23 +461,19 @@ const tree = {
   },
   "$..[?(@.name && @.name.match(/1_1$/))].name^^": function (scope) {
     if (scope.depth < 1) return;
-    let pos = 0;
     if (scope.property !== "name") return;
     if (!(scope.sandbox.at(-2).value.name && scope.sandbox.at(-2).value.name.match(/1_1$/))) return;
     scope.emit("$..[?(@.name && @.name.match(/1_1$/))].name^^", 2, false);
   },
   "$.bar[?( @property >= 400 )]..foo": function (scope) {
     if (scope.depth < 2) return;
-    let pos = 0;
     if (scope.path[0] !== "bar") return;
     if (!(scope.sandbox.at(2).property >= 400)) return;
-    if (scope.depth < pos + 2 || (pos = scope.property !== "foo" ? -1 : scope.depth, pos === -1)) return;
-    if (scope.depth !== pos) return;
+    if (scope.property !== "foo") return;
     scope.emit("$.bar[?( @property >= 400 )]..foo", 0, false);
   },
   "$.paths..content.*.examples": function (scope) {
     if (scope.depth < 3) return;
-    let pos = 0;
     if (scope.path[0] !== "paths") return;
     if (scope.property !== "examples") return;
     if (scope.path[scope.depth - 2] !== "content") return;
@@ -530,7 +518,6 @@ export default function (input, callbacks) {
 const tree = {
   "$..examples.*": function (scope) {
     if (scope.depth < 1) return;
-    let pos = 0;
     if (scope.path[scope.depth - 1] !== "examples") return;
     scope.emit("$..examples.*", 0, false);
   },
@@ -548,10 +535,7 @@ const tree = {
   },
   "$.examples..*": function (scope) {
     if (scope.depth < 1) return;
-    let pos = 0;
     if (scope.path[0] !== "examples") return;
-    if ((pos = scope.depth < 1 ? -1 : scope.depth, pos === -1)) return;
-    if (scope.depth !== pos) return;
     scope.emit("$.examples..*", 0, false);
   },
   "$.examples.*": function (scope) {
@@ -731,10 +715,8 @@ export default function (input, callbacks) {
 const tree = {
   "$.info..[?(@property.startsWith('foo'))]": function (scope) {
     if (scope.depth < 1) return;
-    let pos = 0;
     if (scope.path[0] !== "info") return;
-    if (scope.depth < pos + 1 || (pos = !String(scope.sandbox.property).startsWith('foo') ? -1 : scope.depth, pos === -1)) return;
-    if (scope.depth !== pos) return;
+    if (!String(scope.sandbox.property).startsWith('foo')) return;
     scope.emit("$.info..[?(@property.startsWith('foo'))]", 0, false);
   },
   "$.info.*[?(@property.startsWith('foo'))]": function (scope) {
@@ -790,10 +772,8 @@ const zones = {
 const tree = {
   "$.store..[price,bar,baz]": function (scope) {
     if (scope.depth < 1) return;
-    let pos = 0;
     if (scope.path[0] !== "store") return;
-    if ((scope.depth < pos + 1 || (pos = scope.property !== "price" ? -1 : scope.depth, pos === -1)) && (scope.depth < pos + 1 || (pos = scope.property !== "bar" ? -1 : scope.depth, pos === -1)) && (scope.depth < pos + 1 || (pos = scope.property !== "baz" ? -1 : scope.depth, pos === -1))) return;
-    if (scope.depth !== pos) return;
+    if (scope.property !== "price" && scope.property !== "bar" && scope.property !== "baz") return;
     scope.emit("$.store..[price,bar,baz]", 0, false);
   },
   "$.book": function (scope) {
@@ -835,7 +815,6 @@ const zones = {
 const tree = {
   "$.paths[*][*]..content[*].examples[*]": function (scope) {
     if (scope.depth < 6) return;
-    let pos = 0;
     if (scope.path[0] !== "paths") return;
     if (scope.path[scope.depth - 1] !== "examples") return;
     if (scope.path[scope.depth - 3] !== "content") return;
@@ -843,7 +822,6 @@ const tree = {
   },
   "$.paths[*][*]..parameters[*].examples[*]": function (scope) {
     if (scope.depth < 6) return;
-    let pos = 0;
     if (scope.path[0] !== "paths") return;
     if (scope.path[scope.depth - 1] !== "examples") return;
     if (scope.path[scope.depth - 3] !== "parameters") return;
@@ -884,11 +862,9 @@ const zones = {
 const tree = {
   "$.data[*][*][city,street]..id": function (scope) {
     if (scope.depth < 4) return;
-    let pos = 0;
     if (scope.path[0] !== "data") return;
-    if ((scope.depth < pos + 3 || scope.path[pos + 3] !== "city") && (scope.depth < pos + 3 || scope.path[pos + 3] !== "street")) return;
-    if (scope.depth < pos + 4 || (pos = scope.property !== "id" ? -1 : scope.depth, pos === -1)) return;
-    if (scope.depth !== pos) return;
+    if (scope.path[3] !== "city" && scope.path[3] !== "street") return;
+    if (scope.property !== "id") return;
     scope.emit("$.data[*][*][city,street]..id", 0, false);
   }
 };

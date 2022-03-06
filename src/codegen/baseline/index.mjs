@@ -2,6 +2,7 @@ import * as b from '../ast/builders.mjs';
 import fastPaths from '../fast-paths/index.mjs';
 import { isDeep } from '../guards.mjs';
 import Iterator from '../iterator.mjs';
+import optimizer from '../optimizer/index.mjs';
 import generateEmitCall from '../templates/emit-call.mjs';
 import fnParams from '../templates/fn-params.mjs';
 import internalScope from '../templates/internal-scope.mjs';
@@ -197,6 +198,7 @@ export default function baseline(jsonPaths, opts) {
       tree.push(b.stringLiteral(id), placement);
     }
 
+    optimizer(branch, iterator);
     tree.push(b.blockStatement(branch), 'tree-method');
 
     zone?.attach();

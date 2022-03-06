@@ -31,6 +31,8 @@ export function generateMemberExpression(iterator, { deep, value }) {
     const isLastNode =
       iterator.nextNode === null || iterator.nextNode === 'KeyExpression';
 
+    iterator.feedback.mutatesPos ||= !isLastNode;
+
     const right = b.sequenceExpression([
       b.assignmentExpression(
         '=',
@@ -277,6 +279,9 @@ export function generateFilterScriptExpression(iterator, { deep, value }) {
   );
 
   if (iterator.feedback.bailed || !deep || iterator.state.inverted) return node;
+
+  iterator.feedback.mutatesPos ||=
+    iterator.nextNode !== null && iterator.nextNode !== 'KeyExpression';
 
   const assignment = b.sequenceExpression([
     b.assignmentExpression(

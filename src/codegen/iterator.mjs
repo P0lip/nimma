@@ -198,6 +198,9 @@ export default class Iterator {
       }
     }
 
-    Object.assign(this.feedback, feedback);
+    Object.assign(this.feedback, {
+      ...feedback,
+      mutatesPos: this.feedback.mutatesPos,
+    });
   }
 }
