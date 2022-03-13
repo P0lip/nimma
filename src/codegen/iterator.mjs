@@ -16,9 +16,12 @@ function isBailable(nodes) {
     } else if (isMemberExpression(node)) {
       i++;
       let hadFlatMemberExpressions = false;
+      let deepNodes = 1;
       for (; i < nodes.length - 1; i++) {
         const node = nodes[i];
-        if (!isDeep(node)) {
+        if (isDeep(node)) {
+          deepNodes++;
+        } else {
           hadFlatMemberExpressions ||=
             isMemberExpression(node) || isWildcardExpression(node);
           continue;
@@ -35,7 +38,7 @@ function isBailable(nodes) {
       return isDeep(nodes[nodes.length - 1])
         ? hadFlatMemberExpressions ||
             isWildcardExpression(nodes[nodes.length - 1])
-        : false;
+        : deepNodes > 1;
     } else {
       deep = true;
     }

@@ -1,4 +1,5 @@
 import chai from 'chai';
+import forEach from 'mocha-each';
 
 import Nimma from '../core/index.mjs';
 import { jsonPathPlus } from '../fallbacks/index.mjs';
@@ -1282,5 +1283,15 @@ export default function (input, callbacks) {
 }
 `);
     });
+  });
+
+  forEach([
+    '$..[?(@.a)]..[?(@.b)]..c..d',
+    '$..[?(@.ab)]..[?(@.cb)]..c..d',
+    '$.paths.*.*[responses,requestBody]..content..schema.properties.*~',
+  ]).it('should consider %s expression as unsafe', expression => {
+    expect(generate.bind(null, [expression], { unsafe: false })).to.throw(
+      `Error parsing ${expression}`,
+    );
   });
 });
