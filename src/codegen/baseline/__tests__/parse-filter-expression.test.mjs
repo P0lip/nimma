@@ -12,7 +12,13 @@ function print(expr) {
   const ast = parse(`$[${expr}]`);
   const iterator = new Iterator(ast);
   const { value: node } = iterator[Symbol.iterator]().next();
-  return astring(generateFilterScriptExpression(iterator, node));
+  return astring(
+    generateFilterScriptExpression(iterator, node, {
+      attachCustomShorthand() {
+        // no-op
+      },
+    }),
+  );
 }
 
 describe('parseFilterExpression', () => {
@@ -114,6 +120,10 @@ describe('parseFilterExpression', () => {
       expect(print(`?(@integer())`)).to.eq(
         `!Number.isInteger(scope.sandbox.value)`,
       );
+    });
+
+    it('supports custom handlers', () => {
+      expect(print(`?(@@schema())`)).to.eq(`!shorthands.schema(scope)`);
     });
 
     it('throws upon unknown shorthand', () => {

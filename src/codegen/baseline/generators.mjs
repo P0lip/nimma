@@ -261,12 +261,17 @@ export function generateWildcardExpression(iterator) {
   }
 }
 
-export function generateFilterScriptExpression(iterator, { deep, value }) {
+export function generateFilterScriptExpression(
+  iterator,
+  { deep, value },
+  tree,
+) {
   const esTree = jsep(value);
   assertDefinedIdentifier(esTree);
   const node = b.unaryExpression(
     '!',
     rewriteESTree(
+      tree,
       esTree,
       iterator.state.fixed &&
         iterator.state.pos > 0 &&
@@ -311,7 +316,7 @@ export function generateFilterScriptExpression(iterator, { deep, value }) {
   );
 }
 
-export function rewriteESTree(node, pos) {
+export function rewriteESTree(tree, node, pos) {
   switch (node.type) {
     case 'LogicalExpression':
     case 'BinaryExpression':
@@ -319,7 +324,7 @@ export function rewriteESTree(node, pos) {
         node.operator = '===';
         node.left = b.callExpression(
           b.memberExpression(node.right, b.identifier('includes')),
-          [rewriteESTree(node.left, pos)],
+          [rewriteESTree(tree, node.left, pos)],
         );
         node.right = b.booleanLiteral(true);
       } else if (node.operator === '~=') {
@@ -333,25 +338,25 @@ export function rewriteESTree(node, pos) {
             b.regExpLiteral(node.right.value, ''),
             b.identifier('test'),
           ),
-          [rewriteESTree(node.left, pos)],
+          [rewriteESTree(tree, node.left, pos)],
         );
         node.right = b.booleanLiteral(true);
       } else {
-        node.left = rewriteESTree(node.left, pos);
-        node.right = rewriteESTree(node.right, pos);
+        node.left = rewriteESTree(tree, node.left, pos);
+        node.right = rewriteESTree(tree, node.right, pos);
         assertDefinedIdentifier(node.left);
         assertDefinedIdentifier(node.right);
       }
 
       break;
     case 'UnaryExpression':
-      node.argument = rewriteESTree(node.argument, pos);
+      node.argument = rewriteESTree(tree, node.argument, pos);
       assertDefinedIdentifier(node.argument);
       return node;
     case 'MemberExpression':
-      node.object = rewriteESTree(node.object, pos);
+      node.object = rewriteESTree(tree, node.object, pos);
       assertDefinedIdentifier(node.object);
-      node.property = rewriteESTree(node.property, pos);
+      node.property = rewriteESTree(tree, node.property, pos);
       if (node.computed) {
         assertDefinedIdentifier(node.property);
       }
@@ -362,12 +367,12 @@ export function rewriteESTree(node, pos) {
         node.callee.type === 'Identifier' &&
         node.callee.name.startsWith('@')
       ) {
-        return processAtIdentifier(node.callee.name, pos);
+        return processAtIdentifier(tree, node.callee.name, pos);
       }
 
-      node.callee = rewriteESTree(node.callee, pos);
+      node.callee = rewriteESTree(tree, node.callee, pos);
       node.arguments = node.arguments.map(argument =>
-        rewriteESTree(argument, pos),
+        rewriteESTree(tree, argument, pos),
       );
 
       if (
@@ -384,7 +389,7 @@ export function rewriteESTree(node, pos) {
       break;
     case 'Identifier':
       if (node.name.startsWith('@')) {
-        return processAtIdentifier(node.name, pos);
+        return processAtIdentifier(tree, node.name, pos);
       }
 
       if (node.name === 'undefined') {
@@ -401,7 +406,7 @@ export function rewriteESTree(node, pos) {
   return node;
 }
 
-function processAtIdentifier(name, pos) {
+function processAtIdentifier(tree, name, pos) {
   switch (name) {
     case '@':
       return remapSandbox(sandbox.value, pos);
@@ -468,6 +473,18 @@ function processAtIdentifier(name, pos) {
         [remapSandbox(sandbox.value, pos)],
       );
     default:
+      if (name.startsWith('@@')) {
+        const shorthandName = name.slice(2);
+        tree.attachCustomShorthand(shorthandName);
+        return b.callExpression(
+          b.memberExpression(
+            internalScope.shorthands,
+            b.identifier(shorthandName),
+          ),
+          [scope._],
+        );
+      }
+
       throw new SyntaxError(`Unsupported shorthand '${name}'`);
   }
 }

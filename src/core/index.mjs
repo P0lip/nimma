@@ -17,6 +17,7 @@ export default class Nimma {
       unsafe = true,
       output = 'auto',
       npmProvider = null,
+      customShorthands = null,
     } = {},
   ) {
     this.#fallback = fallback;
@@ -29,6 +30,7 @@ export default class Nimma {
     );
 
     this.tree = codegen(mappedExpressions, {
+      customShorthands,
       format: output === 'auto' ? getOutputFormat() : output,
       npmProvider,
     });

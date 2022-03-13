@@ -9,7 +9,7 @@ Node =  MemberExpression
         / (Wildcard / "[" Wildcard "]") { return { type: "WildcardExpression" } }
         / "[" expression:(ScriptExpression) "]" { return expression }
         / "[" expression:(ScriptFilterExpression) "]" { return expression }
-        / expression:JsonPathPlusFilterFunction { return expression }
+        / expression:(JsonPathPlusFilterFunction / CustomScriptFilterExpression) { return expression }
         / "[" value:(value:MemberIdentifier ","? { return value })* "]" { return { type: "MultipleMemberExpression", value: [...new Set(value)] } }
         / "[" expression:SliceExpression "]" { return expression }
 
@@ -27,6 +27,7 @@ SliceExpression = value:$((((Number ":" Number?) / (":" Number?) / Number) (":" 
 }
 
 JsonPathPlusFilterFunction = value:$("@" [a-z]+ "()") { return { type: 'ScriptFilterExpression', value } }
+CustomScriptFilterExpression = value:$("@" node:JsonPathPlusFilterFunction { return node.value }) { return { type: 'ScriptFilterExpression', value } }
 
 KeyExpression = "~" { return { type: "KeyExpression" } }
 ParentExpression = "^" { return { type: "ParentExpression" } }

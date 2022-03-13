@@ -28,10 +28,22 @@ function _collect(input, expressions, opts) {
   return collected;
 }
 
-function collect(input, expressions, fallback = null) {
-  const auto = _collect(input, expressions, { fallback });
-  const esnext = _collect(input, expressions, { fallback, output: 'ES2021' });
-  const es2018 = _collect(input, expressions, { fallback, output: 'ES2018' });
+function collect(
+  input,
+  expressions,
+  { fallback = null, customShorthands = null } = {},
+) {
+  const auto = _collect(input, expressions, { fallback, customShorthands });
+  const esnext = _collect(input, expressions, {
+    fallback,
+    customShorthands,
+    output: 'ES2021',
+  });
+  const es2018 = _collect(input, expressions, {
+    fallback,
+    customShorthands,
+    output: 'ES2018',
+  });
 
   expect(auto).to.deep.eq(esnext);
   expect(esnext).to.deep.eq(es2018);
@@ -699,7 +711,9 @@ describe('Nimma', () => {
       },
     };
 
-    const collected = collect(document, ['$.foo^.info'], jsonPathPlus);
+    const collected = collect(document, ['$.foo^.info'], {
+      fallback: jsonPathPlus,
+    });
 
     expect(collected).to.deep.eq({
       '$.foo^.info': [[{ bar: false }, ['info']]],
@@ -1012,6 +1026,91 @@ describe('Nimma', () => {
         [456, ['data', 'geo', 'countries', 'city', 'code', 'id']],
         [789, ['data', 'geo', 'countries', 'street', 'name', 'id']],
       ],
+    });
+  });
+
+  describe('custom shorthands', () => {
+    it('should be supported', () => {
+      const document = {
+        components: {
+          schemas: {
+            User: {
+              type: 'object',
+              properties: {
+                id: {
+                  type: 'string',
+                },
+                address: {
+                  type: 'object',
+                  properties: {
+                    street: {
+                      type: 'string',
+                    },
+                  },
+                },
+              },
+            },
+            Extensions: {
+              type: 'object',
+              patternProperties: {
+                '^x-': true,
+              },
+            },
+          },
+        },
+      };
+
+      const shorthands = {
+        schema: ['patternProperties', 'properties']
+          .map(k => `scope.path[scope.path.length - 2] === '${k}'`)
+          .join(' || '),
+      };
+
+      const collected = collect(
+        document,
+        ['$.components.schemas[*]..@@schema()'],
+        {
+          customShorthands: shorthands,
+        },
+      );
+
+      expect(collected).to.deep.eq({
+        '$.components.schemas[*]..@@schema()': [
+          [
+            { type: 'string' },
+            ['components', 'schemas', 'User', 'properties', 'id'],
+          ],
+          [
+            {
+              type: 'object',
+              properties: {
+                street: {
+                  type: 'string',
+                },
+              },
+            },
+            ['components', 'schemas', 'User', 'properties', 'address'],
+          ],
+          [
+            {
+              type: 'string',
+            },
+            [
+              'components',
+              'schemas',
+              'User',
+              'properties',
+              'address',
+              'properties',
+              'street',
+            ],
+          ],
+          [
+            true,
+            ['components', 'schemas', 'Extensions', 'patternProperties', '^x-'],
+          ],
+        ],
+      });
     });
   });
 

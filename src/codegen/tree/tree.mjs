@@ -1,3 +1,4 @@
+import jsep from '../../parser/jsep.mjs';
 import * as b from '../ast/builders.mjs';
 import astring from '../dump.mjs';
 import generateFallbackExpressions from '../templates/fallback-expressions.mjs';
@@ -39,16 +40,19 @@ export default function (input, callbacks) {
 
 export default class ESTree {
   #tree = b.objectExpression([]);
+  #shorthands = b.objectExpression([]);
   #runtimeDependencies = new Set(['Scope']);
   #program = new Set();
   #body = new Set();
   #traverse = new Set();
+  #availableShorthands;
 
-  constructor({ format, npmProvider }) {
+  constructor({ customShorthands, format, npmProvider }) {
     this.format = format;
     this.npmProvider = npmProvider;
     this.ctx = null;
     this.traversalZones = new TraversalZones();
+    this.#availableShorthands = customShorthands;
   }
 
   addRuntimeDependency(specifier) {
@@ -61,6 +65,26 @@ export default class ESTree {
     this.push(
       generateFallbackExpressions(fallback.attach(this), expressions),
       'body',
+    );
+  }
+
+  attachCustomShorthand(name) {
+    if (
+      this.#availableShorthands === null ||
+      !(name in this.#availableShorthands)
+    ) {
+      throw new ReferenceError(`Shorthand '${name}' is not defined`);
+    }
+
+    this.#shorthands.properties.push(
+      b.objectMethod(
+        'method',
+        b.identifier(name),
+        fnParams,
+        b.blockStatement([
+          b.returnStatement(jsep(this.#availableShorthands[name])),
+        ]),
+      ),
     );
   }
 
@@ -122,6 +146,14 @@ export default class ESTree {
             ? null
             : b.variableDeclaration('const', [
                 b.variableDeclarator(internalScope.tree, this.#tree),
+              ]),
+          this.#shorthands.properties.length === 0
+            ? null
+            : b.variableDeclaration('const', [
+                b.variableDeclarator(
+                  internalScope.shorthands,
+                  this.#shorthands,
+                ),
               ]),
           b.exportDefaultDeclaration(
             b.functionDeclaration(

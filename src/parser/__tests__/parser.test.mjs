@@ -66,4 +66,24 @@ describe('Parser', () => {
   forEach(['$info']).it('should refuse to parse %s', expr => {
     expect(parse.bind(null, expr)).to.throw();
   });
+
+  it('should parse @@', () => {
+    expect(parse('$.components.schemas..@@schema()')).to.deep.equal([
+      {
+        type: 'MemberExpression',
+        value: 'components',
+        deep: false,
+      },
+      {
+        type: 'MemberExpression',
+        value: 'schemas',
+        deep: false,
+      },
+      {
+        type: 'ScriptFilterExpression',
+        value: '@@schema()',
+        deep: true,
+      },
+    ]);
+  });
 });

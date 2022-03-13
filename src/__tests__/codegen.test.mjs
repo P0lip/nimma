@@ -1235,4 +1235,52 @@ export default function (input, callbacks) {
 `);
     });
   });
+
+  describe('custom shorthands', () => {
+    it('should be supported', () => {
+      const shorthands = {
+        schema: ['patternProperties', 'properties']
+          .map(k => `scope.path[scope.path.length - 2] === '${k}'`)
+          .join(' || '),
+      };
+
+      expect(
+        generate(['$.components.schemas[*]..@@schema()'], {
+          customShorthands: shorthands,
+        }),
+      ).to.eq(`import {Scope} from "nimma/runtime";
+const zones = {
+  "components": {
+    "schemas": {
+      "**": null
+    }
+  }
+};
+const tree = {
+  "$.components.schemas[*]..@@schema()": function (scope) {
+    if (scope.depth < 3) return;
+    if (scope.path[0] !== "components") return;
+    if (scope.path[1] !== "schemas") return;
+    if (!shorthands.schema(scope)) return;
+    scope.emit("$.components.schemas[*]..@@schema()", 0, false);
+  }
+};
+const shorthands = {
+  schema: function (scope) {
+    return scope.path[scope.path.length - 2] === 'patternProperties' || scope.path[scope.path.length - 2] === 'properties';
+  }
+};
+export default function (input, callbacks) {
+  const scope = new Scope(input, callbacks);
+  try {
+    scope.traverse(() => {
+      tree["$.components.schemas[*]..@@schema()"](scope);
+    }, zones);
+  } finally {
+    scope.destroy();
+  }
+}
+`);
+    });
+  });
 });

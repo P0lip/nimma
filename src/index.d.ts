@@ -11,17 +11,19 @@ export type EmittedScope = {
 };
 
 declare class Nimma {
+  public readonly sourceCode: string;
+
   constructor(
     expressions: string[],
     opts?: {
-      fallback: Fallback;
+      customShorthands: Record<string, string> | null;
+      fallback: Fallback | null;
       unsafe: boolean;
-      output: 'ES2018' | 'ES2021' | 'auto'
+      output: 'ES2018' | 'ES2021' | 'auto';
     },
   ): Nimma;
 
   public query(input: Input, callbacks: Record<string, Callback>): void;
-  public readonly sourceCode: string;
 }
 
 export default Nimma;

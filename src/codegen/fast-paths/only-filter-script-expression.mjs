@@ -21,7 +21,7 @@ export default (nodes, tree, ctx) => {
 
   const condition = b.unaryExpression(
     '!',
-    rewriteESTree(jsep(nodes[0].value), 0),
+    rewriteESTree(tree, jsep(nodes[0].value), 0),
     true,
   );
 
