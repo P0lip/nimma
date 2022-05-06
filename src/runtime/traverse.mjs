@@ -115,9 +115,12 @@ const traps = {
 
     const actualKeys = Object.keys(stored);
 
-    for (const key of actualKeys) {
+    for (let i = 0; i < actualKeys.length; i++) {
+      const key = actualKeys[i];
+
       if (!Object.hasOwnProperty.call(target, key)) {
-        actualKeys.splice(actualKeys.indexOf(key), 1);
+        actualKeys.splice(i, 1);
+        i--;
         continue;
       }
 

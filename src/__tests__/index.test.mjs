@@ -1114,6 +1114,41 @@ describe('Nimma', () => {
     });
   });
 
+  it('works #35', () => {
+    const document = {
+      definitions: {
+        propA: {
+          properties: {
+            a: {},
+          },
+        },
+        propB: {
+          allOf: [
+            {
+              properties: {
+                b: {},
+              },
+            },
+          ],
+        },
+      },
+    };
+
+    const collected = collect(document, [
+      '$.definitions.*.properties',
+      '$.definitions.*.allOf.*.properties',
+    ]);
+
+    expect(collected).to.deep.eq({
+      '$.definitions.*.properties': [
+        [{ a: {} }, ['definitions', 'propA', 'properties']],
+      ],
+      '$.definitions.*.allOf.*.properties': [
+        [{ b: {} }, ['definitions', 'propB', 'allOf', 0, 'properties']],
+      ],
+    });
+  });
+
   forEach([
     Object.preventExtensions({
       shirts: Object.seal({
