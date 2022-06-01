@@ -86,4 +86,13 @@ describe('Parser', () => {
       },
     ]);
   });
+
+  forEach(['$.[enum]', '$.[?(@.enum)]', '$.foo.[bar,baz]']).it(
+    'given %s, should should treat .[ as ..',
+    expr => {
+      expect(parse(expr)).to.deep.equal(
+        parse(expr.replace(/\.\?=(\[\?\()|{\.}1\[/g, '..')),
+      );
+    },
+  );
 });

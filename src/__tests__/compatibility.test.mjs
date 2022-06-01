@@ -301,7 +301,7 @@ describe('Compatibility tests', () => {
       compare(json, "$.store.book[?(@path !== \"$['store']['book'][0]\")]");
     });
 
-    xit('Custom property: @parent', () => {
+    it('Custom property: @parent', () => {
       compare(
         json,
         '$..book[?(@parent.bicycle && @parent.bicycle.color === "red")].category',
@@ -383,7 +383,7 @@ describe('Compatibility tests', () => {
       compare(jsonObj, '$.[?(@.a == 4)]');
     });
 
-    xit('Checking properties of child object (through `@` as property)', function () {
+    it('Checking properties of child object (through `@` as property)', function () {
       const jsonObj = {
         test1: {
           a: 4,

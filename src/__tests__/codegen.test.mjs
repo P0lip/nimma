@@ -389,6 +389,10 @@ export default function (input, callbacks) {
         '$.bar..[?(@.example && @.schema)].test',
         '$..[?(@.name && @.name.match(/1_1$/))].name^^',
         '$.bar[?( @property >= 400 )]..foo',
+        '$.[?(@.bar)]',
+        '$.foo.[?(@.bar)]',
+        '$.foo.[bar]',
+        '$.foo.[bar,baz]',
         '$.paths..content.*.examples',
       ]),
     ).to.eq(`import {Scope} from "nimma/runtime";
@@ -473,6 +477,28 @@ const tree = {
     if (scope.property !== "foo") return;
     scope.emit("$.bar[?( @property >= 400 )]..foo", 0, false);
   },
+  "$.[?(@.bar)]": function (scope) {
+    if (!scope.sandbox.value.bar) return;
+    scope.emit("$.[?(@.bar)]", 0, false);
+  },
+  "$.foo.[?(@.bar)]": function (scope) {
+    if (scope.depth < 1) return;
+    if (scope.path[0] !== "foo") return;
+    if (!scope.sandbox.value.bar) return;
+    scope.emit("$.foo.[?(@.bar)]", 0, false);
+  },
+  "$.foo.[bar]": function (scope) {
+    if (scope.depth < 1) return;
+    if (scope.path[0] !== "foo") return;
+    if (scope.property !== "bar") return;
+    scope.emit("$.foo.[bar]", 0, false);
+  },
+  "$.foo.[bar,baz]": function (scope) {
+    if (scope.depth < 1) return;
+    if (scope.path[0] !== "foo") return;
+    if (scope.property !== "bar" && scope.property !== "baz") return;
+    scope.emit("$.foo.[bar,baz]", 0, false);
+  },
   "$.paths..content.*.examples": function (scope) {
     if (scope.depth < 3) return;
     if (scope.path[0] !== "paths") return;
@@ -497,6 +523,10 @@ export default function (input, callbacks) {
       tree["$.bar..[?(@.example && @.schema)].test"](scope);
       tree["$..[?(@.name && @.name.match(/1_1$/))].name^^"](scope);
       tree["$.bar[?( @property >= 400 )]..foo"](scope);
+      tree["$.[?(@.bar)]"](scope);
+      tree["$.foo.[?(@.bar)]"](scope);
+      tree["$.foo.[bar]"](scope);
+      tree["$.foo.[bar,baz]"](scope);
       tree["$.paths..content.*.examples"](scope);
     }, null);
   } finally {
