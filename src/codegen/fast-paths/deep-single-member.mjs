@@ -19,7 +19,7 @@ export default (nodes, tree, ctx) => {
   tree.push(
     b.blockStatement([
       b.ifStatement(
-        b.binaryExpression(
+        b.safeBinaryExpression(
           '!==',
           scope.property,
           b.stringLiteral(nodes[0].value),

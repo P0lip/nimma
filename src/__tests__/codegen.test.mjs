@@ -23,6 +23,7 @@ describe('Code Generator', () => {
         "$.bar['children']",
         "$.bar['0']",
         "$.bar['children.bar']",
+        '$.paths[*][404,202]',
         '$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload',
       ]),
     ).to.eq(`import {Scope, isObject} from "nimma/runtime";
@@ -35,6 +36,12 @@ const zones = {
   "servers": {
     "*": {
       "url": {}
+    }
+  },
+  "paths": {
+    "*": {
+      "202": {},
+      "404": {}
     }
   },
   "channels": {
@@ -112,6 +119,12 @@ const tree = {
     if (scope === null) return;
     scope.emit("$.bar['children.bar']", 0, false);
   },
+  "$.paths[*][404,202]": function (scope) {
+    if (scope.depth !== 2) return;
+    if (scope.path[0] !== "paths") return;
+    if (String(scope.path[2]) !== "404" && String(scope.path[2]) !== "202") return;
+    scope.emit("$.paths[*][404,202]", 0, false);
+  },
   "$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload": function (scope) {
     if (scope.depth !== 4) return;
     if (scope.path[0] !== "channels") return;
@@ -134,6 +147,7 @@ export default function (input, callbacks) {
       tree["$.servers[*].url"](scope);
       tree["$.servers[0:2]"](scope);
       tree["$.servers[:5]"](scope);
+      tree["$.paths[*][404,202]"](scope);
       tree["$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload"](scope);
     }, zones);
   } finally {

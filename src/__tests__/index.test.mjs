@@ -1185,6 +1185,46 @@ describe('Nimma', () => {
     });
   });
 
+  it('works #37', () => {
+    const document = {
+      paths: {
+        '/pet': {
+          get: {
+            responses: {
+              200: {
+                description: 'successful operation',
+              },
+              401: {
+                description: 'Unauthorized',
+              },
+              400: {
+                description: 'Invalid status value',
+              },
+              404: {
+                description: 'Not Found',
+              },
+            },
+          },
+        },
+      },
+    };
+
+    const collected = collect(document, ['$.paths.*.*.responses[401,404]']);
+
+    expect(collected).to.deep.eq({
+      '$.paths.*.*.responses[401,404]': [
+        [
+          { description: 'Unauthorized' },
+          ['paths', '/pet', 'get', 'responses', '401'],
+        ],
+        [
+          { description: 'Not Found' },
+          ['paths', '/pet', 'get', 'responses', '404'],
+        ],
+      ],
+    });
+  });
+
   forEach([
     Object.preventExtensions({
       shirts: Object.seal({

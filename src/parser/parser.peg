@@ -36,7 +36,7 @@ Modifier = KeyExpression / ParentExpression
 Descendant = ".." { return true } /  "."  & "["  { return true } / "." { return false } / & [@[] { return false }
 
 Identifier = $([$_-] / Char / Digit)+
-MemberIdentifier = Number / Identifier / (("\"" $([^"]*) "\"") / ("'" $([^']*) "'")) { return text().slice(1, -1) }
+MemberIdentifier = value:Identifier { return value.length > 0 && Number.isSafeInteger(Number(value)) ? Number(value) : value } / (("\"" $([^"]*) "\"") / ("'" $([^']*) "'")) { return text().slice(1, -1) }
 Number = "-"? Digit+ { return Number(text()); }
 
 Quote = "'" / "\""

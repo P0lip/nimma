@@ -115,6 +115,29 @@ export function binaryExpression(operator, left, right) {
   };
 }
 
+export function safeBinaryExpression(operator, left, right) {
+  let actualRight = right;
+
+  if (right.type === 'NumericLiteral') {
+    actualRight = stringLiteral(String(right.value));
+  } else if (
+    right.type === 'StringLiteral' &&
+    Number.isSafeInteger(Number(right.value))
+  ) {
+    actualRight = stringLiteral(String(right.value));
+  }
+
+  return {
+    type: 'BinaryExpression',
+    operator,
+    left:
+      actualRight === right
+        ? left
+        : callExpression(identifier('String'), [left]),
+    right: actualRight,
+  };
+}
+
 export function unaryExpression(operator, argument, prefix = true) {
   return {
     type: 'UnaryExpression',

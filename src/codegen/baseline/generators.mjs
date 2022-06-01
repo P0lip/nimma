@@ -6,11 +6,11 @@ import scope from '../templates/scope.mjs';
 
 export function generateMemberExpression(iterator, { deep, value }) {
   if (iterator.feedback.bailed) {
-    return b.binaryExpression('!==', scope.property, b.literal(value));
+    return b.safeBinaryExpression('!==', scope.property, b.literal(value));
   }
 
   if (iterator.state.inverted) {
-    return b.binaryExpression(
+    return b.safeBinaryExpression(
       '!==',
       iterator.state.pos === 0
         ? scope.property
@@ -39,7 +39,7 @@ export function generateMemberExpression(iterator, { deep, value }) {
         internalScope.pos,
         isLastNode
           ? b.conditionalExpression(
-              b.binaryExpression('!==', scope.property, b.literal(value)),
+              b.safeBinaryExpression('!==', scope.property, b.literal(value)),
               b.numericLiteral(-1),
               scope.depth,
             )
@@ -97,7 +97,7 @@ export function generateMemberExpression(iterator, { deep, value }) {
     );
   }
 
-  const right = b.binaryExpression(
+  const right = b.safeBinaryExpression(
     '!==',
     b.memberExpression(
       scope.path,
