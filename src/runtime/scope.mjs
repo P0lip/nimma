@@ -12,14 +12,12 @@ export default class Scope {
     this.#parent = parent;
     this.path = [];
     this.errors = [];
-    this.sandbox = new Sandbox(this.path, root, null);
+    const sandbox = (this.sandbox = new Sandbox(this.path, root, null));
     this.callbacks = proxyCallbacks(callbacks, this.errors);
-
-    const self = this;
     this.#output = {
       path: this.path,
       get value() {
-        return self.value;
+        return sandbox.value;
       },
     };
   }
