@@ -4,25 +4,10 @@
       "@babel/preset-env",
       {
         "targets": {
-          "node": "14.17"
+          "node": "14.13"
         },
         "shippedProposals": true
       }
     ]
-  ],
-  "env": {
-    "legacy": {
-      "presets": [
-        [
-          "@babel/preset-env",
-          {
-            "targets": {
-              "node": "12.20"
-            },
-            "shippedProposals": true
-          }
-        ]
-      ]
-    }
-  }
+  ]
 }

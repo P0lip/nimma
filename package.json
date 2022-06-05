@@ -1,6 +1,6 @@
 {
   "name": "nimma",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Scalable JSONPath engine.",
   "keywords": [
     "json",
@@ -11,46 +11,39 @@
     "url": "https://github.com/P0lip/nimma/issues"
   },
   "engines": {
-    "node": "^12.20 || >=14.13"
+    "node": ">=14.13"
   },
   "files": [
     "dist/**"
   ],
-  "types": "./dist/cjs/index.d.ts",
   "type": "commonjs",
-  "main": "./dist/legacy/cjs/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.mjs",
   "exports": {
     ".": {
+      "types": "./dist/esm/index.d.ts",
       "import": "./dist/esm/index.mjs",
       "require": "./dist/cjs/index.js"
-    },
-    "./runtime": {
-      "import": "./dist/esm/runtime/index.mjs",
-      "require": "./dist/cjs/runtime/index.js"
     },
     "./parser": {
       "import": "./dist/esm/parser/parser.mjs",
       "require": "./dist/cjs/parser/parser.js"
     },
+    "./runtime": {
+      "types": "./dist/esm/runtime/index.d.ts",
+      "import": "./dist/esm/runtime/index.mjs",
+      "require": "./dist/cjs/runtime/index.js"
+    },
     "./errors": {
+      "types": "./dist/esm/runtime/errors/index.d.ts",
       "import": "./dist/esm/runtime/errors/index.mjs",
       "require": "./dist/cjs/runtime/errors/index.js"
     },
     "./fallbacks": {
+      "types": "./dist/esm/fallbacks/index.d.ts",
       "import": "./dist/esm/fallbacks/index.mjs",
       "require": "./dist/cjs/fallbacks/index.js"
-    },
-    "./legacy": {
-      "import": "./dist/legacy/esm/index.mjs",
-      "require": "./dist/legacy/cjs/index.js"
-    },
-    "./legacy/runtime": {
-      "import": "./dist/legacy/esm/runtime/index.mjs",
-      "require": "./dist/legacy/cjs/runtime/index.js"
-    },
-    "./legacy/fallbacks": {
-      "import": "./dist/legacy/esm/fallbacks/index.mjs",
-      "require": "./dist/legacy/cjs/fallbacks/index.js"
     }
   },
   "sideEffects": false,
@@ -62,8 +55,8 @@
   },
   "scripts": {
     "prebuild": "peggy --format es -o src/parser/parser.mjs src/parser/parser.peg",
-    "build": "export NODE_ENV=production; rollup -c && BABEL_ENV=legacy rollup -c",
-    "postbuild": "(cd dist/legacy && sed -i \"s/nimma\\/runtime/nimma\\/legacy\\/runtime/\" cjs/codegen/tree/tree.js esm/codegen/tree/tree.mjs) && node ./scripts/copy-types.mjs",
+    "build": "export NODE_ENV=production; rollup -c",
+    "postbuild": "node ./scripts/copy-types.mjs",
     "lint": "ls-lint && eslint --cache --cache-location .cache/ --ext .js,.mjs src",
     "test": "export NODE_ENV=test; c8 mocha --config .mocharc ./**/__tests__/**/*.test.mjs && karma start",
     "prepublishOnly": "npm run lint && npm run test && npm run build && (stat ./dist/esm/parser/parser.mjs && stat ./dist/cjs/parser/parser.js) >> /dev/null"
