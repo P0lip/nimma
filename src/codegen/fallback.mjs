@@ -1,13 +1,5 @@
 import * as b from './ast/builders.mjs';
 
-function safeName(name) {
-  return `nimma_${name}`;
-}
-
-function safeIdentifier(name) {
-  return b.identifier(safeName(name));
-}
-
 function getFunctionBody(fn) {
   const source = Reflect.apply(Function.toString, fn, []);
   const paramsDefEnd = source.indexOf(')') + 1;
@@ -22,7 +14,7 @@ function getFunctionBody(fn) {
 }
 
 export default class Fallback {
-  #modules = new Set();
+  #modules = new Map();
   #deps = new Map();
   #fn;
   #extraCode = '';
@@ -32,19 +24,17 @@ export default class Fallback {
     this.#fn = fn;
 
     for (const [source, specifiers] of Object.entries(deps)) {
-      const importSpecifiers = [];
+      const members = new Map();
+      const localModule = {};
+
       for (const { imported, local, value } of specifiers) {
         this.#deps.set(local, value);
-        this.runtimeDeps.set(safeName(local), value);
-
-        importSpecifiers.push(
-          b.importSpecifier(safeIdentifier(local), b.identifier(imported)),
-        );
-
-        this.#modules.add(
-          b.importDeclaration(importSpecifiers, b.stringLiteral(source)),
-        );
+        localModule[imported] = value;
+        members.set(imported, local);
       }
+
+      this.#modules.set(source, members);
+      this.runtimeDeps.set(source, localModule);
     }
   }
 
@@ -55,8 +45,8 @@ export default class Fallback {
   }
 
   attach(tree) {
-    for (const mod of this.#modules) {
-      tree.push(mod, 'program');
+    for (const [source, members] of this.#modules.entries()) {
+      tree.addModule(members, source);
     }
 
     const id = b.identifier('fallback');
@@ -79,7 +69,7 @@ export default class Fallback {
             [
               b.objectExpression(
                 args.map(arg =>
-                  b.objectProperty(b.stringLiteral(arg), safeIdentifier(arg)),
+                  b.objectProperty(b.stringLiteral(arg), b.identifier(arg)),
                 ),
               ),
             ],

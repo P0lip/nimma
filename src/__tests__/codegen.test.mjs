@@ -1217,14 +1217,14 @@ export default function (input, callbacks) {
   });
 
   describe('given fallback', () => {
-    it('and errored expressions, should include whatever fallback specified', () => {
+    it('and errored expressions and ESM module, should include whatever fallback specified', () => {
       expect(
         generate(['$.foo^.info'], {
           fallback: jsonPathPlus,
         }),
       ).to.eq(`import {Scope} from "nimma/runtime";
-import {JSONPath as nimma_JSONPath} from "jsonpath-plus";
-import {default as nimma_toPath} from "lodash.topath";
+import {JSONPath} from "jsonpath-plus";
+import {default as toPath} from "lodash.topath";
 const fallback = Function(\`return (input, path, fn) => {
     this.JSONPath({
       callback: result => {
@@ -1238,8 +1238,8 @@ const fallback = Function(\`return (input, path, fn) => {
       resultType: 'all',
     });
   }\`).call({
-  "JSONPath": nimma_JSONPath,
-  "toPath": nimma_toPath
+  "JSONPath": JSONPath,
+  "toPath": toPath
 });
 export default function (input, callbacks) {
   const scope = new Scope(input, callbacks);
@@ -1251,6 +1251,51 @@ export default function (input, callbacks) {
     scope.destroy();
   }
 }
+`);
+    });
+
+    it('and errored expressions and CommonJS module, should include whatever fallback specified', () => {
+      expect(
+        generate(['$.foo^.info'], {
+          fallback: jsonPathPlus,
+          module: 'commonjs',
+        }),
+      ).to.eq(`"use strict";
+const {
+  Scope
+} = require("nimma/runtime");
+const {
+  JSONPath
+} = require("jsonpath-plus");
+const {
+  default: toPath
+} = require("lodash.topath");
+const fallback = Function(\`return (input, path, fn) => {
+    this.JSONPath({
+      callback: result => {
+        fn({
+          path: this.toPath(result.path.slice(1)),
+          value: result.value,
+        });
+      },
+      json: input,
+      path,
+      resultType: 'all',
+    });
+  }\`).call({
+  "JSONPath": JSONPath,
+  "toPath": toPath
+});
+module.exports = function (input, callbacks) {
+  const scope = new Scope(input, callbacks);
+  try {
+    for (const path of ["$.foo^.info"]) {
+      fallback(input, path, scope.callbacks[path])
+    }
+  } finally {
+    scope.destroy();
+  }
+};
 `);
     });
 

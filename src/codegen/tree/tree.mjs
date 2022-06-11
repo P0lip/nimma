@@ -6,6 +6,8 @@ import fnParams from '../templates/fn-params.mjs';
 import internalScope from '../templates/internal-scope.mjs';
 import scope from '../templates/scope.mjs';
 import treeMethodCall from '../templates/tree-method-call.mjs';
+import commonjs from './modules/commonjs.mjs';
+import esm from './modules/esm.mjs';
 import TraversalZones from './traversal-zones.mjs';
 
 const params = [b.identifier('input'), b.identifier('callbacks')];
@@ -41,24 +43,33 @@ export default function (input, callbacks) {
 export default class ESTree {
   #tree = b.objectExpression([]);
   #shorthands = b.objectExpression([]);
-  #runtimeDependencies = new Set(['Scope']);
+  #runtimeDependencies;
+  #modules;
   #program = new Set();
   #body = new Set();
   #traverse = new Set();
   #availableShorthands;
 
-  constructor({ customShorthands, format, npmProvider }) {
+  constructor({ customShorthands, format, module, npmProvider }) {
     this.format = format;
+    this.module = module;
     this.npmProvider = npmProvider;
     this.ctx = null;
     this.traversalZones = new TraversalZones();
     this.#availableShorthands = customShorthands;
+
+    this.#runtimeDependencies = new Map([['Scope', 'Scope']]);
+    this.#modules = new Map([
+      [`${this.npmProvider ?? ''}nimma/runtime`, this.#runtimeDependencies],
+    ]);
   }
 
   addRuntimeDependency(specifier) {
-    if (!this.#runtimeDependencies.has(specifier)) {
-      this.#runtimeDependencies.add(specifier);
-    }
+    this.#runtimeDependencies.set(specifier, specifier);
+  }
+
+  addModule(members, source) {
+    this.#modules.set(source, members);
   }
 
   attachFallbackExpressions(fallback, expressions) {
@@ -128,17 +139,26 @@ export default class ESTree {
     }
   }
 
-  toString() {
+  export(format) {
     const traversalZones = this.traversalZones.root;
+
+    const { createImport, createDefaultExport } =
+      format === 'esm' ? esm : commonjs;
+
+    if (format !== 'esm' && this.npmProvider !== null) {
+      throw new Error(
+        'npmProvider option is not supported for formats other than ESM',
+      );
+    }
 
     return astring(
       b.program(
         [
-          b.importDeclaration(
-            [...this.#runtimeDependencies].map(dep =>
-              b.importSpecifier(b.identifier(dep), b.identifier(dep)),
-            ),
-            b.stringLiteral(`${this.npmProvider ?? ''}nimma/runtime`),
+          format === 'esm'
+            ? null
+            : b.expressionStatement(b.literal('use strict')),
+          ...Array.from(this.#modules.entries()).map(([source, members]) =>
+            createImport(Array.from(members.entries()), source),
           ),
           ...this.#program,
           traversalZones,
@@ -155,7 +175,7 @@ export default class ESTree {
                   this.#shorthands,
                 ),
               ]),
-          b.exportDefaultDeclaration(
+          createDefaultExport(
             b.functionDeclaration(
               null,
               params,
@@ -195,5 +215,9 @@ export default class ESTree {
         ].filter(Boolean),
       ),
     );
+  }
+
+  toString() {
+    return this.export('esm');
   }
 }

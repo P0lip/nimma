@@ -3,12 +3,11 @@ import * as runtime from '../runtime/index.mjs';
 import getOutputFormat from './utils/determine-format.mjs';
 import parseExpressions from './utils/parse-expressions.mjs';
 
-const IMPORT_DECLARATIONS_REGEXP =
-  /import\s*({[^}]+})\s*from\s*['"][^'"]+['"];?/;
-
 export default class Nimma {
   #fallback;
   #compiledFn;
+  #module;
+  #sourceCode;
 
   constructor(
     expressions,
@@ -16,12 +15,15 @@ export default class Nimma {
       fallback = null,
       unsafe = true,
       output = 'auto',
+      module = 'esm',
       npmProvider = null,
       customShorthands = null,
     } = {},
   ) {
     this.#fallback = fallback;
     this.#compiledFn = null;
+    this.#module = module;
+    this.#sourceCode = null;
 
     const { erroredExpressions, mappedExpressions } = parseExpressions(
       expressions,
@@ -32,40 +34,31 @@ export default class Nimma {
     this.tree = codegen(mappedExpressions, {
       customShorthands,
       format: output === 'auto' ? getOutputFormat() : output,
+      module,
       npmProvider,
     });
 
     if (erroredExpressions.length > 0) {
       this.tree.attachFallbackExpressions(fallback, erroredExpressions);
     }
+  }
 
-    this.sourceCode = String(this.tree);
+  get sourceCode() {
+    this.#sourceCode ??= String(this.tree.export(this.#module));
+    return this.#sourceCode;
   }
 
   query(input, callbacks) {
-    if (this.#compiledFn !== null) {
-      this.#compiledFn(input, callbacks);
-      return;
-    }
+    this.#compiledFn ??= Function(
+      'module, require',
+      `${String(this.tree.export('commonjs'))};return module.exports`,
+    )({}, id => {
+      if (id === 'nimma/runtime') {
+        return runtime;
+      }
 
-    const globals = '__nimma_globals__';
-    const code = this.sourceCode
-      .replace('export default function', `return function`)
-      .replace(IMPORT_DECLARATIONS_REGEXP, `const $1 = ${globals};`)
-      .replace(RegExp(IMPORT_DECLARATIONS_REGEXP.source, 'g'), '');
-
-    this.#compiledFn = Function(
-      globals,
-      ...(this.#fallback === null
-        ? []
-        : Array.from(this.#fallback.runtimeDeps.keys())),
-      code,
-    )(
-      runtime,
-      ...(this.#fallback === null
-        ? []
-        : Array.from(this.#fallback.runtimeDeps.values())),
-    );
+      return this.#fallback?.runtimeDeps.get(id);
+    });
 
     this.#compiledFn(input, callbacks);
   }
