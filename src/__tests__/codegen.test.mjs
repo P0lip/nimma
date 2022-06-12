@@ -977,7 +977,7 @@ const tree = {
   },
   "$[?(@ ~= 'test')]": function (scope) {
     if (scope.depth !== 0) return;
-    if (!(/test/.test(scope.sandbox.value) === true)) return;
+    if (!/test/.test(scope.sandbox.value)) return;
     scope.emit("$[?(@ ~= 'test')]", 0, false);
   }
 };

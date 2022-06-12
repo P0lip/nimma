@@ -133,4 +133,15 @@ describe('parseFilterExpression', () => {
       );
     });
   });
+
+  it('supports ~= operator', () => {
+    expect(print(`?(@ ~= "abc")`)).to.eq('!/abc/.test(scope.sandbox.value)');
+  });
+
+  it('prohibits the use of ~= operator for nodes other than Literals', () => {
+    expect(print.bind(null, `?(@ ~= baz)`)).to.throw(
+      SyntaxError,
+      '~= must be used with strings',
+    );
+  });
 });

@@ -328,19 +328,17 @@ export function rewriteESTree(tree, node, pos) {
         );
         node.right = b.booleanLiteral(true);
       } else if (node.operator === '~=') {
-        node.operator = '===';
         if (node.right.type !== 'Literal') {
-          throw SyntaxError('Expected string');
+          throw SyntaxError('~= must be used with strings');
         }
 
-        node.left = b.callExpression(
+        return b.callExpression(
           b.memberExpression(
             b.regExpLiteral(node.right.value, ''),
             b.identifier('test'),
           ),
           [rewriteESTree(tree, node.left, pos)],
         );
-        node.right = b.booleanLiteral(true);
       } else {
         node.left = rewriteESTree(tree, node.left, pos);
         node.right = rewriteESTree(tree, node.right, pos);
