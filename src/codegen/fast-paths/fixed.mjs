@@ -20,7 +20,6 @@ import treeMethodCall from '../templates/tree-method-call.mjs';
 
 const VALUE_IDENTIFIER = b.identifier('value');
 const IS_OBJECT_IDENTIFIER = b.identifier('isObject');
-const GET_IDENTIFIER = b.identifier('get');
 
 const IS_NOT_OBJECT_IF_STATEMENT = b.ifStatement(
   b.unaryExpression(
@@ -47,30 +46,17 @@ export default (nodes, tree, ctx) => {
   const valueVariableDeclaration = b.variableDeclaration('const', [
     b.variableDeclarator(
       VALUE_IDENTIFIER,
-      nodes.slice(0, -1).reduce(
-        (object, node) => {
-          if (tree.format === 'ES2018') {
-            object.arguments[1].elements.push(b.literal(node.value));
-            return object;
-          }
-
-          return b.memberExpression(object, b.literal(node.value), true, true);
-        },
-        tree.format === 'ES2018' && nodes.length > 0
-          ? b.callExpression(b.identifier('get'), [
-              sandbox.root,
-              b.arrayExpression([]),
-            ])
-          : sandbox.root,
-      ),
+      nodes
+        .slice(0, -1)
+        .reduce(
+          (object, node) =>
+            b.memberExpression(object, b.literal(node.value), true, true),
+          sandbox.root,
+        ),
     ),
   ]);
 
   tree.addRuntimeDependency(IS_OBJECT_IDENTIFIER.name);
-
-  if (tree.format === 'ES2018') {
-    tree.addRuntimeDependency(GET_IDENTIFIER.name);
-  }
 
   tree.pushAll([
     [

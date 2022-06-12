@@ -19,7 +19,6 @@ declare class Nimma {
       fallback?: Fallback | null;
       npmProvider?: string | null;
       unsafe?: boolean;
-      output?: 'ES2018' | 'ES2021' | 'auto';
       module?: 'esm' | 'commonjs';
     },
   );

@@ -1,6 +1,5 @@
 import codegen from '../codegen/index.mjs';
 import * as runtime from '../runtime/index.mjs';
-import getOutputFormat from './utils/determine-format.mjs';
 import parseExpressions from './utils/parse-expressions.mjs';
 
 export default class Nimma {
@@ -14,7 +13,6 @@ export default class Nimma {
     {
       fallback = null,
       unsafe = true,
-      output = 'auto',
       module = 'esm',
       npmProvider = null,
       customShorthands = null,
@@ -33,7 +31,6 @@ export default class Nimma {
 
     this.tree = codegen(mappedExpressions, {
       customShorthands,
-      format: output === 'auto' ? getOutputFormat() : output,
       module,
       npmProvider,
     });

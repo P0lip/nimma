@@ -8,7 +8,7 @@ import { RuntimeError } from '../runtime/errors/index.mjs';
 
 const { expect } = chai;
 
-function _collect(input, expressions, opts) {
+function collect(input, expressions, opts) {
   const collected = {};
   const _ = (expr, scope) => {
     collected[expr] ??= [];
@@ -26,29 +26,6 @@ function _collect(input, expressions, opts) {
   );
 
   return collected;
-}
-
-function collect(
-  input,
-  expressions,
-  { fallback = null, customShorthands = null } = {},
-) {
-  const auto = _collect(input, expressions, { fallback, customShorthands });
-  const esnext = _collect(input, expressions, {
-    fallback,
-    customShorthands,
-    output: 'ES2021',
-  });
-  const es2018 = _collect(input, expressions, {
-    fallback,
-    customShorthands,
-    output: 'ES2018',
-  });
-
-  expect(auto).to.deep.eq(esnext);
-  expect(esnext).to.deep.eq(es2018);
-
-  return esnext;
 }
 
 describe('Nimma', () => {
