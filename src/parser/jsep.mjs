@@ -8,4 +8,6 @@ Jsep.addBinaryOp('in', 12);
 Jsep.addBinaryOp('~=', 20);
 Jsep.plugins.register(regex, ternary);
 
+export { Jsep };
+
 export default expr => Jsep.parse(expr);
