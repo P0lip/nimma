@@ -1,5 +1,4 @@
 import { expect } from 'chai';
-import forEach from 'mocha-each';
 
 import Nimma from '../core/index.mjs';
 
@@ -72,25 +71,25 @@ const tree = {
     scope.emit("$.info.contact", 0, false);
   },
   "$.info.contact.*": function (scope) {
-    if (scope.depth !== 2) return;
+    if (scope.path.length !== 3) return;
     if (scope.path[0] !== "info") return;
     if (scope.path[1] !== "contact") return;
     scope.emit("$.info.contact.*", 0, false);
   },
   "$.servers[*].url": function (scope) {
-    if (scope.depth !== 2) return;
+    if (scope.path.length !== 3) return;
     if (scope.path[0] !== "servers") return;
     if (scope.path[2] !== "url") return;
     scope.emit("$.servers[*].url", 0, false);
   },
   "$.servers[0:2]": function (scope) {
-    if (scope.depth !== 1) return;
+    if (scope.path.length !== 2) return;
     if (scope.path[0] !== "servers") return;
     if (typeof scope.path[1] !== "number" || scope.path[1] >= 2) return;
     scope.emit("$.servers[0:2]", 0, false);
   },
   "$.servers[:5]": function (scope) {
-    if (scope.depth !== 1) return;
+    if (scope.path.length !== 2) return;
     if (scope.path[0] !== "servers") return;
     if (typeof scope.path[1] !== "number" || scope.path[1] >= 5) return;
     scope.emit("$.servers[:5]", 0, false);
@@ -117,17 +116,24 @@ const tree = {
     scope.emit("$.bar['children.bar']", 0, false);
   },
   "$.paths[*][404,202]": function (scope) {
-    if (scope.depth !== 2) return;
+    if (scope.path.length !== 3) return;
     if (scope.path[0] !== "paths") return;
     if (String(scope.path[2]) !== "404" && String(scope.path[2]) !== "202") return;
     scope.emit("$.paths[*][404,202]", 0, false);
   },
-  "$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload": function (scope) {
-    if (scope.depth !== 4) return;
+  "$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload": function (scope, state) {
+    if (scope.path.length < 4) return;
     if (scope.path[0] !== "channels") return;
     if (scope.path[2] !== "publish" && scope.path[2] !== "subscribe") return;
-    if (!(scope.sandbox.at(4).value.schemaFormat === void 0)) return;
-    if (scope.path[4] !== "payload") return;
+    if (state.initialValue >= 0) {
+      if (scope.sandbox.value.schemaFormat === void 0) {
+        state.value |= 1
+      } else if (state.at(-1) === 0) {
+        state.value &= 0
+        return;
+      }
+    }
+    if (state.initialValue < 1 || !(scope.path[scope.path.length - 1] === "payload")) return;
     scope.emit("$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload", 0, false);
   }
 };
@@ -139,13 +145,14 @@ export default function (input, callbacks) {
     tree["$.bar['children']"](scope);
     tree["$.bar['0']"](scope);
     tree["$.bar['children.bar']"](scope);
+    const state0 = scope.allocState();
     scope.traverse(() => {
       tree["$.info.contact.*"](scope);
       tree["$.servers[*].url"](scope);
       tree["$.servers[0:2]"](scope);
       tree["$.servers[:5]"](scope);
       tree["$.paths[*][404,202]"](scope);
-      tree["$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload"](scope);
+      tree["$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload"](scope, state0);
     }, zones);
   } finally {
     scope.destroy();
@@ -174,13 +181,13 @@ const tree = {
     scope.emit("$.info~", 0, true);
   },
   "$.servers[*].url~": function (scope) {
-    if (scope.depth !== 2) return;
+    if (scope.path.length !== 3) return;
     if (scope.path[0] !== "servers") return;
     if (scope.path[2] !== "url") return;
     scope.emit("$.servers[*].url~", 0, true);
   },
   "$.servers[:5]~": function (scope) {
-    if (scope.depth !== 1) return;
+    if (scope.path.length !== 2) return;
     if (scope.path[0] !== "servers") return;
     if (typeof scope.path[1] !== "number" || scope.path[1] >= 5) return;
     scope.emit("$.servers[:5]~", 0, true);
@@ -223,13 +230,13 @@ const tree = {
     scope.emit("$.info^~", 1, true);
   },
   "$.servers[*].url^^": function (scope) {
-    if (scope.depth !== 2) return;
+    if (scope.path.length !== 3) return;
     if (scope.path[0] !== "servers") return;
     if (scope.path[2] !== "url") return;
     scope.emit("$.servers[*].url^^", 2, false);
   },
   "$..baz^^": function (scope) {
-    if (scope.property !== "baz") return;
+    if (scope.path[scope.path.length - 1] !== "baz") return;
     scope.emit("$..baz^^", 2, false);
     scope.emit("$..baz~^^", 0, true);
   }
@@ -250,7 +257,7 @@ export default function (input, callbacks) {
     });
   });
 
-  it('supported deep', () => {
+  it('deep', () => {
     expect(
       generate([
         '$..empty',
@@ -258,6 +265,7 @@ export default function (input, callbacks) {
         '$.baz.bar..baz',
         '$..foo..bar..baz',
         '$..baz..baz',
+        '$..[?(@.baz)]..baz',
         "$..[?( @property === 'get' || @property === 'put' || @property === 'post' )]",
         "$..paths..[?( @property === 'get' || @property === 'put' || @property === 'post' )]",
         "$.components.schemas..[?(@property !== 'properties' && @ && (@ && @.example !== void 0 || @.default !== void 0))]",
@@ -270,87 +278,136 @@ export default function (input, callbacks) {
         '$.foo.[bar]',
         '$.foo.[bar,baz]',
         '$.paths..content.*.examples',
+        '$..[?(@.example && @.schema)]..[?(@.example && @.schema)]',
+        '$..[?(@.example && @.schema)]..foo.bar..[?(@.example && @.schema)]',
+        '$..[?( @property >= 400 )]..foo',
+        '$..foo..[?( @property >= 900 )]..foo',
+        '$.paths..content.bar..examples',
       ]),
     ).to.eq(`import {Scope} from "nimma/runtime";
 const tree = {
   "$..empty": function (scope) {
-    if (scope.property !== "empty") return;
+    if (scope.path[scope.path.length - 1] !== "empty") return;
     scope.emit("$..empty", 0, false);
   },
   "$.baz..baz": function (scope) {
-    if (scope.depth < 1) return;
+    if (scope.path.length < 2) return;
     if (scope.path[0] !== "baz") return;
-    if (scope.property !== "baz") return;
+    if (scope.path[scope.path.length - 1] !== "baz") return;
     scope.emit("$.baz..baz", 0, false);
   },
   "$.baz.bar..baz": function (scope) {
-    if (scope.depth < 2) return;
+    if (scope.path.length < 3) return;
     if (scope.path[0] !== "baz") return;
     if (scope.path[1] !== "bar") return;
-    if (scope.property !== "baz") return;
+    if (scope.path[scope.path.length - 1] !== "baz") return;
     scope.emit("$.baz.bar..baz", 0, false);
   },
-  "$..foo..bar..baz": function (scope) {
-    if (scope.depth < 2) return;
-    let pos = 0;
-    if ((pos = scope.path.indexOf("foo", pos), pos === -1)) return;
-    if ((pos = scope.path.indexOf("bar", pos + 1), pos === -1)) return;
-    if (scope.depth < pos + 1 || (pos = scope.property !== "baz" ? -1 : scope.depth, pos === -1)) return;
-    if (scope.depth !== pos) return;
+  "$..foo..bar..baz": function (scope, state) {
+    if (scope.path.length < 1) return;
+    if (state.initialValue >= 0) {
+      if (scope.path[scope.path.length - 1] === "foo") {
+        state.value |= 1
+      }
+    }
+    if (state.initialValue >= 1) {
+      if (scope.path[scope.path.length - 1] === "bar") {
+        state.value |= 3
+      }
+    }
+    if (state.initialValue < 3 || !(scope.path[scope.path.length - 1] === "baz")) return;
     scope.emit("$..foo..bar..baz", 0, false);
   },
-  "$..baz..baz": function (scope) {
-    if (scope.depth < 1) return;
-    let pos = 0;
-    if ((pos = scope.path.indexOf("baz", pos), pos === -1)) return;
-    if (scope.depth < pos + 1 || (pos = scope.property !== "baz" ? -1 : scope.depth, pos === -1)) return;
-    if (scope.depth !== pos) return;
+  "$..baz..baz": function (scope, state) {
+    if (scope.path.length < 1) return;
+    if (state.initialValue >= 0) {
+      if (scope.path[scope.path.length - 1] === "baz") {
+        state.value |= 1
+      }
+    }
+    if (state.initialValue < 1 || !(scope.path[scope.path.length - 1] === "baz")) return;
     scope.emit("$..baz..baz", 0, false);
+  },
+  "$..[?(@.baz)]..baz": function (scope, state) {
+    if (scope.path.length < 1) return;
+    if (state.initialValue >= 0) {
+      if (scope.sandbox.value.baz) {
+        state.value |= 1
+      } else if (state.at(-1) === 0) {
+        state.value &= 0
+        return;
+      }
+    }
+    if (state.initialValue < 1 || !(scope.path[scope.path.length - 1] === "baz")) return;
+    scope.emit("$..[?(@.baz)]..baz", 0, false);
   },
   "$..[?( @property === 'get' || @property === 'put' || @property === 'post' )]": function (scope) {
     if (!(scope.sandbox.property === 'get' || scope.sandbox.property === 'put' || scope.sandbox.property === 'post')) return;
     scope.emit("$..[?( @property === 'get' || @property === 'put' || @property === 'post' )]", 0, false);
   },
-  "$..paths..[?( @property === 'get' || @property === 'put' || @property === 'post' )]": function (scope) {
-    if (scope.depth < 1) return;
-    let pos = 0;
-    if ((pos = scope.path.indexOf("paths", pos), pos === -1)) return;
-    if (scope.depth < pos + 1 || (pos = !(scope.sandbox.property === 'get' || scope.sandbox.property === 'put' || scope.sandbox.property === 'post') ? -1 : scope.depth, pos === -1)) return;
-    if (scope.depth !== pos) return;
+  "$..paths..[?( @property === 'get' || @property === 'put' || @property === 'post' )]": function (scope, state) {
+    if (scope.path.length < 1) return;
+    if (state.initialValue >= 0) {
+      if (scope.path[scope.path.length - 1] === "paths") {
+        state.value |= 1
+      }
+    }
+    if (state.initialValue < 1 || !(scope.sandbox.property === 'get' || scope.sandbox.property === 'put' || scope.sandbox.property === 'post')) return;
     scope.emit("$..paths..[?( @property === 'get' || @property === 'put' || @property === 'post' )]", 0, false);
   },
   "$.components.schemas..[?(@property !== 'properties' && @ && (@ && @.example !== void 0 || @.default !== void 0))]": function (scope) {
-    if (scope.depth < 2) return;
+    if (scope.path.length < 3) return;
     if (scope.path[0] !== "components") return;
     if (scope.path[1] !== "schemas") return;
     if (!(scope.sandbox.property !== 'properties' && scope.sandbox.value && (scope.sandbox.value && scope.sandbox.value.example !== void 0 || scope.sandbox.value.default !== void 0))) return;
     scope.emit("$.components.schemas..[?(@property !== 'properties' && @ && (@ && @.example !== void 0 || @.default !== void 0))]", 0, false);
   },
   "$..address.street[?(@.number > 20)]": function (scope) {
-    if (scope.depth < 2) return;
+    if (scope.path.length < 3) return;
+    if (scope.path[scope.path.length - 3] !== "address") return;
+    if (scope.path[scope.path.length - 2] !== "street") return;
     if (!(scope.sandbox.value.number > 20)) return;
-    if (scope.path[scope.depth - 1] !== "street") return;
-    if (scope.path[scope.depth - 2] !== "address") return;
     scope.emit("$..address.street[?(@.number > 20)]", 0, false);
   },
-  "$.bar..[?(@.example && @.schema)].test": function (scope) {
-    if (scope.depth < 2) return;
+  "$.bar..[?(@.example && @.schema)].test": function (scope, state) {
+    if (scope.path.length < 2) return;
     if (scope.path[0] !== "bar") return;
-    if (scope.property !== "test") return;
-    if (!(scope.sandbox.at(-2).value.example && scope.sandbox.at(-2).value.schema)) return;
+    if (state.initialValue >= 0) {
+      if (scope.sandbox.value.example && scope.sandbox.value.schema) {
+        state.value |= 1
+      } else if (state.at(-1) === 0) {
+        state.value &= 0
+        return;
+      }
+    }
+    if (state.initialValue < 1 || !(scope.path[scope.path.length - 1] === "test")) return;
     scope.emit("$.bar..[?(@.example && @.schema)].test", 0, false);
   },
-  "$..[?(@.name && @.name.match(/1_1$/))].name^^": function (scope) {
-    if (scope.depth < 1) return;
-    if (scope.property !== "name") return;
-    if (!(scope.sandbox.at(-2).value.name && scope.sandbox.at(-2).value.name.match(/1_1$/))) return;
+  "$..[?(@.name && @.name.match(/1_1$/))].name^^": function (scope, state) {
+    if (scope.path.length < 1) return;
+    if (state.initialValue >= 0) {
+      if (scope.sandbox.value.name && scope.sandbox.value.name.match(/1_1$/)) {
+        state.value |= 1
+      } else if (state.at(-1) === 0) {
+        state.value &= 0
+        return;
+      }
+    }
+    if (state.initialValue < 1 || !(scope.path[scope.path.length - 1] === "name")) return;
     scope.emit("$..[?(@.name && @.name.match(/1_1$/))].name^^", 2, false);
   },
-  "$.bar[?( @property >= 400 )]..foo": function (scope) {
-    if (scope.depth < 2) return;
+  "$.bar[?( @property >= 400 )]..foo": function (scope, state) {
+    if (scope.path.length < 2) return;
     if (scope.path[0] !== "bar") return;
-    if (!(scope.sandbox.at(2).property >= 400)) return;
-    if (scope.property !== "foo") return;
+    if (state.initialValue >= 0) {
+      if (scope.sandbox.property >= 400) {
+        state.value |= 1
+      } else if (state.at(-1) === 0) {
+        state.value &= 0
+        return;
+      }
+    }
+    if (state.initialValue < 1 || !(scope.path[scope.path.length - 1] === "foo")) return;
     scope.emit("$.bar[?( @property >= 400 )]..foo", 0, false);
   },
   "$.[?(@.bar)]": function (scope) {
@@ -358,52 +415,159 @@ const tree = {
     scope.emit("$.[?(@.bar)]", 0, false);
   },
   "$.foo.[?(@.bar)]": function (scope) {
-    if (scope.depth < 1) return;
+    if (scope.path.length < 2) return;
     if (scope.path[0] !== "foo") return;
     if (!scope.sandbox.value.bar) return;
     scope.emit("$.foo.[?(@.bar)]", 0, false);
   },
   "$.foo.[bar]": function (scope) {
-    if (scope.depth < 1) return;
+    if (scope.path.length < 2) return;
     if (scope.path[0] !== "foo") return;
-    if (scope.property !== "bar") return;
+    if (scope.path[scope.path.length - 1] !== "bar") return;
     scope.emit("$.foo.[bar]", 0, false);
   },
   "$.foo.[bar,baz]": function (scope) {
-    if (scope.depth < 1) return;
+    if (scope.path.length < 2) return;
     if (scope.path[0] !== "foo") return;
-    if (scope.property !== "bar" && scope.property !== "baz") return;
+    if (scope.path[scope.path.length - 1] !== "bar" && scope.path[scope.path.length - 1] !== "baz") return;
     scope.emit("$.foo.[bar,baz]", 0, false);
   },
   "$.paths..content.*.examples": function (scope) {
-    if (scope.depth < 3) return;
+    if (scope.path.length < 4) return;
     if (scope.path[0] !== "paths") return;
-    if (scope.property !== "examples") return;
-    if (scope.path[scope.depth - 2] !== "content") return;
+    if (scope.path[scope.path.length - 3] !== "content") return;
+    if (scope.path[scope.path.length - 1] !== "examples") return;
     scope.emit("$.paths..content.*.examples", 0, false);
+  },
+  "$..[?(@.example && @.schema)]..[?(@.example && @.schema)]": function (scope, state) {
+    if (scope.path.length < 1) return;
+    if (state.initialValue >= 0) {
+      if (scope.sandbox.value.example && scope.sandbox.value.schema) {
+        state.value |= 1
+      } else if (state.at(-1) === 0) {
+        state.value &= 0
+        return;
+      }
+    }
+    if (state.initialValue < 1 || !(scope.sandbox.value.example && scope.sandbox.value.schema)) return;
+    scope.emit("$..[?(@.example && @.schema)]..[?(@.example && @.schema)]", 0, false);
+  },
+  "$..[?(@.example && @.schema)]..foo.bar..[?(@.example && @.schema)]": function (scope, state) {
+    if (scope.path.length < 1) return;
+    if (state.initialValue >= 0) {
+      if (scope.sandbox.value.example && scope.sandbox.value.schema) {
+        state.value |= 1
+      } else if (state.at(-1) === 0) {
+        state.value &= 0
+        return;
+      }
+    }
+    if (state.initialValue >= 1) {
+      if (scope.path[scope.path.length - 1] === "foo") {
+        state.value |= 3
+      }
+    }
+    if (state.initialValue >= 3) {
+      if (scope.path[scope.path.length - 1] === "bar") {
+        state.value |= 7
+      } else if (state.at(-1) === 3) {
+        state.value &= 1
+        return;
+      }
+    }
+    if (state.initialValue < 7 || !(scope.sandbox.value.example && scope.sandbox.value.schema)) return;
+    scope.emit("$..[?(@.example && @.schema)]..foo.bar..[?(@.example && @.schema)]", 0, false);
+  },
+  "$..[?( @property >= 400 )]..foo": function (scope, state) {
+    if (scope.path.length < 1) return;
+    if (state.initialValue >= 0) {
+      if (scope.sandbox.property >= 400) {
+        state.value |= 1
+      } else if (state.at(-1) === 0) {
+        state.value &= 0
+        return;
+      }
+    }
+    if (state.initialValue < 1 || !(scope.path[scope.path.length - 1] === "foo")) return;
+    scope.emit("$..[?( @property >= 400 )]..foo", 0, false);
+  },
+  "$..foo..[?( @property >= 900 )]..foo": function (scope, state) {
+    if (scope.path.length < 1) return;
+    if (state.initialValue >= 0) {
+      if (scope.path[scope.path.length - 1] === "foo") {
+        state.value |= 1
+      }
+    }
+    if (state.initialValue >= 1) {
+      if (scope.sandbox.property >= 900) {
+        state.value |= 3
+      } else if (state.at(-1) === 1) {
+        state.value &= 1
+        return;
+      }
+    }
+    if (state.initialValue < 3 || !(scope.path[scope.path.length - 1] === "foo")) return;
+    scope.emit("$..foo..[?( @property >= 900 )]..foo", 0, false);
+  },
+  "$.paths..content.bar..examples": function (scope, state) {
+    if (scope.path.length < 2) return;
+    if (scope.path[0] !== "paths") return;
+    if (state.initialValue >= 0) {
+      if (scope.path[scope.path.length - 1] === "content") {
+        state.value |= 1
+      }
+    }
+    if (state.initialValue >= 1) {
+      if (scope.path[scope.path.length - 1] === "bar") {
+        state.value |= 3
+      } else if (state.at(-1) === 1) {
+        state.value &= 0
+        return;
+      }
+    }
+    if (state.initialValue < 3 || !(scope.path[scope.path.length - 1] === "examples")) return;
+    scope.emit("$.paths..content.bar..examples", 0, false);
   }
 };
 export default function (input, callbacks) {
   const scope = new Scope(input, callbacks);
   try {
+    const state0 = scope.allocState();
+    const state1 = scope.allocState();
+    const state2 = scope.allocState();
+    const state3 = scope.allocState();
+    const state4 = scope.allocState();
+    const state5 = scope.allocState();
+    const state6 = scope.allocState();
+    const state7 = scope.allocState();
+    const state8 = scope.allocState();
+    const state9 = scope.allocState();
+    const state10 = scope.allocState();
+    const state11 = scope.allocState();
     scope.traverse(() => {
       tree["$..empty"](scope);
       tree["$.baz..baz"](scope);
       tree["$.baz.bar..baz"](scope);
-      tree["$..foo..bar..baz"](scope);
-      tree["$..baz..baz"](scope);
+      tree["$..foo..bar..baz"](scope, state0);
+      tree["$..baz..baz"](scope, state1);
+      tree["$..[?(@.baz)]..baz"](scope, state2);
       tree["$..[?( @property === 'get' || @property === 'put' || @property === 'post' )]"](scope);
-      tree["$..paths..[?( @property === 'get' || @property === 'put' || @property === 'post' )]"](scope);
+      tree["$..paths..[?( @property === 'get' || @property === 'put' || @property === 'post' )]"](scope, state3);
       tree["$.components.schemas..[?(@property !== 'properties' && @ && (@ && @.example !== void 0 || @.default !== void 0))]"](scope);
       tree["$..address.street[?(@.number > 20)]"](scope);
-      tree["$.bar..[?(@.example && @.schema)].test"](scope);
-      tree["$..[?(@.name && @.name.match(/1_1$/))].name^^"](scope);
-      tree["$.bar[?( @property >= 400 )]..foo"](scope);
+      tree["$.bar..[?(@.example && @.schema)].test"](scope, state4);
+      tree["$..[?(@.name && @.name.match(/1_1$/))].name^^"](scope, state5);
+      tree["$.bar[?( @property >= 400 )]..foo"](scope, state6);
       tree["$.[?(@.bar)]"](scope);
       tree["$.foo.[?(@.bar)]"](scope);
       tree["$.foo.[bar]"](scope);
       tree["$.foo.[bar,baz]"](scope);
       tree["$.paths..content.*.examples"](scope);
+      tree["$..[?(@.example && @.schema)]..[?(@.example && @.schema)]"](scope, state7);
+      tree["$..[?(@.example && @.schema)]..foo.bar..[?(@.example && @.schema)]"](scope, state8);
+      tree["$..[?( @property >= 400 )]..foo"](scope, state9);
+      tree["$..foo..[?( @property >= 900 )]..foo"](scope, state10);
+      tree["$.paths..content.bar..examples"](scope, state11);
     }, null);
   } finally {
     scope.destroy();
@@ -424,29 +588,28 @@ export default function (input, callbacks) {
     ).to.eq(`import {Scope} from "nimma/runtime";
 const tree = {
   "$..examples.*": function (scope) {
-    if (scope.depth < 1) return;
-    if (scope.path[scope.depth - 1] !== "examples") return;
+    if (scope.path.length < 2) return;
+    if (scope.path[scope.path.length - 2] !== "examples") return;
     scope.emit("$..examples.*", 0, false);
   },
-  "$..examples..*": function (scope) {
-    scope.bail("$..examples..*", scope => {
-      scope.emit("$..examples..*", 0, false);
-      scope.emit("$..examples..*~", 0, true);
-    }, [{
-      fn: scope => scope.property !== "examples",
-      deep: true
-    }, {
-      fn: scope => false,
-      deep: true
-    }]);
+  "$..examples..*": function (scope, state) {
+    if (scope.path.length < 1) return;
+    if (state.initialValue >= 0) {
+      if (scope.path[scope.path.length - 1] === "examples") {
+        state.value |= 1
+      }
+    }
+    if (state.initialValue < 1) return;
+    scope.emit("$..examples..*", 0, false);
+    scope.emit("$..examples..*~", 0, true);
   },
   "$.examples..*": function (scope) {
-    if (scope.depth < 1) return;
+    if (scope.path.length < 2) return;
     if (scope.path[0] !== "examples") return;
     scope.emit("$.examples..*", 0, false);
   },
   "$.examples.*": function (scope) {
-    if (scope.depth !== 1) return;
+    if (scope.path.length !== 2) return;
     if (scope.path[0] !== "examples") return;
     scope.emit("$.examples.*", 0, false);
   }
@@ -454,9 +617,10 @@ const tree = {
 export default function (input, callbacks) {
   const scope = new Scope(input, callbacks);
   try {
-    tree["$..examples..*"](scope);
+    const state0 = scope.allocState();
     scope.traverse(() => {
       tree["$..examples.*"](scope);
+      tree["$..examples..*"](scope, state0);
       tree["$.examples..*"](scope);
       tree["$.examples.*"](scope);
     }, null);
@@ -483,33 +647,33 @@ const zones = {
 };
 const tree = {
   "$[0:2]": function (scope) {
-    if (scope.depth !== 0) return;
+    if (scope.path.length !== 1) return;
     if (typeof scope.path[0] !== "number" || scope.path[0] >= 2) return;
     scope.emit("$[0:2]", 0, false);
   },
   "$[:5]": function (scope) {
-    if (scope.depth !== 0) return;
+    if (scope.path.length !== 1) return;
     if (typeof scope.path[0] !== "number" || scope.path[0] >= 5) return;
     scope.emit("$[:5]", 0, false);
   },
   "$[1:5:3]": function (scope) {
-    if (scope.depth !== 0) return;
+    if (scope.path.length !== 1) return;
     if (typeof scope.path[0] !== "number" || scope.path[0] < 1 || scope.path[0] >= 5 || scope.path[0] !== 1 && scope.path[0] % 3 !== 1) return;
     scope.emit("$[1:5:3]", 0, false);
   },
   "$[::2]": function (scope) {
-    if (scope.depth !== 0) return;
+    if (scope.path.length !== 1) return;
     if (typeof scope.path[0] !== "number" || scope.path[0] !== 0 && scope.path[0] % 2 !== 0) return;
     scope.emit("$[::2]", 0, false);
   },
   "$[1::2]": function (scope) {
-    if (scope.depth !== 0) return;
+    if (scope.path.length !== 1) return;
     if (typeof scope.path[0] !== "number" || scope.path[0] < 1 || scope.path[0] !== 1 && scope.path[0] % 2 !== 1) return;
     scope.emit("$[1::2]", 0, false);
   },
   "$[1:-5:-2]": function (scope) {
-    if (scope.depth !== 0) return;
-    if (typeof scope.path[0] !== "number" || !inBounds(scope.sandbox.at(-2).value, scope.path[0], 1, -5, -2)) return;
+    if (scope.path.length !== 1) return;
+    if (typeof scope.path[0] !== "number" || !inBounds(scope.sandbox, scope.path[0], 1, -5, -2)) return;
     scope.emit("$[1:-5:-2]", 0, false);
   }
 };
@@ -531,84 +695,6 @@ export default function (input, callbacks) {
 `);
   });
 
-  it('bailed', () => {
-    expect(
-      generate([
-        '$..[?(@.example && @.schema)]..[?(@.example && @.schema)]',
-        '$..[?( @property >= 400 )]..foo',
-        '$..foo..[?( @property >= 900 )]..foo',
-        '$.paths..content.bar..examples',
-      ]),
-    ).to.eq(`import {Scope} from "nimma/runtime";
-const tree = {
-  "$..[?(@.example && @.schema)]..[?(@.example && @.schema)]": function (scope) {
-    scope.bail("$..[?(@.example && @.schema)]..[?(@.example && @.schema)]", scope => {
-      scope.emit("$..[?(@.example && @.schema)]..[?(@.example && @.schema)]", 0, false);
-    }, [{
-      fn: scope => !(scope.sandbox.value.example && scope.sandbox.value.schema),
-      deep: true
-    }, {
-      fn: scope => !(scope.sandbox.value.example && scope.sandbox.value.schema),
-      deep: true
-    }]);
-  },
-  "$..[?( @property >= 400 )]..foo": function (scope) {
-    scope.bail("$..[?( @property >= 400 )]..foo", scope => {
-      scope.emit("$..[?( @property >= 400 )]..foo", 0, false);
-    }, [{
-      fn: scope => !(scope.sandbox.property >= 400),
-      deep: true
-    }, {
-      fn: scope => scope.property !== "foo",
-      deep: true
-    }]);
-  },
-  "$..foo..[?( @property >= 900 )]..foo": function (scope) {
-    scope.bail("$..foo..[?( @property >= 900 )]..foo", scope => {
-      scope.emit("$..foo..[?( @property >= 900 )]..foo", 0, false);
-    }, [{
-      fn: scope => scope.property !== "foo",
-      deep: true
-    }, {
-      fn: scope => !(scope.sandbox.property >= 900),
-      deep: true
-    }, {
-      fn: scope => scope.property !== "foo",
-      deep: true
-    }]);
-  },
-  "$.paths..content.bar..examples": function (scope) {
-    scope.bail("$.paths..content.bar..examples", scope => {
-      scope.emit("$.paths..content.bar..examples", 0, false);
-    }, [{
-      fn: scope => scope.property !== "paths",
-      deep: false
-    }, {
-      fn: scope => scope.property !== "content",
-      deep: true
-    }, {
-      fn: scope => scope.property !== "bar",
-      deep: false
-    }, {
-      fn: scope => scope.property !== "examples",
-      deep: true
-    }]);
-  }
-};
-export default function (input, callbacks) {
-  const scope = new Scope(input, callbacks);
-  try {
-    tree["$..[?(@.example && @.schema)]..[?(@.example && @.schema)]"](scope);
-    tree["$..[?( @property >= 400 )]..foo"](scope);
-    tree["$..foo..[?( @property >= 900 )]..foo"](scope);
-    tree["$.paths..content.bar..examples"](scope);
-  } finally {
-    scope.destroy();
-  }
-}
-`);
-  });
-
   it('filter expressions', () => {
     expect(
       generate([
@@ -621,23 +707,25 @@ export default function (input, callbacks) {
     ).to.eq(`import {Scope} from "nimma/runtime";
 const tree = {
   "$.info..[?(@property.startsWith('foo'))]": function (scope) {
-    if (scope.depth < 1) return;
+    if (scope.path.length < 2) return;
     if (scope.path[0] !== "info") return;
     if (!String(scope.sandbox.property).startsWith('foo')) return;
     scope.emit("$.info..[?(@property.startsWith('foo'))]", 0, false);
   },
   "$.info.*[?(@property.startsWith('foo'))]": function (scope) {
-    if (scope.depth !== 2) return;
+    if (scope.path.length !== 3) return;
     if (scope.path[0] !== "info") return;
     if (!String(scope.sandbox.property).startsWith('foo')) return;
     scope.emit("$.info.*[?(@property.startsWith('foo'))]", 0, false);
   },
-  "$..headers..[?(@.example && @.schema)]": function (scope) {
-    if (scope.depth < 1) return;
-    let pos = 0;
-    if ((pos = scope.path.indexOf("headers", pos), pos === -1)) return;
-    if (scope.depth < pos + 1 || (pos = !(scope.sandbox.value.example && scope.sandbox.value.schema) ? -1 : scope.depth, pos === -1)) return;
-    if (scope.depth !== pos) return;
+  "$..headers..[?(@.example && @.schema)]": function (scope, state) {
+    if (scope.path.length < 1) return;
+    if (state.initialValue >= 0) {
+      if (scope.path[scope.path.length - 1] === "headers") {
+        state.value |= 1
+      }
+    }
+    if (state.initialValue < 1 || !(scope.sandbox.value.example && scope.sandbox.value.schema)) return;
     scope.emit("$..headers..[?(@.example && @.schema)]", 0, false);
   },
   "$..[?(@ && @.example)]": function (scope) {
@@ -645,7 +733,7 @@ const tree = {
     scope.emit("$..[?(@ && @.example)]", 0, false);
   },
   "$[?(@ && @.example)]": function (scope) {
-    if (scope.depth !== 0) return;
+    if (scope.path.length !== 1) return;
     if (!(scope.sandbox.value && scope.sandbox.value.example)) return;
     scope.emit("$[?(@ && @.example)]", 0, false);
   }
@@ -653,10 +741,11 @@ const tree = {
 export default function (input, callbacks) {
   const scope = new Scope(input, callbacks);
   try {
+    const state0 = scope.allocState();
     scope.traverse(() => {
       tree["$.info..[?(@property.startsWith('foo'))]"](scope);
       tree["$.info.*[?(@property.startsWith('foo'))]"](scope);
-      tree["$..headers..[?(@.example && @.schema)]"](scope);
+      tree["$..headers..[?(@.example && @.schema)]"](scope, state0);
       tree["$..[?(@ && @.example)]"](scope);
       tree["$[?(@ && @.example)]"](scope);
     }, null);
@@ -678,9 +767,9 @@ const zones = {
 };
 const tree = {
   "$.store..[price,bar,baz]": function (scope) {
-    if (scope.depth < 1) return;
+    if (scope.path.length < 2) return;
     if (scope.path[0] !== "store") return;
-    if (scope.property !== "price" && scope.property !== "bar" && scope.property !== "baz") return;
+    if (scope.path[scope.path.length - 1] !== "price" && scope.path[scope.path.length - 1] !== "bar" && scope.path[scope.path.length - 1] !== "baz") return;
     scope.emit("$.store..[price,bar,baz]", 0, false);
   },
   "$.book": function (scope) {
@@ -721,17 +810,17 @@ const zones = {
 };
 const tree = {
   "$.paths[*][*]..content[*].examples[*]": function (scope) {
-    if (scope.depth < 6) return;
+    if (scope.path.length < 7) return;
     if (scope.path[0] !== "paths") return;
-    if (scope.path[scope.depth - 1] !== "examples") return;
-    if (scope.path[scope.depth - 3] !== "content") return;
+    if (scope.path[scope.path.length - 4] !== "content") return;
+    if (scope.path[scope.path.length - 2] !== "examples") return;
     scope.emit("$.paths[*][*]..content[*].examples[*]", 0, false);
   },
   "$.paths[*][*]..parameters[*].examples[*]": function (scope) {
-    if (scope.depth < 6) return;
+    if (scope.path.length < 7) return;
     if (scope.path[0] !== "paths") return;
-    if (scope.path[scope.depth - 1] !== "examples") return;
-    if (scope.path[scope.depth - 3] !== "parameters") return;
+    if (scope.path[scope.path.length - 4] !== "parameters") return;
+    if (scope.path[scope.path.length - 2] !== "examples") return;
     scope.emit("$.paths[*][*]..parameters[*].examples[*]", 0, false);
   }
 };
@@ -768,10 +857,10 @@ const zones = {
 };
 const tree = {
   "$.data[*][*][city,street]..id": function (scope) {
-    if (scope.depth < 4) return;
+    if (scope.path.length < 5) return;
     if (scope.path[0] !== "data") return;
     if (scope.path[3] !== "city" && scope.path[3] !== "street") return;
-    if (scope.property !== "id") return;
+    if (scope.path[scope.path.length - 1] !== "id") return;
     scope.emit("$.data[*][*][city,street]..id", 0, false);
   }
 };
@@ -825,37 +914,37 @@ const zones = {
 };
 const tree = {
   "$.paths[*][*].tags[*]": function (scope) {
-    if (scope.depth !== 4) return;
+    if (scope.path.length !== 5) return;
     if (scope.path[0] !== "paths") return;
     if (scope.path[3] !== "tags") return;
     scope.emit("$.paths[*][*].tags[*]", 0, false);
   },
   "$.paths[*][*].operationId": function (scope) {
-    if (scope.depth !== 3) return;
+    if (scope.path.length !== 4) return;
     if (scope.path[0] !== "paths") return;
     if (scope.path[3] !== "operationId") return;
     scope.emit("$.paths[*][*].operationId", 0, false);
   },
   "$.abc[*][*][*].abc": function (scope) {
-    if (scope.depth !== 4) return;
+    if (scope.path.length !== 5) return;
     if (scope.path[0] !== "abc") return;
     if (scope.path[4] !== "abc") return;
     scope.emit("$.abc[*][*][*].abc", 0, false);
   },
   "$.abc[*][*].bar": function (scope) {
-    if (scope.depth !== 3) return;
+    if (scope.path.length !== 4) return;
     if (scope.path[0] !== "abc") return;
     if (scope.path[3] !== "bar") return;
     scope.emit("$.abc[*][*].bar", 0, false);
   },
   "$.abc[*][*][*][*].baz": function (scope) {
-    if (scope.depth !== 5) return;
+    if (scope.path.length !== 6) return;
     if (scope.path[0] !== "abc") return;
     if (scope.path[5] !== "baz") return;
     scope.emit("$.abc[*][*][*][*].baz", 0, false);
   },
   "$.abc[*][*][*][*].bar": function (scope) {
-    if (scope.depth !== 5) return;
+    if (scope.path.length !== 6) return;
     if (scope.path[0] !== "abc") return;
     if (scope.path[5] !== "bar") return;
     scope.emit("$.abc[*][*][*][*].bar", 0, false);
@@ -927,7 +1016,7 @@ const zones = {
 };
 const tree = {
   "$[*]": function (scope) {
-    if (scope.depth !== 0) return;
+    if (scope.path.length !== 1) return;
     scope.emit("$[*]", 0, false);
     scope.emit("$.*", 0, false);
     scope.emit("$[*]^", 1, false);
@@ -963,17 +1052,17 @@ const zones = {
 };
 const tree = {
   "$[?(index(@)=='key')]": function (scope) {
-    if (scope.depth !== 0) return;
+    if (scope.path.length !== 1) return;
     if (!(scope.sandbox.index(scope.sandbox.value) == 'key')) return;
     scope.emit("$[?(index(@)=='key')]", 0, false);
   },
   "$[?(@ in ['red','green','blue'])]": function (scope) {
-    if (scope.depth !== 0) return;
+    if (scope.path.length !== 1) return;
     if (!(['red', 'green', 'blue'].includes(scope.sandbox.value) === true)) return;
     scope.emit("$[?(@ in ['red','green','blue'])]", 0, false);
   },
   "$[?(@ ~= 'test')]": function (scope) {
-    if (scope.depth !== 0) return;
+    if (scope.path.length !== 1) return;
     if (!/test/.test(scope.sandbox.value)) return;
     scope.emit("$[?(@ ~= 'test')]", 0, false);
   }
@@ -1100,7 +1189,7 @@ const zones = {
 };
 const tree = {
   "$.components.schemas[*]..@@schema()": function (scope) {
-    if (scope.depth < 3) return;
+    if (scope.path.length < 4) return;
     if (scope.path[0] !== "components") return;
     if (scope.path[1] !== "schemas") return;
     if (!shorthands.schema(scope)) return;
@@ -1108,7 +1197,7 @@ const tree = {
   }
 };
 const shorthands = {
-  schema: function (scope) {
+  schema: function (scope, state) {
     return scope.path[scope.path.length - 2] === 'patternProperties' || scope.path[scope.path.length - 2] === 'properties';
   }
 };
@@ -1124,15 +1213,5 @@ export default function (input, callbacks) {
 }
 `);
     });
-  });
-
-  forEach([
-    '$..[?(@.a)]..[?(@.b)]..c..d',
-    '$..[?(@.ab)]..[?(@.cb)]..c..d',
-    '$.paths.*.*[responses,requestBody]..content..schema.properties.*~',
-  ]).it('should consider %s expression as unsafe', expression => {
-    expect(generate.bind(null, [expression], { unsafe: false })).to.throw(
-      `Error parsing ${expression}`,
-    );
   });
 });

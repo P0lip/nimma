@@ -10,13 +10,15 @@ function print(expr) {
   const ast = parse(`$[${expr}]`);
   const iterator = new Iterator(ast);
   const { value: node } = iterator[Symbol.iterator]().next();
-  return astring(
-    generateFilterScriptExpression(iterator, node, {
-      attachCustomShorthand() {
-        // no-op
-      },
-    }),
-  );
+  const branch = [];
+
+  generateFilterScriptExpression(branch, iterator, node, {
+    attachCustomShorthand() {
+      // no-op
+    },
+  });
+
+  return astring(branch[0].test);
 }
 
 describe('parseFilterExpression', () => {

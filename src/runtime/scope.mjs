@@ -1,43 +1,71 @@
 import proxyCallbacks from './proxy-callbacks.mjs';
 import { Sandbox } from './sandbox.mjs';
-import { bailedTraverse, traverse, zonedTraverse } from './traverse.mjs';
+import { traverse, zonedTraverse } from './traverse.mjs';
+
+class State {
+  #values = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  #size = 0;
+
+  initialValue = 0;
+
+  get value() {
+    return this.#values[this.#size];
+  }
+
+  at(index) {
+    return this.#values.slice(0, this.#size).at(index);
+  }
+
+  set value(value) {
+    this.#values[this.#size] = value;
+  }
+
+  enter() {
+    this.#size++;
+    if (this.#values.length === this.#size - 1) {
+      this.#values.push(0);
+    }
+
+    this.#values[this.#size] = this.#values[this.#size - 1];
+    this.initialValue = this.value;
+  }
+
+  exit(depth) {
+    this.#size = Math.max(0, depth - 1);
+  }
+}
 
 export default class Scope {
   #parent;
-  #output;
+  #states;
 
   constructor(root, callbacks, parent = null) {
     this.root = root;
     this.#parent = parent;
     this.path = [];
     this.errors = [];
-    const sandbox = (this.sandbox = new Sandbox(this.path, root, null));
+    this.#states = [];
+    this.sandbox = new Sandbox(this.path, root, null);
     this.callbacks = proxyCallbacks(callbacks, this.errors);
-    this.#output = {
-      path: this.path,
-      get value() {
-        return sandbox.value;
-      },
-    };
   }
 
-  get depth() {
-    return this.path.length - 1;
-  }
-
-  get property() {
-    return this.sandbox.property;
-  }
-
-  get value() {
-    return this.sandbox.value;
+  allocState() {
+    const state = new State();
+    this.#states.push(state);
+    return state;
   }
 
   enter(key) {
     this.path.push(key);
     this.sandbox = this.sandbox.push();
 
-    return this.path.length;
+    const length = this.path.length;
+    for (let i = 0; i < this.#states.length; i++) {
+      const state = this.#states[i];
+      state.enter(key);
+    }
+
+    return length;
   }
 
   exit(depth) {
@@ -48,7 +76,12 @@ export default class Scope {
 
     this.sandbox = this.sandbox.pop();
 
-    return this.path.length;
+    for (let i = 0; i < this.#states.length; i++) {
+      const state = this.#states[i];
+      state.exit(depth);
+    }
+
+    return length;
   }
 
   fork(path) {
@@ -56,7 +89,7 @@ export default class Scope {
 
     for (const segment of path) {
       newScope.enter(segment);
-      if (newScope.value === void 0) {
+      if (newScope.sandbox.value === void 0) {
         return null;
       }
     }
@@ -72,48 +105,43 @@ export default class Scope {
     }
   }
 
-  bail(id, fn, deps) {
-    const scope = this.fork(this.path);
-    bailedTraverse.call(scope, fn, deps);
-  }
-
   emit(id, pos, withKeys) {
     const fn = this.callbacks[id];
 
     if (pos === 0 && !withKeys) {
-      return void fn(this.#output);
+      return void fn({
+        path: this.path.slice(),
+        value: this.sandbox.value,
+      });
     }
 
-    if (pos !== 0 && pos > this.depth + 1) {
+    if (pos !== 0 && pos > this.path.length) {
       return;
     }
 
-    const output =
-      pos === 0
-        ? this.#output
-        : {
-            path: this.#output.path.slice(
-              0,
-              Math.max(0, this.#output.path.length - pos),
-            ),
-            value: (this.sandbox.at(-pos - 1) ?? this.sandbox.at(0)).value,
-          };
+    let path;
+    let value;
+    if (pos > 0) {
+      path = this.path.slice(0, Math.max(0, this.path.length - pos));
+      value = (this.sandbox.at(-pos - 1) ?? this.sandbox.at(0)).value;
+    } else {
+      path = this.path.slice();
+      value = this.sandbox.value;
+    }
 
     if (!withKeys) {
-      fn(output);
+      fn({ path, value });
     } else {
       fn({
-        path: output.path,
-        value:
-          output.path.length === 0
-            ? void 0
-            : output.path[output.path.length - 1],
+        path,
+        value: path.length === 0 ? void 0 : path[path.length - 1],
       });
     }
   }
 
   destroy() {
     this.path.length = 0;
+    this.#states.length = 0;
     this.sandbox.destroy();
     this.sandbox = null;
 

@@ -2,17 +2,24 @@ import * as b from '../ast/builders.mjs';
 
 const SCOPE_IDENTIFIER = b.identifier('scope');
 
+const PATH = b.memberExpression(SCOPE_IDENTIFIER, b.identifier('path'));
+const DEPTH = b.memberExpression(PATH, b.identifier('length'));
+
 export default {
   _: SCOPE_IDENTIFIER,
 
-  bail: b.memberExpression(SCOPE_IDENTIFIER, b.identifier('bail')),
+  allocState: b.memberExpression(SCOPE_IDENTIFIER, b.identifier('allocState')),
   callbacks: b.memberExpression(SCOPE_IDENTIFIER, b.identifier('callbacks')),
-  depth: b.memberExpression(SCOPE_IDENTIFIER, b.identifier('depth')),
+  depth: DEPTH,
   destroy: b.memberExpression(SCOPE_IDENTIFIER, b.identifier('destroy')),
   emit: b.memberExpression(SCOPE_IDENTIFIER, b.identifier('emit')),
   fork: b.memberExpression(SCOPE_IDENTIFIER, b.identifier('fork')),
-  path: b.memberExpression(SCOPE_IDENTIFIER, b.identifier('path')),
-  property: b.memberExpression(SCOPE_IDENTIFIER, b.identifier('property')),
+  path: PATH,
+  property: b.memberExpression(
+    PATH,
+    b.binaryExpression('-', DEPTH, b.numericLiteral(1)),
+    true,
+  ),
   sandbox: b.memberExpression(SCOPE_IDENTIFIER, b.identifier('sandbox')),
   traverse: b.memberExpression(SCOPE_IDENTIFIER, b.identifier('traverse')),
   value: b.memberExpression(SCOPE_IDENTIFIER, b.identifier('value')),

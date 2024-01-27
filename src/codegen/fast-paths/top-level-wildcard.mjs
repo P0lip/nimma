@@ -8,7 +8,7 @@ import generateEmitCall from '../templates/emit-call.mjs';
 import scope from '../templates/scope.mjs';
 
 const IS_NOT_ZERO_DEPTH_IF_STATEMENT = b.ifStatement(
-  b.binaryExpression('!==', scope.depth, b.numericLiteral(0)),
+  b.binaryExpression('!==', scope.depth, b.numericLiteral(1)),
   b.returnStatement(),
 );
 

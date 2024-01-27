@@ -1,3 +1,5 @@
 import scope from './scope.mjs';
+import state from './state.mjs';
 
-export default [scope._];
+export const statelessFnParams = [scope._];
+export const statefulFnParams = [scope._, state._];

@@ -1,4 +1,5 @@
-export default function (value, pos, start, end, step) {
+export default function (sandbox, pos, start, end, step) {
+  const value = sandbox.parentAt(-2);
   const actualStart =
     start < 0
       ? Math.max(0, start + value.length)

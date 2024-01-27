@@ -1,7 +1,10 @@
 import jsep from '../../parser/jsep.mjs';
 import * as b from '../ast/builders.mjs';
 import astring from '../dump.mjs';
-import fnParams from '../templates/fn-params.mjs';
+import {
+  statefulFnParams,
+  statelessFnParams,
+} from '../templates/fn-params.mjs';
 import internalScope from '../templates/internal-scope.mjs';
 import scope from '../templates/scope.mjs';
 import treeMethodCall from '../templates/tree-method-call.mjs';
@@ -48,6 +51,7 @@ export default class ESTree {
   #body = new Set();
   #traverse = new Set();
   #availableShorthands;
+  #states = -1;
 
   constructor({ customShorthands, format, module, npmProvider }) {
     this.format = format;
@@ -83,7 +87,7 @@ export default class ESTree {
       b.objectMethod(
         'method',
         b.identifier(name),
-        fnParams,
+        statefulFnParams,
         b.blockStatement([
           b.returnStatement(jsep(this.#availableShorthands[name])),
         ]),
@@ -98,11 +102,14 @@ export default class ESTree {
   push(node, placement) {
     switch (placement) {
       case 'tree-method':
+      case 'stateful-tree-method':
         this.#tree.properties.push(
           b.objectMethod(
             'method',
             b.stringLiteral(this.ctx.id),
-            fnParams,
+            placement === 'stateful-tree-method'
+              ? statefulFnParams
+              : statelessFnParams,
             node,
           ),
         );
@@ -120,8 +127,21 @@ export default class ESTree {
 
         break;
       case 'traverse':
-        this.#traverse.add(treeMethodCall(node.value));
+        this.#traverse.add(treeMethodCall(node.value, statelessFnParams));
         break;
+      case 'stateful-traverse': {
+        this.#states += 1;
+        const id = b.identifier(`state${this.#states}`);
+        this.push(
+          b.variableDeclaration('const', [
+            b.variableDeclarator(id, b.callExpression(scope.allocState, [])),
+          ]),
+          'body',
+        );
+
+        this.#traverse.add(treeMethodCall(node.value, [scope._, id]));
+        break;
+      }
     }
   }
 
@@ -207,9 +227,5 @@ export default class ESTree {
         ].filter(Boolean),
       ),
     );
-  }
-
-  toString() {
-    return this.export('esm');
   }
 }

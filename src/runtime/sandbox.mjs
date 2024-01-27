@@ -24,10 +24,6 @@ export class Sandbox {
     return dumpPath(this.#path);
   }
 
-  get depth() {
-    return this.#path.length - 1;
-  }
-
   get value() {
     if (this.#value !== void 0) {
       return this.#value;
@@ -37,7 +33,7 @@ export class Sandbox {
   }
 
   get property() {
-    return unwrapOrNull(this.#path, this.depth);
+    return unwrapOrNull(this.#path, this.#path.length - 1);
   }
 
   get #parent() {
@@ -46,6 +42,10 @@ export class Sandbox {
     }
 
     return this.#history[this.#history.length - 3];
+  }
+
+  parentAt(i) {
+    return this.#history[this.#history.length + i][1];
   }
 
   get parentValue() {

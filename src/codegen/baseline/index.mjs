@@ -2,10 +2,7 @@ import * as b from '../ast/builders.mjs';
 import fastPaths from '../fast-paths/index.mjs';
 import { isDeep } from '../guards.mjs';
 import Iterator from '../iterator.mjs';
-import optimizer from '../optimizer/index.mjs';
 import generateEmitCall from '../templates/emit-call.mjs';
-import fnParams from '../templates/fn-params.mjs';
-import internalScope from '../templates/internal-scope.mjs';
 import scope from '../templates/scope.mjs';
 import ESTree from '../tree/tree.mjs';
 import {
@@ -15,10 +12,6 @@ import {
   generateSliceExpression,
   generateWildcardExpression,
 } from './generators.mjs';
-
-const POS_VARIABLE_DECLARATION = b.variableDeclaration('let', [
-  b.variableDeclarator(internalScope.pos, b.numericLiteral(0)),
-]);
 
 export default function baseline(jsonPaths, opts) {
   const tree = new ESTree(opts);
@@ -44,17 +37,13 @@ export default function baseline(jsonPaths, opts) {
       const method = tree.getMethodByHash(existingHash);
       let body = method.body.body;
 
-      if (iterator.feedback.bailed) {
-        body = body[0].expression.arguments[1].body.body;
-      }
-
       body.push(generateEmitCall(id, iterator.modifiers));
       continue;
     } else {
       hashes.set(hash, id);
     }
 
-    if (iterator.feedback.bailed || (nodes.length > 0 && isDeep(nodes[0]))) {
+    if (nodes.length > 0 && isDeep(nodes[0])) {
       tree.traversalZones.destroy();
     }
 
@@ -71,135 +60,62 @@ export default function baseline(jsonPaths, opts) {
       }
     }
 
-    const branch = iterator.feedback.bailed
-      ? []
-      : [
-          b.ifStatement(
-            b.binaryExpression(
-              iterator.feedback.fixed ? '!==' : '<',
-              scope.depth,
-              b.numericLiteral(iterator.length - 1),
+    const branch =
+      iterator.feedback.minimumDepth !== -1
+        ? [
+            b.ifStatement(
+              b.binaryExpression(
+                iterator.feedback.fixed && iterator.feedback.stateOffset === -1
+                  ? '!=='
+                  : '<',
+                scope.depth,
+                b.numericLiteral(iterator.feedback.minimumDepth + 1),
+              ),
+              b.returnStatement(),
             ),
-            b.returnStatement(),
-          ),
-        ].concat(iterator.feedback.fixed ? [] : POS_VARIABLE_DECLARATION);
+          ]
+        : [];
 
-    const zone = iterator.feedback.bailed ? null : tree.traversalZones.create();
-    const inverseAt = iterator.feedback.inverseAt;
+    const zone = tree.traversalZones.create();
 
     for (const node of iterator) {
-      if (isDeep(node) || inverseAt === iterator.state.absolutePos) {
+      if (isDeep(node)) {
         zone?.allIn();
       }
 
-      let treeNode;
-
       switch (node.type) {
         case 'MemberExpression':
-          treeNode = generateMemberExpression(iterator, node, tree);
+          generateMemberExpression(branch, iterator, node, tree);
           zone?.expand(node.value);
           break;
         case 'MultipleMemberExpression':
-          treeNode = generateMultipleMemberExpression(iterator, node, tree);
+          generateMultipleMemberExpression(branch, iterator, node, tree);
           zone?.expandMultiple(node.value);
           break;
         case 'SliceExpression':
-          treeNode = generateSliceExpression(iterator, node, tree);
+          generateSliceExpression(branch, iterator, node, tree);
           zone?.resize();
           break;
         case 'ScriptFilterExpression':
-          treeNode = generateFilterScriptExpression(iterator, node, tree);
+          generateFilterScriptExpression(branch, iterator, node, tree);
           zone?.resize();
           break;
         case 'WildcardExpression':
-          treeNode = generateWildcardExpression(iterator, node, tree);
+          generateWildcardExpression(branch, iterator, node, tree);
           zone?.resize();
-          if (treeNode === null) {
-            continue;
-          }
-
           break;
       }
-
-      if (iterator.feedback.bailed) {
-        branch.push(
-          b.objectExpression([
-            b.objectProperty(
-              b.identifier('fn'),
-              b.arrowFunctionExpression([scope._], treeNode),
-            ),
-            b.objectProperty(b.identifier('deep'), b.booleanLiteral(node.deep)),
-          ]),
-        );
-      } else {
-        branch.push(b.ifStatement(treeNode, b.returnStatement()));
-      }
     }
 
-    if (
-      !iterator.feedback.fixed &&
-      !iterator.feedback.bailed &&
-      !iterator.state.inverted
-    ) {
-      branch.push(
-        b.ifStatement(
-          b.binaryExpression(
-            '!==',
-            scope.depth,
-            iterator.state.pos === 0
-              ? internalScope.pos
-              : b.binaryExpression(
-                  '+',
-                  internalScope.pos,
-                  b.numericLiteral(iterator.state.pos),
-                ),
-          ),
-          b.returnStatement(),
-        ),
-      );
-    }
+    branch.push(generateEmitCall(ctx.id, iterator.modifiers));
 
-    const placement = iterator.feedback.bailed ? 'body' : 'traverse';
-
-    if (iterator.feedback.bailed) {
-      branch.splice(
-        0,
-        branch.length,
-        b.expressionStatement(
-          b.callExpression(scope.bail, [
-            b.stringLiteral(id),
-            b.arrowFunctionExpression(
-              [scope._],
-              b.blockStatement([
-                b.expressionStatement(
-                  generateEmitCall(ctx.id, iterator.modifiers).expression,
-                ),
-              ]),
-            ),
-            b.arrayExpression([...branch]),
-          ]),
-        ),
-      );
+    if (iterator.feedback.stateOffset !== -1) {
+      tree.push(b.stringLiteral(id), 'stateful-traverse');
+      tree.push(b.blockStatement(branch), 'stateful-tree-method');
     } else {
-      branch.push(generateEmitCall(ctx.id, iterator.modifiers));
+      tree.push(b.stringLiteral(id), 'traverse');
+      tree.push(b.blockStatement(branch), 'tree-method');
     }
-
-    if (placement === 'body') {
-      tree.push(
-        b.expressionStatement(
-          b.callExpression(
-            b.memberExpression(internalScope.tree, b.stringLiteral(id), true),
-            fnParams,
-          ),
-        ),
-        placement,
-      );
-    } else {
-      tree.push(b.stringLiteral(id), placement);
-    }
-
-    optimizer(branch, iterator);
-    tree.push(b.blockStatement(branch), 'tree-method');
 
     zone?.attach();
   }

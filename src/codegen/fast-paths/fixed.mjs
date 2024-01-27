@@ -14,6 +14,7 @@
 import * as b from '../ast/builders.mjs';
 import { isDeep, isMemberExpression } from '../guards.mjs';
 import generateEmitCall from '../templates/emit-call.mjs';
+import { statelessFnParams } from '../templates/fn-params.mjs';
 import sandbox from '../templates/sandbox.mjs';
 import scope from '../templates/scope.mjs';
 import treeMethodCall from '../templates/tree-method-call.mjs';
@@ -77,7 +78,7 @@ export default (nodes, tree, ctx) => {
       ]),
       'tree-method',
     ],
-    [treeMethodCall(ctx.id), 'body'],
+    [treeMethodCall(ctx.id, statelessFnParams), 'body'],
   ]);
 
   return true;

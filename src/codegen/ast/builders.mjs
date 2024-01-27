@@ -98,6 +98,7 @@ export function conditionalExpression(test, consequent, alternate) {
 }
 
 export function ifStatement(test, consequent, alternate) {
+  if (!consequent) throw new Error('abc');
   return {
     type: 'IfStatement',
     test,

@@ -1,79 +1,36 @@
 import {
   isDeep,
-  isMemberExpression,
   isModifierExpression,
+  isNegativeSliceExpression,
+  isScriptFilterExpression,
   isWildcardExpression,
 } from './guards.mjs';
 
-function isBailable(nodes) {
-  let deep = false;
-  for (let i = 0; i < nodes.length; i++) {
-    const node = nodes[i];
-    if (!isDeep(node)) continue;
-
-    if (deep) {
-      return true;
-    } else if (isMemberExpression(node)) {
-      i++;
-      let hadFlatMemberExpressions = false;
-      let deepNodes = 1;
-      for (; i < nodes.length - 1; i++) {
-        const node = nodes[i];
-        if (isDeep(node)) {
-          deepNodes++;
-        } else {
-          hadFlatMemberExpressions ||=
-            isMemberExpression(node) || isWildcardExpression(node);
-          continue;
-        }
-
-        if (isMemberExpression(node) || isWildcardExpression(node)) {
-          if (hadFlatMemberExpressions) return true;
-          continue;
-        }
-
-        return true;
-      }
-
-      return isDeep(nodes[nodes.length - 1])
-        ? hadFlatMemberExpressions ||
-            isWildcardExpression(nodes[nodes.length - 1])
-        : deepNodes > 1;
-    } else {
-      deep = true;
-    }
-  }
-
-  return false;
+function emptyState() {
+  return {
+    absoluteOffset: -1,
+    groupNumbers: [],
+    indexed: true,
+    isLastNode: true,
+    numbers: [-1, -1],
+    offset: -1,
+    usesState: false,
+  };
 }
 
 export default class Iterator {
   nodes;
-  #i;
 
   constructor(nodes) {
     this.modifiers = Iterator.trim(nodes);
     this.nodes = Iterator.compact(nodes);
-    this.#i = -1;
-    this.feedback = Iterator.analyze(
-      this.nodes,
-      this.modifiers.keyed || this.modifiers.parents > 0,
-    );
+    this.feedback = Iterator.analyze(this.nodes);
     this.length = this.nodes.length;
-    this.state = {
-      absolutePos: -1,
-      fixed: true,
-      inverted: false,
-      pos: -1,
-    };
+    this.state = emptyState();
 
     if (this.feedback.fixed && this.modifiers.parents > this.length) {
       this.length = -1;
     }
-  }
-
-  get nextNode() {
-    return this.#i + 1 < this.nodes.length ? this.nodes[this.#i + 1] : null;
   }
 
   static compact(nodes) {
@@ -124,86 +81,100 @@ export default class Iterator {
 
   static analyze(nodes) {
     const feedback = {
-      bailed: isBailable(nodes),
       fixed: true,
-      inverseAt: -1,
+      inverseOffset: -1,
+      minimumDepth: -1,
+      stateOffset: -1,
     };
 
-    if (feedback.bailed) {
-      feedback.fixed = false;
-      return feedback;
-    }
-
-    let potentialInvertAtPoint = -1;
+    let deep = -1;
+    let potentialInverseOffset = -1;
 
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i];
 
-      if (!isDeep(node)) continue;
-
-      feedback.fixed = false;
-      i++;
-
-      potentialInvertAtPoint = i - 1;
-
-      for (; i < nodes.length; i++) {
-        const nextNode = nodes[i];
-        if (isDeep(nextNode)) {
-          potentialInvertAtPoint = -1;
+      if (!isDeep(node)) {
+        if (isScriptFilterExpression(node) || isNegativeSliceExpression(node)) {
+          if (i === nodes.length - 1) {
+            feedback.inverseOffset = potentialInverseOffset;
+          } else {
+            feedback.stateOffset = deep === -1 ? i : deep;
+          }
+        } else {
+          feedback.inverseOffset = potentialInverseOffset;
         }
+
+        continue;
       }
+
+      if (potentialInverseOffset === -1) {
+        potentialInverseOffset = i;
+      }
+
+      if (deep !== -1) {
+        feedback.stateOffset = deep;
+        break;
+      } else if (isScriptFilterExpression(node) && i !== nodes.length - 1) {
+        feedback.stateOffset = i;
+        deep = i;
+        break;
+      }
+
+      deep = i;
     }
 
-    if (
-      nodes.length > 1 &&
-      potentialInvertAtPoint !== -1 &&
-      potentialInvertAtPoint < nodes.length - 1
-    ) {
-      feedback.inverseAt = potentialInvertAtPoint;
-    }
+    feedback.fixed = deep === -1;
+    feedback.minimumDepth =
+      feedback.stateOffset === -1 ? nodes.length - 1 : feedback.stateOffset;
 
     return feedback;
   }
 
   *[Symbol.iterator]() {
-    if (this.feedback.bailed) {
-      return yield* this.nodes;
-    }
+    const { feedback, nodes, state } = this;
 
-    const { ...feedback } = this.feedback;
+    Object.assign(state, emptyState());
 
-    let order = 1;
-    const nodes =
-      this.feedback.inverseAt !== -1 ? this.nodes.slice() : this.nodes;
-
+    let statePos = 0;
     for (let i = 0; i < nodes.length; i++) {
-      if (this.feedback.inverseAt !== -1 && i === this.feedback.inverseAt) {
-        nodes.splice(0, i);
-        nodes.reverse();
-        this.state.pos = 1;
-        i = 0;
-        this.feedback.inverseAt = -1;
-        this.state.inverted = true;
-        order = -1;
+      state.absoluteOffset = i;
+
+      if (isDeep(nodes[i])) {
+        state.offset = -1;
+        state.indexed = false;
+
+        if (state.groupNumbers.length > 0) {
+          state.groupNumbers.length = 0;
+        }
       }
 
-      const node = nodes[i];
-      this.state.pos += order;
-      this.#i++;
-      this.state.absolutePos++;
+      if (feedback.stateOffset === i) {
+        state.offset = -1;
+        state.usesState = true;
+      }
 
-      if (isDeep(node)) {
-        this.state.fixed = false;
-        yield node;
-        this.state.pos = 0;
+      if (feedback.inverseOffset === i) {
+        state.offset = i - nodes.length;
       } else {
-        yield node;
+        state.offset++;
       }
-    }
 
-    Object.assign(this.feedback, {
-      ...feedback,
-      mutatesPos: this.feedback.mutatesPos,
-    });
+      if (state.usesState) {
+        if (statePos === 0) {
+          state.numbers[0] = 0;
+          state.numbers[1] = 1;
+        } else {
+          state.numbers[0] = state.numbers[1];
+          state.numbers[1] = state.numbers[1] + 2 ** statePos;
+        }
+
+        state.groupNumbers.push(state.numbers[0]);
+        statePos++;
+      }
+
+      state.isLastNode = i === nodes.length - 1;
+
+      yield nodes[i];
+    }
   }
 }

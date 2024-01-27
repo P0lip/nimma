@@ -5,7 +5,7 @@ import toPath from 'lodash-es/toPath.js';
 import Nimma from '../../index.mjs';
 
 export function compare(document, path) {
-  const n = new Nimma([path], { unsafe: true });
+  const n = new Nimma([path]);
   const nimma = {
     paths: [],
     results: [],

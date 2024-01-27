@@ -1,203 +1,174 @@
 import jsep from '../../parser/jsep.mjs';
 import * as b from '../ast/builders.mjs';
+import { isNegativeSliceExpression } from '../guards.mjs';
 import internalScope from '../templates/internal-scope.mjs';
 import sandbox from '../templates/sandbox.mjs';
 import scope from '../templates/scope.mjs';
+import state from '../templates/state.mjs';
 
-export function generateMemberExpression(iterator, { deep, value }) {
-  if (iterator.feedback.bailed) {
-    return b.safeBinaryExpression('!==', scope.property, b.literal(value));
-  }
+function generateStateCheck(branch, iterator, check, deep) {
+  const [prevNo, no] = iterator.state.numbers;
 
-  if (iterator.state.inverted) {
-    return b.safeBinaryExpression(
-      '!==',
-      iterator.state.pos === 0
-        ? scope.property
-        : b.memberExpression(
-            scope.path,
-            b.binaryExpression(
-              '-',
-              scope.depth,
-              b.numericLiteral(Math.abs(iterator.state.pos)),
-            ),
-            true,
-          ),
-      b.literal(value),
+  if (iterator.state.isLastNode) {
+    return b.ifStatement(
+      b.logicalExpression(
+        '||',
+        b.binaryExpression('<', state.initialValue, b.numericLiteral(prevNo)),
+        b.unaryExpression('!', check),
+      ),
+      b.returnStatement(),
     );
   }
 
-  if (deep) {
-    const isLastNode =
-      iterator.nextNode === null || iterator.nextNode === 'KeyExpression';
-
-    iterator.feedback.mutatesPos ||= !isLastNode;
-
-    const right = b.sequenceExpression([
-      b.assignmentExpression(
-        '=',
-        internalScope.pos,
-        isLastNode
-          ? b.conditionalExpression(
-              b.safeBinaryExpression('!==', scope.property, b.literal(value)),
-              b.numericLiteral(-1),
-              scope.depth,
-            )
-          : b.callExpression(
-              b.memberExpression(scope.path, b.identifier('indexOf')),
-              [
-                b.literal(value),
-                iterator.state.pos === 0
-                  ? internalScope.pos
-                  : b.binaryExpression(
-                      '+',
-                      internalScope.pos,
-                      b.numericLiteral(1),
-                    ),
-              ],
+  return b.ifStatement(
+    b.binaryExpression('>=', state.initialValue, b.numericLiteral(prevNo)),
+    b.blockStatement([
+      b.ifStatement(
+        check,
+        b.blockStatement([
+          b.assignmentExpression('|=', state.value, b.numericLiteral(no)),
+        ]),
+        deep
+          ? void 0
+          : b.ifStatement(
+              b.binaryExpression(
+                '===',
+                b.callExpression(
+                  b.memberExpression(b.identifier('state'), b.identifier('at')),
+                  [b.numericLiteral(-1)],
+                ),
+                b.numericLiteral(prevNo),
+              ),
+              b.blockStatement([
+                b.assignmentExpression(
+                  '&=',
+                  state.value,
+                  b.numericLiteral(iterator.state.groupNumbers[0]),
+                ),
+                b.returnStatement(),
+              ]),
             ),
       ),
-      b.binaryExpression('===', internalScope.pos, b.numericLiteral(-1)),
-    ]);
-
-    if (isLastNode) {
-      return b.logicalExpression(
-        '||',
-        b.binaryExpression(
-          '<',
-          scope.depth,
-          iterator.state.pos === 0
-            ? internalScope.pos
-            : b.binaryExpression(
-                '+',
-                internalScope.pos,
-                b.numericLiteral(iterator.state.pos),
-              ),
-        ),
-        right,
-      );
-    }
-
-    return right;
-  }
-
-  let left;
-
-  if (!iterator.feedback.fixed && iterator.state.absolutePos !== 0) {
-    left = b.binaryExpression(
-      '<',
-      scope.depth,
-      iterator.state.pos === 0
-        ? internalScope.pos
-        : b.binaryExpression(
-            '+',
-            internalScope.pos,
-            b.numericLiteral(iterator.state.pos),
-          ),
-    );
-  }
-
-  const right = b.safeBinaryExpression(
-    '!==',
-    b.memberExpression(
-      scope.path,
-      iterator.state.pos === 0
-        ? b.numericLiteral(0)
-        : iterator.feedback.fixed
-        ? b.numericLiteral(iterator.state.pos)
-        : b.binaryExpression(
-            '+',
-            internalScope.pos,
-            b.numericLiteral(iterator.state.pos),
-          ),
-      true,
-    ),
-    b.literal(value),
+    ]),
   );
-
-  return left !== void 0 ? b.logicalExpression('||', left, right) : right;
 }
 
-export function generateMultipleMemberExpression(iterator, node) {
-  return node.value.slice(1).reduce(
-    (concat, member) =>
-      b.logicalExpression(
-        '&&',
-        concat,
-        generateMemberExpression(iterator, {
-          type: 'MemberExpression',
-          value: member,
-          // eslint-disable-next-line sort-keys
-          deep: node.deep,
-        }),
+function generatePropertyAccess(iterator) {
+  return (!iterator.state.indexed && iterator.state.isLastNode) ||
+    iterator.state.usesState
+    ? scope.property
+    : b.memberExpression(
+        scope.path,
+        iterator.state.indexed
+          ? b.numericLiteral(iterator.state.offset)
+          : b.binaryExpression(
+              '-',
+              scope.depth,
+              b.numericLiteral(Math.abs(iterator.state.offset)),
+            ),
+        true,
+      );
+}
+
+export function generateMemberExpression(branch, iterator, node) {
+  if (iterator.state.usesState) {
+    branch.push(
+      generateStateCheck(
+        branch,
+        iterator,
+        b.safeBinaryExpression('===', scope.property, b.literal(node.value)),
+        node.deep,
       ),
-    generateMemberExpression(iterator, {
-      type: 'MemberExpression',
-      value: node.value[0],
-      // eslint-disable-next-line sort-keys
-      deep: node.deep,
-    }),
-  );
+    );
+  } else {
+    branch.push(
+      b.ifStatement(
+        b.safeBinaryExpression(
+          '!==',
+          generatePropertyAccess(iterator),
+          b.literal(node.value),
+        ),
+        b.returnStatement(),
+      ),
+    );
+  }
+}
+
+export function generateMultipleMemberExpression(branch, iterator, node) {
+  const property = generatePropertyAccess(iterator);
+
+  const condition = node.value
+    .slice(1)
+    .reduce(
+      (concat, member) =>
+        b.logicalExpression(
+          '&&',
+          concat,
+          b.safeBinaryExpression('!==', property, b.literal(member)),
+        ),
+      b.safeBinaryExpression('!==', property, b.literal(node.value[0])),
+    );
+
+  if (iterator.state.usesState) {
+    branch.push(generateStateCheck(branch, iterator, condition, node.deep));
+  } else {
+    branch.push(b.ifStatement(condition, b.returnStatement()));
+  }
 }
 
 const IN_BOUNDS_IDENTIFIER = b.identifier('inBounds');
 
-export function generateSliceExpression(iterator, node, tree) {
-  const member = iterator.state.inverted
-    ? b.binaryExpression('-', scope.depth, b.numericLiteral(iterator.state.pos))
-    : iterator.state.pos === 0
-    ? b.numericLiteral(0)
-    : iterator.feedback.fixed
-    ? b.numericLiteral(iterator.state.pos)
-    : b.binaryExpression(
-        '+',
-        internalScope.pos,
-        b.numericLiteral(iterator.state.pos),
-      );
+function generateNegativeSliceExpression(branch, iterator, node, tree) {
+  tree.addRuntimeDependency(IN_BOUNDS_IDENTIFIER.name);
 
-  const path = iterator.feedback.bailed
-    ? scope.property
-    : b.memberExpression(scope.path, member, true);
-
+  const property = generatePropertyAccess(iterator);
   const isNumberBinaryExpression = b.binaryExpression(
     '!==',
-    b.unaryExpression('typeof', path),
+    b.unaryExpression('typeof', property),
     b.stringLiteral('number'),
   );
 
-  const hasNegativeIndex = node.value.some(
-    value => Number.isFinite(value) && value < 0,
+  const condition = b.binaryExpression(
+    '||',
+    isNumberBinaryExpression,
+    b.unaryExpression(
+      '!',
+      b.callExpression(IN_BOUNDS_IDENTIFIER, [
+        scope.sandbox,
+        generatePropertyAccess(iterator),
+        ...node.value.map(value => b.numericLiteral(value)),
+      ]),
+    ),
   );
 
-  if (hasNegativeIndex) {
-    tree.addRuntimeDependency(IN_BOUNDS_IDENTIFIER.name);
-    return b.binaryExpression(
-      '||',
-      isNumberBinaryExpression,
-      b.unaryExpression(
-        '!',
-        b.callExpression(IN_BOUNDS_IDENTIFIER, [
-          iterator.state.absolutePos === 0
-            ? remapSandbox(sandbox.value, iterator.state.absolutePos - 2)
-            : remapSandbox(sandbox.value, iterator.state.absolutePos),
-          b.memberExpression(
-            scope.path,
-            iterator.feedback.bailed
-              ? b.binaryExpression(
-                  '-',
-                  b.memberExpression(scope.path, b.identifier('length')),
-                  b.numericLiteral(1),
-                )
-              : member,
-            true,
-          ),
-          ...node.value.map(value => b.numericLiteral(value)),
-        ]),
+  if (iterator.state.usesState) {
+    branch.push(
+      generateStateCheck(
+        branch,
+        iterator,
+        b.unaryExpression('!', condition),
+        node.deep,
       ),
     );
+  } else {
+    branch.push(b.ifStatement(condition, b.returnStatement()));
+  }
+}
+
+export function generateSliceExpression(branch, iterator, node, tree) {
+  if (isNegativeSliceExpression(node)) {
+    return generateNegativeSliceExpression(branch, iterator, node, tree);
   }
 
-  return node.value.reduce((merged, value, i) => {
+  const property = generatePropertyAccess(iterator);
+
+  const isNumberBinaryExpression = b.binaryExpression(
+    '!==',
+    b.unaryExpression('typeof', property),
+    b.stringLiteral('number'),
+  );
+
+  const condition = node.value.reduce((merged, value, i) => {
     if (i === 0 && value === 0) {
       return merged;
     }
@@ -214,7 +185,7 @@ export function generateSliceExpression(iterator, node, tree) {
 
     const expression = b.binaryExpression(
       operator,
-      path,
+      property,
       b.numericLiteral(Number(value)),
     );
 
@@ -224,7 +195,11 @@ export function generateSliceExpression(iterator, node, tree) {
       operator === '%'
         ? b.logicalExpression(
             '&&',
-            b.binaryExpression('!==', path, b.numericLiteral(node.value[0])),
+            b.binaryExpression(
+              '!==',
+              property,
+              b.numericLiteral(node.value[0]),
+            ),
             b.binaryExpression(
               '!==',
               expression,
@@ -234,89 +209,67 @@ export function generateSliceExpression(iterator, node, tree) {
         : expression,
     );
   }, isNumberBinaryExpression);
+
+  if (iterator.state.usesState) {
+    branch.push(
+      generateStateCheck(
+        branch,
+        iterator,
+        b.unaryExpression('!', condition),
+        node.deep,
+      ),
+    );
+  } else {
+    branch.push(b.ifStatement(condition, b.returnStatement()));
+  }
 }
 
-export function generateWildcardExpression(iterator) {
-  if (iterator.feedback.bailed) {
-    return b.booleanLiteral(false);
-  } else if (iterator.nextNode === null && !iterator.feedback.fixed) {
-    return b.sequenceExpression([
-      b.assignmentExpression(
-        '=',
-        internalScope.pos,
-        b.conditionalExpression(
-          b.binaryExpression(
-            '<',
-            scope.depth,
-            b.numericLiteral(iterator.state.pos),
-          ),
-          b.numericLiteral(-1),
-          scope.depth,
-        ),
+export function generateWildcardExpression(branch, iterator) {
+  if (!iterator.state.usesState) return;
+
+  const [prevNo, no] = iterator.state.numbers;
+
+  if (iterator.state.isLastNode) {
+    branch.push(
+      b.ifStatement(
+        b.binaryExpression('<', state.initialValue, b.numericLiteral(prevNo)),
+        b.returnStatement(),
       ),
-      b.binaryExpression('===', internalScope.pos, b.numericLiteral(-1)),
-    ]);
+    );
   } else {
-    return null;
+    branch.push(
+      b.ifStatement(
+        b.binaryExpression('>=', state.initialValue, b.numericLiteral(prevNo)),
+        b.blockStatement([
+          b.assignmentExpression('|=', state.value, b.numericLiteral(no)),
+        ]),
+      ),
+    );
   }
 }
 
 export function generateFilterScriptExpression(
+  branch,
   iterator,
-  { deep, value },
+  { value },
   tree,
 ) {
   const esTree = jsep(value);
   assertDefinedIdentifier(esTree);
-  const node = b.unaryExpression(
-    '!',
-    rewriteESTree(
-      tree,
-      esTree,
-      iterator.state.fixed &&
-        iterator.state.pos > 0 &&
-        iterator.nextNode !== null
-        ? iterator.state.pos + 1
-        : iterator.state.inverted && iterator.state.pos !== 0
-        ? iterator.state.pos - 1
-        : 0,
-    ),
-  );
+  const node = rewriteESTree(tree, esTree);
 
-  if (iterator.feedback.bailed || !deep || iterator.state.inverted) return node;
-
-  iterator.feedback.mutatesPos ||=
-    iterator.nextNode !== null && iterator.nextNode !== 'KeyExpression';
-
-  const assignment = b.sequenceExpression([
-    b.assignmentExpression(
-      '=',
-      internalScope.pos,
-      b.conditionalExpression(node, b.numericLiteral(-1), scope.depth),
-    ),
-    b.binaryExpression('===', internalScope.pos, b.numericLiteral(-1)),
-  ]);
-
-  if (iterator.state.pos === 0) return assignment;
-
-  return b.logicalExpression(
-    '||',
-    b.binaryExpression(
-      '<',
-      scope.depth,
-      iterator.state.pos === 0
-        ? internalScope.pos
-        : b.binaryExpression(
-            '+',
-            internalScope.pos,
-            b.numericLiteral(iterator.state.pos),
-          ),
-    ),
-    assignment,
-  );
+  if (iterator.state.usesState) {
+    branch.push(
+      generateStateCheck(branch, iterator, node, iterator.state.isLastNode),
+    );
+  } else {
+    branch.push(
+      b.ifStatement(b.unaryExpression('!', node), b.returnStatement()),
+    );
+  }
 }
 
-export function rewriteESTree(tree, node, pos) {
+export function rewriteESTree(tree, node) {
   switch (node.type) {
     case 'LogicalExpression':
     case 'BinaryExpression':
@@ -324,7 +277,7 @@ export function rewriteESTree(tree, node, pos) {
         node.operator = '===';
         node.left = b.callExpression(
           b.memberExpression(node.right, b.identifier('includes')),
-          [rewriteESTree(tree, node.left, pos)],
+          [rewriteESTree(tree, node.left)],
         );
         node.right = b.booleanLiteral(true);
       } else if (node.operator === '~=') {
@@ -337,24 +290,24 @@ export function rewriteESTree(tree, node, pos) {
             b.regExpLiteral(node.right.value, ''),
             b.identifier('test'),
           ),
-          [rewriteESTree(tree, node.left, pos)],
+          [rewriteESTree(tree, node.left)],
         );
       } else {
-        node.left = rewriteESTree(tree, node.left, pos);
-        node.right = rewriteESTree(tree, node.right, pos);
+        node.left = rewriteESTree(tree, node.left);
+        node.right = rewriteESTree(tree, node.right);
         assertDefinedIdentifier(node.left);
         assertDefinedIdentifier(node.right);
       }
 
       break;
     case 'UnaryExpression':
-      node.argument = rewriteESTree(tree, node.argument, pos);
+      node.argument = rewriteESTree(tree, node.argument);
       assertDefinedIdentifier(node.argument);
       return node;
     case 'MemberExpression':
-      node.object = rewriteESTree(tree, node.object, pos);
+      node.object = rewriteESTree(tree, node.object);
       assertDefinedIdentifier(node.object);
-      node.property = rewriteESTree(tree, node.property, pos);
+      node.property = rewriteESTree(tree, node.property);
       if (node.computed) {
         assertDefinedIdentifier(node.property);
       }
@@ -365,12 +318,12 @@ export function rewriteESTree(tree, node, pos) {
         node.callee.type === 'Identifier' &&
         node.callee.name.startsWith('@')
       ) {
-        return processAtIdentifier(tree, node.callee.name, pos);
+        return processAtIdentifier(tree, node.callee.name);
       }
 
-      node.callee = rewriteESTree(tree, node.callee, pos);
+      node.callee = rewriteESTree(tree, node.callee);
       node.arguments = node.arguments.map(argument =>
-        rewriteESTree(tree, argument, pos),
+        rewriteESTree(tree, argument),
       );
 
       if (
@@ -387,7 +340,7 @@ export function rewriteESTree(tree, node, pos) {
       break;
     case 'Identifier':
       if (node.name.startsWith('@')) {
-        return processAtIdentifier(tree, node.name, pos);
+        return processAtIdentifier(tree, node.name);
       }
 
       if (node.name === 'undefined') {
@@ -404,71 +357,59 @@ export function rewriteESTree(tree, node, pos) {
   return node;
 }
 
-function processAtIdentifier(tree, name, pos) {
+function processAtIdentifier(tree, name) {
   switch (name) {
     case '@':
-      return remapSandbox(sandbox.value, pos);
+      return sandbox.value;
     case '@root':
-      return remapSandbox(sandbox.root, pos);
+      return sandbox.root;
     case '@path':
-      return remapSandbox(sandbox.path, pos);
+      return sandbox.path;
     case '@property':
-      return remapSandbox(sandbox.property, pos);
+      return sandbox.property;
     case '@parent':
-      return remapSandbox(sandbox.parentValue, pos);
+      return sandbox.parentValue;
     case '@parentProperty':
-      return remapSandbox(sandbox.parentProperty, pos);
+      return sandbox.parentProperty;
     case '@string':
     case '@number':
     case '@boolean':
       return b.binaryExpression(
         '===',
-        b.unaryExpression('typeof', remapSandbox(sandbox.value, pos)),
+        b.unaryExpression('typeof', sandbox.value),
         b.stringLiteral(name.slice(1)),
       );
     case '@scalar':
       return b.logicalExpression(
         '||',
-        b.binaryExpression(
-          '===',
-          remapSandbox(sandbox.value, pos),
-          b.nullLiteral(),
-        ),
+        b.binaryExpression('===', sandbox.value, b.nullLiteral()),
         b.binaryExpression(
           '!==',
-          b.unaryExpression('typeof', remapSandbox(sandbox.value, pos)),
+          b.unaryExpression('typeof', sandbox.value),
           b.stringLiteral('object'),
         ),
       );
     case '@array':
       return b.callExpression(
         b.memberExpression(b.identifier('Array'), b.identifier('isArray')),
-        [remapSandbox(sandbox.value, pos)],
+        [sandbox.value],
       );
     case '@null':
-      return b.binaryExpression(
-        '===',
-        remapSandbox(sandbox.value, pos),
-        b.nullLiteral(),
-      );
+      return b.binaryExpression('===', sandbox.value, b.nullLiteral());
     case '@object':
       return b.logicalExpression(
         '&&',
-        b.binaryExpression(
-          '!==',
-          remapSandbox(sandbox.value, pos),
-          b.nullLiteral(),
-        ),
+        b.binaryExpression('!==', sandbox.value, b.nullLiteral()),
         b.binaryExpression(
           '===',
-          b.unaryExpression('typeof', remapSandbox(sandbox.value, pos)),
+          b.unaryExpression('typeof', sandbox.value),
           b.stringLiteral('object'),
         ),
       );
     case '@integer':
       return b.callExpression(
         b.memberExpression(b.identifier('Number'), b.identifier('isInteger')),
-        [remapSandbox(sandbox.value, pos)],
+        [sandbox.value],
       );
     default:
       if (name.startsWith('@@')) {
@@ -493,15 +434,4 @@ function assertDefinedIdentifier(node) {
   if (node.type !== 'Identifier') return;
   if (KNOWN_IDENTIFIERS.includes(node.name)) return;
   throw ReferenceError(`'${node.name}' is not defined`);
-}
-
-function remapSandbox(node, pos) {
-  if (node.type === 'MemberExpression' && pos !== 0) {
-    return {
-      ...node,
-      object: b.callExpression(sandbox.at, [b.numericLiteral(pos)]),
-    };
-  }
-
-  return node;
 }

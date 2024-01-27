@@ -1,4 +1,3 @@
-import Iterator from '../../codegen/iterator.mjs';
 import parse from '../../parser/index.mjs';
 
 function pickException([, ex]) {
@@ -9,17 +8,13 @@ function pickExpression([expression]) {
   return expression;
 }
 
-export default function parseExpressions(expressions, unsafe) {
+export default function parseExpressions(expressions) {
   const mappedExpressions = [];
   const erroredExpressions = [];
 
   for (const expression of new Set(expressions)) {
     try {
       const parsed = parse(expression);
-      if (unsafe === false && Iterator.analyze(parsed).bailed) {
-        throw SyntaxError('Unsafe expressions are ignored');
-      }
-
       mappedExpressions.push([expression, parsed]);
     } catch (e) {
       erroredExpressions.push([expression, e]);

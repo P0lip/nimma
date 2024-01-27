@@ -1,59 +1,40 @@
 import isObject from './codegen-functions/is-object.mjs';
 
-function _traverseBody(key, curObj, scope, cb, deps) {
+function _traverseBody(key, curObj, scope, cb) {
   const value = curObj[key];
   const pos = scope.enter(key);
-  const matched = deps !== null && deps.length > 0 && !deps[0].fn(scope);
 
-  if (deps === null || (deps.length === 1 && matched)) {
-    cb(scope);
-  }
+  cb(scope);
 
-  if (!isObject(value)) {
-    // no-op
-  } else if (deps === null) {
-    _traverse(value, scope, cb, deps);
-  } else if (deps.length > 0) {
-    if (matched) {
-      _traverse(value, scope, cb, deps.slice(1));
-    }
-
-    if (deps[0].deep) {
-      scope.exit(pos);
-      scope.enter(key);
-      _traverse(value, scope, cb, deps);
-    }
+  if (isObject(value)) {
+    _traverse(value, scope, cb);
   }
 
   scope.exit(pos);
 }
 
-function _traverse(curObj, scope, cb, deps) {
+function _traverse(curObj, scope, cb) {
   if (Array.isArray(curObj)) {
     for (let i = 0; i < curObj.length; i++) {
-      _traverseBody(i, curObj, scope, cb, deps);
+      _traverseBody(i, curObj, scope, cb);
     }
   } else {
     for (const key of Object.keys(curObj)) {
-      _traverseBody(key, curObj, scope, cb, deps);
+      _traverseBody(key, curObj, scope, cb);
     }
   }
 }
 
 export function traverse(cb) {
-  _traverse(this.root, this, cb, null);
-}
-
-export function bailedTraverse(cb, deps) {
-  _traverse(this.value, this, cb, deps);
+  _traverse(this.root, this, cb);
 }
 
 export function zonedTraverse(cb, zones) {
   if (isSaneObject(this.root)) {
     zonesRegistry.set(this.root, zones);
-    _traverse(new Proxy(this.root, traps), this, cb, null);
+    _traverse(new Proxy(this.root, traps), this, cb);
   } else {
-    _traverse(this.root, this, cb, null);
+    _traverse(this.root, this, cb);
   }
 }
 

@@ -9,20 +9,13 @@ export default class Nimma {
 
   constructor(
     expressions,
-    {
-      unsafe = true,
-      module = 'esm',
-      npmProvider = null,
-      customShorthands = null,
-    } = {},
+    { module = 'esm', npmProvider = null, customShorthands = null } = {},
   ) {
     this.#compiledFn = null;
     this.#module = module;
     this.#sourceCode = null;
 
-    const parsedExpressions = parseExpressions(expressions, unsafe);
-
-    this.tree = codegen(parsedExpressions, {
+    this.tree = codegen(parseExpressions(expressions), {
       customShorthands,
       module,
       npmProvider,
