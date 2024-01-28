@@ -14,7 +14,6 @@ declare class Nimma {
     expressions: string[],
     opts?: {
       customShorthands?: Record<string, string> | null;
-      npmProvider?: string | null;
       module?: 'esm' | 'commonjs';
     },
   );

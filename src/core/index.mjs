@@ -7,10 +7,7 @@ export default class Nimma {
   #module;
   #sourceCode;
 
-  constructor(
-    expressions,
-    { module = 'esm', npmProvider = null, customShorthands = null } = {},
-  ) {
+  constructor(expressions, { module = 'esm', customShorthands = null } = {}) {
     this.#compiledFn = null;
     this.#module = module;
     this.#sourceCode = null;
@@ -18,7 +15,6 @@ export default class Nimma {
     this.tree = codegen(parseExpressions(expressions), {
       customShorthands,
       module,
-      npmProvider,
     });
   }
 

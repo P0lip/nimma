@@ -53,18 +53,15 @@ export default class ESTree {
   #availableShorthands;
   #states = -1;
 
-  constructor({ customShorthands, format, module, npmProvider }) {
+  constructor({ customShorthands, format, module }) {
     this.format = format;
     this.module = module;
-    this.npmProvider = npmProvider;
     this.ctx = null;
     this.traversalZones = new TraversalZones();
     this.#availableShorthands = customShorthands;
 
     this.#runtimeDependencies = new Map([['Scope', 'Scope']]);
-    this.#modules = new Map([
-      [`${this.npmProvider ?? ''}nimma/runtime`, this.#runtimeDependencies],
-    ]);
+    this.#modules = new Map([[`nimma/runtime`, this.#runtimeDependencies]]);
   }
 
   addRuntimeDependency(specifier) {
@@ -156,12 +153,6 @@ export default class ESTree {
 
     const { createImport, createDefaultExport } =
       format === 'esm' ? esm : commonjs;
-
-    if (format !== 'esm' && this.npmProvider !== null) {
-      throw new Error(
-        'npmProvider option is not supported for formats other than ESM',
-      );
-    }
 
     return astring(
       b.program(
