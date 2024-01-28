@@ -3,8 +3,6 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { babel } from '@rollup/plugin-babel';
-
 const pkg = JSON.parse(
   fs.readFileSync(
     path.join(path.dirname(fileURLToPath(import.meta.url)), 'package.json'),
@@ -12,19 +10,12 @@ const pkg = JSON.parse(
   ),
 );
 
-const BASE_DIR = './dist';
+const BASE_DIR = '.';
 
 export default [
   {
-    external: id =>
-      id.startsWith('@babel/runtime') ||
-      Object.keys(pkg.dependencies).includes(id) ||
-      Object.keys(pkg.optionalDependencies).includes(id),
-    input: [
-      './src/index.mjs',
-      './src/fallbacks/index.mjs',
-      './src/runtime/errors/index.mjs',
-    ],
+    external: Object.keys(pkg.dependencies),
+    input: Object.values(pkg.exports).map(entry => entry.import),
     output: [
       {
         dir: path.join(BASE_DIR, './cjs'),
@@ -34,14 +25,6 @@ export default [
         name: pkg.name,
         preserveModules: true,
       },
-      {
-        dir: path.join(BASE_DIR, './esm'),
-        entryFileNames: '[name].mjs',
-        format: 'es',
-        name: pkg.name,
-        preserveModules: true,
-      },
     ],
-    plugins: [babel({ babelHelpers: 'bundled' })],
   },
 ];

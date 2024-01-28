@@ -1,6 +1,5 @@
 import Iterator from '../../codegen/iterator.mjs';
 import parse from '../../parser/index.mjs';
-import AggregateError from '../../runtime/errors/aggregate-error.mjs';
 
 function pickException([, ex]) {
   return ex;

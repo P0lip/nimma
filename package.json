@@ -11,38 +11,38 @@
     "url": "https://github.com/P0lip/nimma/issues"
   },
   "engines": {
-    "node": ">=14.13"
+    "node": ">=18"
   },
   "files": [
-    "dist/**"
+    "src",
+    "cjs"
   ],
   "type": "module",
-  "types": "./dist/esm/index.d.ts",
-  "main": "./dist/cjs/index.js",
-  "module": "./dist/esm/index.mjs",
+  "types": "./src/index.d.ts",
+  "main": "./cjs/index.js",
+  "module": "./src/index.mjs",
   "exports": {
     ".": {
-      "types": "./dist/esm/index.d.ts",
-      "import": "./dist/esm/index.mjs",
-      "require": "./dist/cjs/index.cjs"
+      "types": "./src/index.d.ts",
+      "import": "./src/index.mjs",
+      "require": "./cjs/index.cjs"
     },
     "./parser": {
-      "import": "./dist/esm/parser/parser.mjs",
-      "require": "./dist/cjs/parser/parser.cjs"
+      "import": "./src/parser/parser.mjs",
+      "require": "./cjs/parser/parser.cjs"
     },
     "./parser/jsep": {
-      "import": "./dist/esm/parser/jsep.mjs",
-      "require": "./dist/cjs/parser/jsep.cjs"
+      "import": "./src/parser/jsep.mjs",
+      "require": "./cjs/parser/jsep.cjs"
     },
     "./runtime": {
-      "types": "./dist/esm/runtime/index.d.ts",
-      "import": "./dist/esm/runtime/index.mjs",
-      "require": "./dist/cjs/runtime/index.cjs"
+      "import": "./src/runtime/index.mjs",
+      "require": "./cjs/runtime/index.cjs"
     },
     "./errors": {
-      "types": "./dist/esm/runtime/errors/index.d.ts",
-      "import": "./dist/esm/runtime/errors/index.mjs",
-      "require": "./dist/cjs/runtime/errors/index.cjs"
+      "types": "./src/runtime/errors/index.d.ts",
+      "import": "./src/runtime/errors/index.mjs",
+      "require": "./cjs/runtime/errors/index.cjs"
     }
   },
   "sideEffects": false,
@@ -55,7 +55,6 @@
   "scripts": {
     "prebuild": "peggy --format es -o src/parser/parser.mjs src/parser/parser.peg",
     "build": "export NODE_ENV=production; rollup -c",
-    "postbuild": "node ./scripts/copy-types.mjs",
     "lint": "ls-lint && eslint --cache --cache-location .cache/ src && prettier --ignore-path .gitignore --check --cache --cache-location .cache/.prettier src",
     "test": "export NODE_ENV=test; c8 mocha --config .mocharc ./**/__tests__/**/*.test.mjs && karma start karma.conf.cjs",
     "prepublishOnly": "npm run lint && npm run test && npm run build && (stat ./dist/esm/parser/parser.mjs && stat ./dist/cjs/parser/parser.js) >> /dev/null"
@@ -63,16 +62,13 @@
   "devDependencies": {
     "@babel/core": "^7.23.9",
     "@babel/eslint-parser": "^7.23.9",
-    "@babel/plugin-transform-runtime": "^7.23.9",
     "@babel/preset-env": "^7.23.9",
     "@eslint/js": "^8.56.0",
     "@ls-lint/ls-lint": "^1.10.0",
-    "@rollup/plugin-babel": "^6.0.4",
     "@sindresorhus/fnv1a": "^3.0.0",
     "benchmark": "^2.1.4",
     "c8": "^9.1.0",
     "chai": "^5.0.3",
-    "cpy": "^8.1.2",
     "eslint": "^8.56.0",
     "eslint-plugin-chai-expect": "^3.0.0",
     "eslint-plugin-chai-friendly": "^0.7.4",

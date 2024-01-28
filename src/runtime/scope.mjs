@@ -1,4 +1,3 @@
-import AggregateError from './errors/aggregate-error.mjs';
 import proxyCallbacks from './proxy-callbacks.mjs';
 import { Sandbox } from './sandbox.mjs';
 import { bailedTraverse, traverse, zonedTraverse } from './traverse.mjs';
