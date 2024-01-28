@@ -10,7 +10,7 @@ function pickExpression([expression]) {
   return expression;
 }
 
-export default function parseExpressions(expressions, unsafe, hasFallback) {
+export default function parseExpressions(expressions, unsafe) {
   const mappedExpressions = [];
   const erroredExpressions = [];
 
@@ -18,9 +18,7 @@ export default function parseExpressions(expressions, unsafe, hasFallback) {
     try {
       const parsed = parse(expression);
       if (unsafe === false && Iterator.analyze(parsed).bailed) {
-        throw SyntaxError(
-          'Unsafe expressions are ignored, but no fallback was specified',
-        );
+        throw SyntaxError('Unsafe expressions are ignored');
       }
 
       mappedExpressions.push([expression, parsed]);
@@ -29,15 +27,12 @@ export default function parseExpressions(expressions, unsafe, hasFallback) {
     }
   }
 
-  if (!hasFallback && erroredExpressions.length > 0) {
+  if (erroredExpressions.length > 0) {
     throw new AggregateError(
       erroredExpressions.map(pickException),
       `Error parsing ${erroredExpressions.map(pickExpression).join(', ')}`,
     );
   }
 
-  return {
-    erroredExpressions: erroredExpressions.map(pickExpression),
-    mappedExpressions,
-  };
+  return mappedExpressions;
 }

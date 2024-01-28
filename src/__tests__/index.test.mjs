@@ -2,7 +2,6 @@
 import { expect } from 'chai';
 import forEach from 'mocha-each';
 
-import jsonPathPlus from '../fallbacks/jsonpath-plus.mjs';
 import Nimma from '../index.mjs';
 import { RuntimeError } from '../runtime/errors/index.mjs';
 
@@ -673,25 +672,6 @@ describe('Nimma', () => {
 
     expect(collected).to.deep.eq({
       '$[?(@ && @.example)]': [[{ example: true }, ['test1']]],
-    });
-  });
-
-  it('works #23', () => {
-    const document = {
-      foo: {
-        bar: true,
-      },
-      info: {
-        bar: false,
-      },
-    };
-
-    const collected = collect(document, ['$.foo^.info'], {
-      fallback: jsonPathPlus,
-    });
-
-    expect(collected).to.deep.eq({
-      '$.foo^.info': [[{ bar: false }, ['info']]],
     });
   });
 

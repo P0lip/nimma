@@ -1,5 +1,3 @@
-import type Fallback from '../codegen/fallback';
-
 export type Callback = (scope: EmittedScope) => void;
 
 type JsonPath = (string | number)[];
@@ -16,7 +14,6 @@ declare class Nimma {
     expressions: string[],
     opts?: {
       customShorthands?: Record<string, string> | null;
-      fallback?: Fallback | null;
       npmProvider?: string | null;
       unsafe?: boolean;
       module?: 'esm' | 'commonjs';

@@ -2,7 +2,6 @@ import { expect } from 'chai';
 import forEach from 'mocha-each';
 
 import Nimma from '../core/index.mjs';
-import { jsonPathPlus } from '../fallbacks/index.mjs';
 
 function generate(expressions, opts) {
   return new Nimma(expressions, opts).sourceCode;
@@ -1077,116 +1076,6 @@ export default function (input, callbacks) {
   }
 }
 `);
-  });
-
-  describe('given fallback', () => {
-    it('and errored expressions and ESM module, should include whatever fallback specified', () => {
-      expect(
-        generate(['$.foo^.info'], {
-          fallback: jsonPathPlus,
-        }),
-      ).to.eq(`import {Scope} from "nimma/runtime";
-import {JSONPath} from "jsonpath-plus";
-import {default as toPath} from "lodash.topath";
-const fallback = Function(\`return (input, path, fn) => {
-    this.JSONPath({
-      callback: result => {
-        fn({
-          path: this.toPath(result.path.slice(1)),
-          value: result.value,
-        });
-      },
-      json: input,
-      path,
-      resultType: 'all',
-    });
-  }\`).call({
-  "JSONPath": JSONPath,
-  "toPath": toPath
-});
-export default function (input, callbacks) {
-  const scope = new Scope(input, callbacks);
-  try {
-    for (const path of ["$.foo^.info"]) {
-      fallback(input, path, scope.callbacks[path])
-    }
-  } finally {
-    scope.destroy();
-  }
-}
-`);
-    });
-
-    it('and errored expressions and CommonJS module, should include whatever fallback specified', () => {
-      expect(
-        generate(['$.foo^.info'], {
-          fallback: jsonPathPlus,
-          module: 'commonjs',
-        }),
-      ).to.eq(`"use strict";
-const {
-  Scope
-} = require("nimma/runtime");
-const {
-  JSONPath
-} = require("jsonpath-plus");
-const {
-  default: toPath
-} = require("lodash.topath");
-const fallback = Function(\`return (input, path, fn) => {
-    this.JSONPath({
-      callback: result => {
-        fn({
-          path: this.toPath(result.path.slice(1)),
-          value: result.value,
-        });
-      },
-      json: input,
-      path,
-      resultType: 'all',
-    });
-  }\`).call({
-  "JSONPath": JSONPath,
-  "toPath": toPath
-});
-module.exports = function (input, callbacks) {
-  const scope = new Scope(input, callbacks);
-  try {
-    for (const path of ["$.foo^.info"]) {
-      fallback(input, path, scope.callbacks[path])
-    }
-  } finally {
-    scope.destroy();
-  }
-};
-`);
-    });
-
-    it('and no errored expressions, should keep code untouched', () => {
-      expect(
-        generate(['$.foo.info'], {
-          fallback: jsonPathPlus,
-        }),
-      ).to.eq(`import {Scope, isObject} from "nimma/runtime";
-const tree = {
-  "$.foo.info": function (scope) {
-    const value = scope.sandbox.root?.["foo"];
-    if (!isObject(value)) return;
-    scope = scope.fork(["foo", "info"]);
-    if (scope === null) return;
-    scope.emit("$.foo.info", 0, false);
-  }
-};
-export default function (input, callbacks) {
-  const scope = new Scope(input, callbacks);
-  try {
-    tree["$.foo.info"](scope);
-  } finally {
-    scope.destroy();
-  }
-}
-`);
-    });
   });
 
   describe('custom shorthands', () => {
