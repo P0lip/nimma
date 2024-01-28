@@ -1,9 +1,9 @@
 /* eslint-env node */
-import { babel } from '@rollup/plugin-babel';
-import commonjs from '@rollup/plugin-commonjs';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { babel } from '@rollup/plugin-babel';
 
 const pkg = JSON.parse(
   fs.readFileSync(
@@ -42,6 +42,6 @@ export default [
         preserveModules: true,
       },
     ],
-    plugins: [babel({ babelHelpers: 'bundled' }), commonjs()],
+    plugins: [babel({ babelHelpers: 'bundled' })],
   },
 ];
