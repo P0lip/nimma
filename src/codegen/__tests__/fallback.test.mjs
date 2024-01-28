@@ -1,9 +1,7 @@
-import chai from 'chai';
+import { expect } from 'chai';
 import forEach from 'mocha-each';
 
 import Fallback from '../fallback.mjs';
-
-const { expect } = chai;
 
 describe('Fallback', () => {
   forEach([

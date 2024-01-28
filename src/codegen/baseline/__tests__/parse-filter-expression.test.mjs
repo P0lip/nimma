@@ -1,12 +1,10 @@
-import chai from 'chai';
+import { expect } from 'chai';
 import forEach from 'mocha-each';
 
 import parse from '../../../parser/index.mjs';
 import astring from '../../dump.mjs';
 import Iterator from '../../iterator.mjs';
 import { generateFilterScriptExpression } from '../generators.mjs';
-
-const { expect } = chai;
 
 function print(expr) {
   const ast = parse(`$[${expr}]`);

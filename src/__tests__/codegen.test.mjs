@@ -1,10 +1,8 @@
-import chai from 'chai';
+import { expect } from 'chai';
 import forEach from 'mocha-each';
 
 import Nimma from '../core/index.mjs';
 import { jsonPathPlus } from '../fallbacks/index.mjs';
-
-const { expect } = chai;
 
 function generate(expressions, opts) {
   return new Nimma(expressions, opts).sourceCode;

@@ -1,9 +1,7 @@
-import chai from 'chai';
+import { expect } from 'chai';
 import forEach from 'mocha-each';
 
 import parse from '../../parser/index.mjs';
-
-const { expect } = chai;
 
 describe('Parser', () => {
   it('goessner samples', () => {

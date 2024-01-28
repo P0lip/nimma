@@ -1,10 +1,8 @@
-import * as chai from 'chai';
+import { expect } from 'chai';
 import * as JSONPath from 'jsonpath-plus';
 import toPath from 'lodash.topath';
 
 import Nimma from '../../index.mjs';
-
-const { expect } = chai;
 
 export function compare(document, path) {
   const n = new Nimma([path], { unsafe: true });

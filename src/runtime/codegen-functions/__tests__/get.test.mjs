@@ -1,8 +1,6 @@
-import chai from 'chai';
+import { expect } from 'chai';
 
 import get from '../get.mjs';
-
-const { expect } = chai;
 
 describe('get codegen function', () => {
   it('should gracefully handle invalid input', () => {

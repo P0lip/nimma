@@ -1,12 +1,10 @@
 /* eslint-disable no-undef */
-import chai from 'chai';
+import { expect } from 'chai';
 import forEach from 'mocha-each';
 
 import jsonPathPlus from '../fallbacks/jsonpath-plus.mjs';
 import Nimma from '../index.mjs';
 import { RuntimeError } from '../runtime/errors/index.mjs';
-
-const { expect } = chai;
 
 function collect(input, expressions, opts) {
   const collected = {};

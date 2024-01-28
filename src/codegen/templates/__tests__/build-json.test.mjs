@@ -1,9 +1,7 @@
-import chai from 'chai';
+import { expect } from 'chai';
 
 import dump from '../../dump.mjs';
 import buildJson from '../build-json.mjs';
-
-const { expect } = chai;
 
 function compare(input) {
   expect(JSON.parse(dump(buildJson(input)))).to.deep.eq(input);

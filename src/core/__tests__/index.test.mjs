@@ -1,10 +1,8 @@
 /* eslint-disable no-undef */
-import chai from 'chai';
+import { expect } from 'chai';
 
 import { ParserError } from '../../runtime/errors/index.mjs';
 import Nimma from '../index.mjs';
-
-const { expect } = chai;
 
 describe('Core', () => {
   it('given unsupported, should throw', () => {
