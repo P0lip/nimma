@@ -28,7 +28,7 @@ export default [
     output: [
       {
         dir: path.join(BASE_DIR, './cjs'),
-        entryFileNames: '[name].js',
+        entryFileNames: '[name].cjs',
         exports: 'named',
         format: 'cjs',
         name: pkg.name,

@@ -16,7 +16,7 @@
   "files": [
     "dist/**"
   ],
-  "type": "commonjs",
+  "type": "module",
   "types": "./dist/esm/index.d.ts",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.mjs",
@@ -24,25 +24,25 @@
     ".": {
       "types": "./dist/esm/index.d.ts",
       "import": "./dist/esm/index.mjs",
-      "require": "./dist/cjs/index.js"
+      "require": "./dist/cjs/index.cjs"
     },
     "./parser": {
       "import": "./dist/esm/parser/parser.mjs",
-      "require": "./dist/cjs/parser/parser.js"
+      "require": "./dist/cjs/parser/parser.cjs"
     },
     "./parser/jsep": {
       "import": "./dist/esm/parser/jsep.mjs",
-      "require": "./dist/cjs/parser/jsep.js"
+      "require": "./dist/cjs/parser/jsep.cjs"
     },
     "./runtime": {
       "types": "./dist/esm/runtime/index.d.ts",
       "import": "./dist/esm/runtime/index.mjs",
-      "require": "./dist/cjs/runtime/index.js"
+      "require": "./dist/cjs/runtime/index.cjs"
     },
     "./errors": {
       "types": "./dist/esm/runtime/errors/index.d.ts",
       "import": "./dist/esm/runtime/errors/index.mjs",
-      "require": "./dist/cjs/runtime/errors/index.js"
+      "require": "./dist/cjs/runtime/errors/index.cjs"
     }
   },
   "sideEffects": false,
@@ -57,7 +57,7 @@
     "build": "export NODE_ENV=production; rollup -c",
     "postbuild": "node ./scripts/copy-types.mjs",
     "lint": "ls-lint && eslint --cache --cache-location .cache/ --ext .js,.mjs src",
-    "test": "export NODE_ENV=test; c8 mocha --config .mocharc ./**/__tests__/**/*.test.mjs && karma start",
+    "test": "export NODE_ENV=test; c8 mocha --config .mocharc ./**/__tests__/**/*.test.mjs && karma start karma.conf.cjs",
     "prepublishOnly": "npm run lint && npm run test && npm run build && (stat ./dist/esm/parser/parser.mjs && stat ./dist/cjs/parser/parser.js) >> /dev/null"
   },
   "devDependencies": {
@@ -95,7 +95,7 @@
     "mocha-each": "^2.0.1",
     "peggy": "^1.2.0",
     "prettier": "^2.3.2",
-    "rollup": "^2.56.2"
+    "rollup": "^4.9.6"
   },
   "dependencies": {
     "@jsep-plugin/regex": "^1.0.3",
