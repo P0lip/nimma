@@ -1,16 +1,17 @@
 import * as b from '../../ast/builders.mjs';
 
-export default {
-  createDefaultExport(member) {
-    return b.exportDefaultDeclaration(member);
-  },
-
-  createImport(members, source) {
-    return b.importDeclaration(
-      members.map(([imported, local]) =>
+export default function (runtimeDependencies, program) {
+  program.body.unshift(
+    b.importDeclaration(
+      runtimeDependencies.map(([imported, local]) =>
         b.importSpecifier(b.identifier(local), b.identifier(imported)),
       ),
-      b.stringLiteral(source),
-    );
-  },
-};
+      b.stringLiteral('nimma/runtime'),
+    ),
+  );
+
+  program.body[program.body.length - 1] = b.exportDefaultDeclaration(
+    program.body[program.body.length - 1],
+  );
+  return program;
+}

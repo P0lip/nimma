@@ -46,30 +46,22 @@ export default class ESTree {
   #tree = b.objectExpression([]);
   #shorthands = b.objectExpression([]);
   #runtimeDependencies;
-  #modules;
   #program = new Set();
   #body = new Set();
   #traverse = new Set();
   #availableShorthands;
   #states = -1;
 
-  constructor({ customShorthands, format, module }) {
-    this.format = format;
+  constructor({ customShorthands, module }) {
     this.module = module;
     this.ctx = null;
     this.traversalZones = new TraversalZones();
     this.#availableShorthands = customShorthands;
-
     this.#runtimeDependencies = new Map([['Scope', 'Scope']]);
-    this.#modules = new Map([[`nimma/runtime`, this.#runtimeDependencies]]);
   }
 
   addRuntimeDependency(specifier) {
     this.#runtimeDependencies.set(specifier, specifier);
-  }
-
-  addModule(members, source) {
-    this.#modules.set(source, members);
   }
 
   attachCustomShorthand(name) {
@@ -151,72 +143,59 @@ export default class ESTree {
   export(format) {
     const traversalZones = this.traversalZones.root;
 
-    const { createImport, createDefaultExport } =
-      format === 'esm' ? esm : commonjs;
-
-    return astring(
-      b.program(
-        [
-          format === 'esm'
-            ? null
-            : b.expressionStatement(b.literal('use strict')),
-          ...Array.from(this.#modules.entries()).map(([source, members]) =>
-            createImport(Array.from(members.entries()), source),
-          ),
-          ...this.#program,
-          traversalZones,
-          this.#tree.properties.length === 0
-            ? null
-            : b.variableDeclaration('const', [
-                b.variableDeclarator(internalScope.tree, this.#tree),
-              ]),
-          this.#shorthands.properties.length === 0
-            ? null
-            : b.variableDeclaration('const', [
-                b.variableDeclarator(
-                  internalScope.shorthands,
-                  this.#shorthands,
-                ),
-              ]),
-          createDefaultExport(
-            b.functionDeclaration(
-              null,
-              params,
-              b.blockStatement(
-                [
-                  NEW_SCOPE_VARIABLE_DECLARATION,
-                  b.tryStatement(
-                    b.blockStatement(
-                      [
-                        ...this.#body,
-                        this.#traverse.size === 0
-                          ? null
-                          : b.expressionStatement(
-                              b.callExpression(scope.traverse, [
-                                b.arrowFunctionExpression(
-                                  [],
-                                  b.blockStatement(Array.from(this.#traverse)),
-                                ),
-                                traversalZones === null
-                                  ? b.nullLiteral()
-                                  : traversalZones.declarations[0].id,
-                              ]),
+    const program = b.program(
+      [
+        ...this.#program,
+        traversalZones,
+        this.#tree.properties.length === 0
+          ? null
+          : b.variableDeclaration('const', [
+              b.variableDeclarator(internalScope.tree, this.#tree),
+            ]),
+        this.#shorthands.properties.length === 0
+          ? null
+          : b.variableDeclaration('const', [
+              b.variableDeclarator(internalScope.shorthands, this.#shorthands),
+            ]),
+        b.functionDeclaration(
+          null,
+          params,
+          b.blockStatement(
+            [
+              NEW_SCOPE_VARIABLE_DECLARATION,
+              b.tryStatement(
+                b.blockStatement(
+                  [
+                    ...this.#body,
+                    this.#traverse.size === 0
+                      ? null
+                      : b.expressionStatement(
+                          b.callExpression(scope.traverse, [
+                            b.arrowFunctionExpression(
+                              [],
+                              b.blockStatement(Array.from(this.#traverse)),
                             ),
-                      ].filter(Boolean),
-                    ),
-                    null,
-                    b.blockStatement([
-                      b.expressionStatement(
-                        b.callExpression(scope.destroy, []),
-                      ),
-                    ]),
-                  ),
-                ].filter(Boolean),
+                            traversalZones === null
+                              ? b.nullLiteral()
+                              : traversalZones.declarations[0].id,
+                          ]),
+                        ),
+                  ].filter(Boolean),
+                ),
+                null,
+                b.blockStatement([
+                  b.expressionStatement(b.callExpression(scope.destroy, [])),
+                ]),
               ),
-            ),
+            ].filter(Boolean),
           ),
-        ].filter(Boolean),
-      ),
+        ),
+      ].filter(Boolean),
     );
+
+    const mod = format === 'esm' ? esm : commonjs;
+    mod(Array.from(this.#runtimeDependencies), program);
+
+    return astring(program);
   }
 }

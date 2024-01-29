@@ -1,21 +1,12 @@
 import * as b from '../../ast/builders.mjs';
 
-export default {
-  createDefaultExport(member) {
-    return b.expressionStatement(
-      b.assignmentExpression(
-        '=',
-        b.memberExpression(b.identifier('module'), b.identifier('exports')),
-        member,
-      ),
-    );
-  },
-
-  createImport(members, source) {
-    return b.variableDeclaration('const', [
+export default function (runtimeDependencies, program) {
+  program.body.unshift(
+    b.expressionStatement(b.stringLiteral('use strict')),
+    b.variableDeclaration('const', [
       b.variableDeclarator(
         b.objectExpression(
-          members.map(([imported, local]) =>
+          runtimeDependencies.map(([imported, local]) =>
             b.objectProperty(
               b.identifier(imported),
               b.identifier(local),
@@ -24,8 +15,20 @@ export default {
             ),
           ),
         ),
-        b.callExpression(b.identifier('require'), [b.stringLiteral(source)]),
+        b.callExpression(b.identifier('require'), [
+          b.stringLiteral('nimma/runtime'),
+        ]),
       ),
-    ]);
-  },
-};
+    ]),
+  );
+
+  program.body[program.body.length - 1] = b.expressionStatement(
+    b.assignmentExpression(
+      '=',
+      b.memberExpression(b.identifier('module'), b.identifier('exports')),
+      program.body[program.body.length - 1],
+    ),
+  );
+
+  return program;
+}

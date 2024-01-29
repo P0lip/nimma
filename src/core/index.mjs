@@ -27,11 +27,7 @@ export default class Nimma {
     this.#compiledFn ??= Function(
       'module, require',
       `${String(this.tree.export('commonjs'))};return module.exports`,
-    )({}, id => {
-      if (id === 'nimma/runtime') {
-        return runtime;
-      }
-    });
+    )({}, () => runtime);
 
     this.#compiledFn(input, callbacks);
   }
