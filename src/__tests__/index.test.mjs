@@ -12,14 +12,13 @@ function collect(input, expressions, opts) {
     collected[expr].push([scope.value, scope.path]);
   };
 
-  const n = new Nimma(expressions, opts);
-
-  n.query(
+  Nimma.query(
     input,
     expressions.reduce((mapped, expression) => {
       mapped[expression] = _.bind(null, expression);
       return mapped;
     }, {}),
+    opts,
   );
 
   return collected;

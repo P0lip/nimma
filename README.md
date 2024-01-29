@@ -33,241 +33,140 @@
 
 ## Usage
 
+### Querying
+
 ```js
-import Nimma from 'https://cdn.skypack.dev/nimma';
+import Nimma from 'nimma';
 
-const n = new Nimma([
-  '$.info',
-  '$.info.contact',
-  '$.info^',
-  '$.info^~',
-  '$.servers[*].url',
-  '$.servers[0:2]',
-  '$.servers[:5]',
-  "$.bar['children']",
-  "$.bar['0']",
-  "$.bar['children.bar']",
-  '$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload',
-  "$..[?( @property === 'get' || @property === 'put' || @property === 'post' )]",
-  "$..paths..[?( @property === 'get' || @property === 'put' || @property === 'post' )]",
-  `$.examples.*`,
-  '$[1:-5:-2]',
-  '$..foo..[?( @property >= 900 )]..foo',
-]);
-
-// you can perform the query...
-n.query(document, {
-  ['$.info']({ value, path }) {
-    //
+const document = {
+  info: {
+    title: 'Example API',
+    version: '1.0.0',
+    contact: {
+      name: 'API Support',
+      url: 'http://www.example.com/support',
+      email: ''
+    }
   },
-  // and so on for each specified path
+  paths: {
+    '/users': {
+      get: {
+        summary: 'Returns a list of users.',
+        operationId: 'getUsers',
+        responses: {
+          '200': {
+            description: 'OK',
+          }
+        }
+      },
+      post: {
+        summary: 'Creates a new user.',
+        operationId: 'createUser',
+        responses: {
+          '200': {
+            description: 'OK',
+          }
+        }
+      },
+      put: {
+        summary: 'Updates a user.',
+        operationId: 'updateUser',
+        responses: {
+          '200': {
+            description: 'OK',
+          }
+        }
+      }
+    }
+  }
+};
+
+const query = Nimma.query(document, {
+  '$.info'({ path, value }) {
+    console.log(path, value);
+  },
+  '$.info.contact'({ path, value }) {
+    console.log(path, value);
+  },
+  '$.paths[*][get,post]'({ path, value }) {
+    console.log(path, value);
+  }
 });
 
-// ... or write the generated code. It's advisable to write the code to further re-use.
-await cache.writeFile('./nimma-code.mjs', n.sourceCode); // once
+// a given instance can be re-used to traverse another document
+query({
+  info: {
+    title: 'Example API',
+    version: '2.0.0',
+    contact: {
+      email: ''
+    }
+  },
+});
 ```
 
-Here's how the sourceCode would look like for the above path expressions
+### Code Generation
+
+Nimma can also generate a JS code that can be used to traverse a given JSON document.
 
 ```js
-import { Scope, isObject, inBounds } from 'nimma/runtime';
-const tree = {
-  '$.info': function (scope, fn) {
-    const value = scope.sandbox.root;
-    if (isObject(value)) {
-      scope.fork(['info'])?.emit(fn, 0, false);
-    }
+import Nimma from 'nimma';
+import * as fs from 'node:fs/promises';
+
+const nimma = new Nimma([
+  '$.info',
+  '$.info.contact',
+  '$.servers[:5]',
+  '$.paths[*][*]'
+], {
+  module: 'esm' // or 'cjs' for CommonJS. 'esm' is the default value
+});
+
+// for esm
+await fs.writeFile('./nimma-code.mjs', nimma.sourceCode);
+
+// for cjs
+await fs.writeFile('./nimma-code.cjs', nimma.sourceCode);
+
+// you can also use the code directly
+nimma.query(document, {
+  // you need to provide a callback for each JSON Path expression
+  '$.info'({ path, value }) {
+      console.log(path, value);
   },
-  '$.info.contact': function (scope, fn) {
-    const value = scope.sandbox.root?.['info'];
-    if (isObject(value)) {
-      scope.fork(['info', 'contact'])?.emit(fn, 0, false);
-    }
+  '$.info.contact'({ path, value }) {
+      console.log(path, value);
+  },  
+  '$.servers[:5]'({ path, value }) {
+      console.log(path, value);
   },
-  '$.info^': function (scope, fn) {
-    const value = scope.sandbox.root;
-    if (isObject(value)) {
-      scope.fork(['info'])?.emit(fn, 1, false);
-    }
-  },
-  '$.info^~': function (scope, fn) {
-    const value = scope.sandbox.root;
-    if (isObject(value)) {
-      scope.fork(['info'])?.emit(fn, 1, true);
-    }
-  },
-  '$.servers[*].url': function (scope, fn) {
-    if (scope.depth !== 2) return;
-    if (scope.path[0] !== 'servers') return;
-    if (scope.path[2] !== 'url') return;
-    scope.emit(fn, 0, false);
-  },
-  '$.servers[0:2]': function (scope, fn) {
-    if (scope.depth !== 1) return;
-    if (scope.path[0] !== 'servers') return;
-    if (typeof scope.path[1] !== 'number' || scope.path[1] >= 2) return;
-    scope.emit(fn, 0, false);
-  },
-  '$.servers[:5]': function (scope, fn) {
-    if (scope.depth !== 1) return;
-    if (scope.path[0] !== 'servers') return;
-    if (typeof scope.path[1] !== 'number' || scope.path[1] >= 5) return;
-    scope.emit(fn, 0, false);
-  },
-  "$.bar['children']": function (scope, fn) {
-    const value = scope.sandbox.root?.['bar'];
-    if (isObject(value)) {
-      scope.fork(['bar', 'children'])?.emit(fn, 0, false);
-    }
-  },
-  "$.bar['0']": function (scope, fn) {
-    const value = scope.sandbox.root?.['bar'];
-    if (isObject(value)) {
-      scope.fork(['bar', '0'])?.emit(fn, 0, false);
-    }
-  },
-  "$.bar['children.bar']": function (scope, fn) {
-    const value = scope.sandbox.root?.['bar'];
-    if (isObject(value)) {
-      scope.fork(['bar', 'children.bar'])?.emit(fn, 0, false);
-    }
-  },
-  '$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload':
-    function (scope, fn) {
-      if (scope.depth !== 4) return;
-      if (scope.path[0] !== 'channels') return;
-      if (scope.path[2] !== 'publish' && scope.path[2] !== 'subscribe') return;
-      if (!(scope.sandbox.at(3).value.schemaFormat === void 0)) return;
-      if (scope.path[4] !== 'payload') return;
-      scope.emit(fn, 0, false);
-    },
-  "$..[?( @property === 'get' || @property === 'put' || @property === 'post' )]":
-    function (scope, fn) {
-      if (
-        !(
-          scope.sandbox.property === 'get' ||
-          scope.sandbox.property === 'put' ||
-          scope.sandbox.property === 'post'
-        )
-      )
-        return;
-      scope.emit(fn, 0, false);
-    },
-  "$..paths..[?( @property === 'get' || @property === 'put' || @property === 'post' )]":
-    function (scope, fn) {
-      if (scope.depth < 1) return;
-      let pos = 0;
-      if (((pos = scope.path.indexOf('paths', pos)), pos === -1)) return;
-      if (
-        scope.depth < pos + 1 ||
-        ((pos = !(
-          scope.sandbox.property === 'get' ||
-          scope.sandbox.property === 'put' ||
-          scope.sandbox.property === 'post'
-        )
-          ? -1
-          : scope.depth),
-        pos === -1)
-      )
-        return;
-      if (scope.depth !== pos) return;
-      scope.emit(fn, 0, false);
-    },
-  '$.examples.*': function (scope, fn) {
-    if (scope.depth !== 1) return;
-    if (scope.path[0] !== 'examples') return;
-    scope.emit(fn, 0, false);
-  },
-  '$[1:-5:-2]': function (scope, fn) {
-    if (scope.depth !== 0) return;
-    if (
-      typeof scope.path[0] !== 'number' ||
-      !inBounds(scope.sandbox.parentValue, scope.path[0], 1, -5, -2)
-    )
-      return;
-    scope.emit(fn, 0, false);
-  },
-  '$..foo..[?( @property >= 900 )]..foo': function (scope, fn) {
-    scope.bail(
-      '$..foo..[?( @property >= 900 )]..foo',
-      scope => scope.emit(fn, 0, false),
-      [
-        {
-          fn: scope => scope.property !== 'foo',
-          deep: true,
-        },
-        {
-          fn: scope => !(scope.sandbox.property >= 900),
-          deep: true,
-        },
-        {
-          fn: scope => scope.property !== 'foo',
-          deep: true,
-        },
-      ],
-    );
-  },
-};
-export default function (input, callbacks) {
-  const scope = new Scope(input);
-  const _tree = scope.registerTree(tree);
-  const _callbacks = scope.proxyCallbacks(callbacks, {});
-  try {
-    _tree['$.info'](scope, _callbacks['$.info']);
-    _tree['$.info.contact'](scope, _callbacks['$.info.contact']);
-    _tree['$.info^'](scope, _callbacks['$.info^']);
-    _tree['$.info^~'](scope, _callbacks['$.info^~']);
-    _tree["$.bar['children']"](scope, _callbacks["$.bar['children']"]);
-    _tree["$.bar['0']"](scope, _callbacks["$.bar['0']"]);
-    _tree["$.bar['children.bar']"](scope, _callbacks["$.bar['children.bar']"]);
-    _tree['$..foo..[?( @property >= 900 )]..foo'](
-      scope,
-      _callbacks['$..foo..[?( @property >= 900 )]..foo'],
-    );
-    scope.traverse(() => {
-      _tree['$.servers[*].url'](scope, _callbacks['$.servers[*].url']);
-      _tree['$.servers[0:2]'](scope, _callbacks['$.servers[0:2]']);
-      _tree['$.servers[:5]'](scope, _callbacks['$.servers[:5]']);
-      _tree[
-        '$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload'
-      ](
-        scope,
-        _callbacks[
-          '$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload'
-        ],
-      );
-      _tree[
-        "$..[?( @property === 'get' || @property === 'put' || @property === 'post' )]"
-      ](
-        scope,
-        _callbacks[
-          "$..[?( @property === 'get' || @property === 'put' || @property === 'post' )]"
-        ],
-      );
-      _tree[
-        "$..paths..[?( @property === 'get' || @property === 'put' || @property === 'post' )]"
-      ](
-        scope,
-        _callbacks[
-          "$..paths..[?( @property === 'get' || @property === 'put' || @property === 'post' )]"
-        ],
-      );
-      _tree['$.examples.*'](scope, _callbacks['$.examples.*']);
-      _tree['$[1:-5:-2]'](scope, _callbacks['$[1:-5:-2]']);
-    });
-  } finally {
-    scope.destroy();
+  '$.paths[*][*]'({ path, value }) {
+      console.log(path, value);
   }
-}
+});
 ```
 
-Since it's a valid ES Module, you can easily load it again and there's no need for `new Nimma`.
+Once the code is written to the file, you can use it as follows:
 
-### Supported opts
+```js
+import query from './nimma-code.mjs'; // or const query = require('./nimma-code.cjs');
 
-- output: ES2018 | ES2021 | auto
-- fallback
-- unsafe
+query(document, {
+  // you need to provide a callback for each JSON Path expression
+  '$.info'({ path, value }) {
+    console.log(path, value);
+  },
+  '$.info.contact'({ path, value }) {
+    console.log(path, value);
+  },
+  '$.servers[:5]'({ path, value }) {
+    console.log(path, value);
+  },
+  '$.paths[*][*]'({ path, value }) {
+    console.log(path, value);
+  }
+});
+```
 
 ## Comparison vs jsonpath-plus and alikes
 

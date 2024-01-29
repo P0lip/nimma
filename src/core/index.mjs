@@ -31,4 +31,10 @@ export default class Nimma {
 
     this.#compiledFn(input, callbacks);
   }
+
+  static query(input, callbacks, options) {
+    const nimma = new Nimma(Object.keys(callbacks), options);
+    nimma.query(input, callbacks);
+    return input => nimma.query(input, callbacks);
+  }
 }
