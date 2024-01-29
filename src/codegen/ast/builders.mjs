@@ -88,15 +88,6 @@ export function logicalExpression(operator, left, right) {
   };
 }
 
-export function conditionalExpression(test, consequent, alternate) {
-  return {
-    type: 'ConditionalExpression',
-    test,
-    consequent,
-    alternate,
-  };
-}
-
 export function ifStatement(test, consequent, alternate) {
   if (!consequent) throw new Error('abc');
   return {
@@ -193,23 +184,6 @@ export function returnStatement(argument) {
   return {
     type: 'ReturnStatement',
     argument,
-  };
-}
-
-export function sequenceExpression(expressions) {
-  return {
-    type: 'SequenceExpression',
-    expressions,
-  };
-}
-
-export function forOfStatement(left, right, body, _await) {
-  return {
-    type: 'ForOfStatement',
-    left,
-    right,
-    body,
-    await: _await,
   };
 }
 
@@ -327,21 +301,5 @@ export function tryStatement(block, handler = null, finalizer = null) {
     block,
     handler,
     finalizer,
-  };
-}
-
-export function templateElement(value, tail = false) {
-  return {
-    type: 'TemplateElement',
-    value,
-    tail,
-  };
-}
-
-export function templateLiteral(quasis, expressions) {
-  return {
-    type: 'TemplateLiteral',
-    quasis,
-    expressions,
   };
 }
