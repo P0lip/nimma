@@ -11,7 +11,7 @@
         "book": {
           "type": "array",
           "minItems": 100,
-          "maxItems": 125,
+          "maxItems": 100,
           "items": {
             "type": "object",
             "additionalProperties": false,

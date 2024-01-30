@@ -2,8 +2,8 @@
   "type": "array",
   "items": {
     "type": "object",
-    "minProperties": 25,
-    "maxProperties": 30,
+    "minProperties": 15,
+    "maxProperties": 15,
     "additionalProperties": {
       "type": "object",
       "properties": {
