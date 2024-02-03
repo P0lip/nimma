@@ -87,7 +87,7 @@
     "mocha": "^10.2.0",
     "mocha-each": "^2.0.1",
     "peggy": "^3.0.2",
-    "prettier": "^2.3.2",
+    "prettier": "^3.2.5",
     "rollup": "^4.9.6"
   },
   "dependencies": {
