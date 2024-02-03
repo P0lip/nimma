@@ -11,49 +11,37 @@ function dumpPath(path) {
 export class Sandbox {
   #history;
   #path;
-  #value;
 
-  constructor(path, root, history = null) {
+  constructor(path, root) {
     this.root = root;
     this.#path = path;
-    this.#history = history ?? [[0, root]];
-    this.#value = void 0;
+    this.#history = [root];
+    this.property = null;
+    this.value = this.root;
   }
 
   get path() {
     return dumpPath(this.#path);
   }
 
-  get value() {
-    if (this.#value !== void 0) {
-      return this.#value;
-    }
-
-    return (this.#value ??= this.#history[this.#history.length - 1][1]);
-  }
-
-  get property() {
-    return unwrapOrNull(this.#path, this.#path.length - 1);
-  }
-
-  get #parent() {
-    if (this.#history.length < 3) {
-      return void 0;
-    }
-
-    return this.#history[this.#history.length - 3];
-  }
-
   parentAt(i) {
-    return this.#history[this.#history.length + i][1];
+    return this.#history[this.#path.length + i];
   }
 
   get parentValue() {
-    return this.#parent?.[1];
+    if (this.#path.length < 2) {
+      return void 0;
+    }
+
+    return this.#history[this.#path.length - 2];
   }
 
   get parentProperty() {
-    return this.#path[this.#parent?.[0]];
+    if (this.#path.length < 2) {
+      return void 0;
+    }
+
+    return this.#path[this.#path.length - 2];
   }
 
   destroy() {
@@ -61,42 +49,32 @@ export class Sandbox {
   }
 
   push() {
+    const length = this.#path.length;
+
+    this.property = length === 0 ? null : this.#path[length - 1];
+
     const root =
       this.property !== null && isObject(this.value)
         ? this.value[this.property]
         : null;
 
-    this.#history.push([this.#path.length, root]);
-    this.#value = root;
-    return this;
+    if (length + 1 > this.#history.length) {
+      this.#history.push(root);
+    } else {
+      this.#history[length] = root;
+    }
+
+    this.value = root;
   }
 
   pop() {
-    const length = Math.max(0, this.#path.length + 1);
-    while (this.#history.length > length) {
-      this.#history.pop();
+    const length = this.#path.length;
+    if (length === 0) {
+      this.value = this.root;
+      this.property = null;
+    } else {
+      this.property = this.#path[length - 1];
+      this.value = this.#history[length];
     }
-
-    this.#value = void 0;
-    return this;
   }
-
-  at(pos) {
-    if (Math.abs(pos) > this.#history.length) {
-      return null;
-    }
-
-    const actualPos = (pos < 0 ? this.#history.length : 0) + pos;
-    const history = this.#history.slice(0, actualPos + 1);
-
-    return new Sandbox(
-      this.#path.slice(0, history[history.length - 1][0]),
-      history[history.length - 1][1],
-      history,
-    );
-  }
-}
-
-function unwrapOrNull(collection, pos) {
-  return pos >= 0 && collection.length > pos ? collection[pos] : null;
 }

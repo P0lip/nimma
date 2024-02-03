@@ -45,7 +45,7 @@ export default class Scope {
     this.path = [];
     this.errors = [];
     this.#states = [];
-    this.sandbox = new Sandbox(this.path, root, null);
+    this.sandbox = new Sandbox(this.path, root);
     this.callbacks = proxyCallbacks(callbacks, this.errors);
   }
 
@@ -57,15 +57,14 @@ export default class Scope {
 
   enter(key) {
     this.path.push(key);
-    this.sandbox = this.sandbox.push();
+    this.sandbox.push();
 
-    const length = this.path.length;
     for (let i = 0; i < this.#states.length; i++) {
       const state = this.#states[i];
       state.enter(key);
     }
 
-    return length;
+    return this.path.length;
   }
 
   exit(depth) {
@@ -74,7 +73,7 @@ export default class Scope {
       this.path.pop();
     }
 
-    this.sandbox = this.sandbox.pop();
+    this.sandbox.pop();
 
     for (let i = 0; i < this.#states.length; i++) {
       const state = this.#states[i];
@@ -123,7 +122,7 @@ export default class Scope {
     let value;
     if (pos > 0) {
       path = this.path.slice(0, Math.max(0, this.path.length - pos));
-      value = (this.sandbox.at(-pos - 1) ?? this.sandbox.at(0)).value;
+      value = this.sandbox.parentAt(-pos);
     } else {
       path = this.path.slice();
       value = this.sandbox.value;
@@ -143,7 +142,6 @@ export default class Scope {
     this.path.length = 0;
     this.#states.length = 0;
     this.sandbox.destroy();
-    this.sandbox = null;
 
     if (this.errors.length > 0) {
       throw new AggregateError(this.errors, 'Error running Nimma');
