@@ -117,8 +117,8 @@ export default class Scope {
     let path;
     let value;
     if (pos > 0) {
-      path = this.path.slice(0, Math.max(0, this.path.length - pos));
-      value = this.sandbox.parentAt(-pos);
+      path = this.path.slice(0, this.path.length - pos);
+      value = this.sandbox.valueAt(-pos);
     } else {
       path = this.path.slice();
       value = this.sandbox.value;
@@ -129,7 +129,7 @@ export default class Scope {
     } else {
       fn({
         path,
-        value: path.length === 0 ? void 0 : path[path.length - 1],
+        value: path.length === 0 ? null : path[path.length - 1],
       });
     }
   }

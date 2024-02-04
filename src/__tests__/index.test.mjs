@@ -1430,6 +1430,28 @@ describe('Nimma', () => {
     });
   });
 
+  it('$..info^^', () => {
+    const document = {
+      info: {},
+    };
+
+    const collected = collect(document, ['$..info^^']);
+
+    expect(collected).to.deep.eq({});
+  });
+
+  it('$..info^~', () => {
+    const document = {
+      info: {},
+    };
+
+    const collected = collect(document, ['$..info^~']);
+
+    expect(collected).to.deep.eq({
+      '$..info^~': [[null, []]],
+    });
+  });
+
   forEach([
     Object.preventExtensions({
       shirts: Object.seal({

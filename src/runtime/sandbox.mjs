@@ -22,7 +22,7 @@ export class Sandbox {
     return dumpPath(this.#path);
   }
 
-  parentAt(i) {
+  valueAt(i) {
     return this.#history[this.#path.length + i];
   }
 
