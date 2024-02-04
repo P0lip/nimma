@@ -25,17 +25,15 @@ export default (nodes, tree, ctx) => {
     true,
   );
 
-  tree.pushAll([
-    [
-      b.blockStatement([
-        ...(isDeep(nodes[0]) ? [] : [TOP_LEVEL_DEPTH_IF_STATEMENT]),
-        b.ifStatement(condition, b.returnStatement()),
-        generateEmitCall(ctx.id, ctx.iterator.modifiers),
-      ]),
-      'tree-method',
-    ],
-    [b.stringLiteral(ctx.id), 'traverse'],
-  ]);
+  tree.addTreeMethod(
+    ctx.id,
+    b.blockStatement([
+      ...(isDeep(nodes[0]) ? [] : [TOP_LEVEL_DEPTH_IF_STATEMENT]),
+      b.ifStatement(condition, b.returnStatement()),
+      generateEmitCall(ctx.id, ctx.iterator.modifiers),
+    ]),
+    'traverse',
+  );
 
   if (!isDeep(nodes[0])) {
     tree.traversalZones.create()?.resize().attach();

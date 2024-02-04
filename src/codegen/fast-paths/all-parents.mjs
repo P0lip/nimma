@@ -14,7 +14,7 @@ const IS_NOT_OBJECT_IF_STATEMENT = b.ifStatement(
   b.returnStatement(),
 );
 
-const EMIT_ROOT_CALL_EXPRESSION = generateEmitCall('$..', {
+const EMIT_ROOT_CALL_EXPRESSION = generateEmitCall(b.stringLiteral('$..'), {
   keyed: false,
   parents: 0,
 });
@@ -26,15 +26,15 @@ export default (nodes, tree, ctx) => {
 
   tree.addRuntimeDependency(IS_OBJECT_IDENTIFIER.name);
 
-  tree.push(
+  tree.addTreeMethod(
+    ctx.id,
     b.blockStatement([
       IS_NOT_OBJECT_IF_STATEMENT,
       generateEmitCall(ctx.id, ctx.iterator.modifiers),
     ]),
-    'tree-method',
+    'traverse',
   );
 
-  tree.push(b.stringLiteral(ctx.id), 'traverse');
   tree.push(EMIT_ROOT_CALL_EXPRESSION, 'body');
 
   return true;

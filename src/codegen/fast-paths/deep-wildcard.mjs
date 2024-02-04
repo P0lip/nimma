@@ -15,12 +15,11 @@ export default (nodes, tree, ctx) => {
     return false;
   }
 
-  tree.push(
+  tree.addTreeMethod(
+    ctx.id,
     b.blockStatement([generateEmitCall(ctx.id, ctx.iterator.modifiers)]),
-    'tree-method',
+    'traverse',
   );
-
-  tree.push(b.stringLiteral(ctx.id), 'traverse');
 
   return true;
 };

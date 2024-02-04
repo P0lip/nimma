@@ -1,13 +1,15 @@
 import jsep from '../../parser/jsep.mjs';
 import * as b from '../ast/builders.mjs';
 import astring from '../dump.mjs';
-import {
-  statefulFnParams,
-  statelessFnParams,
-} from '../templates/fn-params.mjs';
+import generateAllocState from '../templates/alloc-state.mjs';
+import { statefulFnParams } from '../templates/fn-params.mjs';
 import internalScope from '../templates/internal-scope.mjs';
 import scope from '../templates/scope.mjs';
-import treeMethodCall from '../templates/tree-method-call.mjs';
+import generateTreeMethod from '../templates/tree-method.mjs';
+import {
+  generateStatefulTreeMethodCall,
+  generateTreeMethodCall,
+} from '../templates/tree-method-call.mjs';
 import commonjs from './modules/commonjs.mjs';
 import esm from './modules/esm.mjs';
 import TraversalZones from './traversal-zones.mjs';
@@ -43,6 +45,7 @@ export default function (input, callbacks) {
 */
 
 export default class ESTree {
+  #hashes;
   #tree = b.objectExpression([]);
   #shorthands = b.objectExpression([]);
   #runtimeDependencies;
@@ -52,9 +55,9 @@ export default class ESTree {
   #availableShorthands;
   #states = -1;
 
-  constructor({ customShorthands, module }) {
-    this.module = module;
-    this.ctx = null;
+  constructor({ hashes, customShorthands }) {
+    this.#hashes = hashes;
+    this.cacheInfo = {};
     this.traversalZones = new TraversalZones();
     this.#availableShorthands = customShorthands;
     this.#runtimeDependencies = new Map([['Scope', 'Scope']]);
@@ -88,55 +91,35 @@ export default class ESTree {
     return this.#tree.properties.find(prop => prop.key.value === hash);
   }
 
-  push(node, placement) {
-    switch (placement) {
-      case 'tree-method':
-      case 'stateful-tree-method':
-        this.#tree.properties.push(
-          b.objectMethod(
-            'method',
-            b.stringLiteral(this.ctx.id),
-            placement === 'stateful-tree-method'
-              ? statefulFnParams
-              : statelessFnParams,
-            node,
-          ),
-        );
-        break;
-      case 'program':
-        if (!this.#program.has(node)) {
-          this.#program.add(node);
-        }
+  addTreeMethod(id, block, scope) {
+    this.cacheInfo[id.value] = {
+      hash: this.#hashes.getHash(id.value),
+      scope,
+    };
 
-        break;
-      case 'body':
-        if (!this.#body.has(node)) {
-          this.#body.add(node);
-        }
+    if (scope === 'stateful-traverse') {
+      const state = generateAllocState(++this.#states);
+      this.#body.add(state);
+      this.#tree.properties.push(generateTreeMethod(id, block, true));
+      this.#traverse.add(generateStatefulTreeMethodCall(id, state));
+      return;
+    }
 
-        break;
-      case 'traverse':
-        this.#traverse.add(treeMethodCall(node.value, statelessFnParams));
-        break;
-      case 'stateful-traverse': {
-        this.#states += 1;
-        const id = b.identifier(`state${this.#states}`);
-        this.push(
-          b.variableDeclaration('const', [
-            b.variableDeclarator(id, b.callExpression(scope.allocState, [])),
-          ]),
-          'body',
-        );
+    this.#tree.properties.push(generateTreeMethod(id, block, false));
 
-        this.#traverse.add(treeMethodCall(node.value, [scope._, id]));
-        break;
-      }
+    const call = generateTreeMethodCall(id);
+    if (scope === 'traverse') {
+      this.#traverse.add(call);
+    } else {
+      this.#body.add(call);
     }
   }
 
-  pushAll(items) {
-    for (const item of items) {
-      this.push(...item);
+  push(node, placement) {
+    switch (placement) {
+      case 'body':
+        this.#body.add(node);
+        break;
     }
   }
 

@@ -26,6 +26,7 @@ export default [
         { blankLine: 'always', prev: 'block-like', next: 'break' },
       ],
       'simple-import-sort/imports': 'error',
+      'sort-keys': 'error',
     },
   },
   {

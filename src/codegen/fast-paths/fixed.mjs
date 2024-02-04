@@ -14,10 +14,8 @@
 import * as b from '../ast/builders.mjs';
 import { isDeep, isMemberExpression } from '../guards.mjs';
 import generateEmitCall from '../templates/emit-call.mjs';
-import { statelessFnParams } from '../templates/fn-params.mjs';
 import sandbox from '../templates/sandbox.mjs';
 import scope from '../templates/scope.mjs';
-import treeMethodCall from '../templates/tree-method-call.mjs';
 
 const VALUE_IDENTIFIER = b.identifier('value');
 const IS_OBJECT_IDENTIFIER = b.identifier('isObject');
@@ -59,27 +57,25 @@ export default (nodes, tree, ctx) => {
 
   tree.addRuntimeDependency(IS_OBJECT_IDENTIFIER.name);
 
-  tree.pushAll([
-    [
-      b.blockStatement([
-        valueVariableDeclaration,
-        IS_NOT_OBJECT_IF_STATEMENT,
-        b.expressionStatement(
-          b.assignmentExpression(
-            '=',
-            scope._,
-            b.callExpression(scope.fork, [
-              b.arrayExpression(nodes.map(toLiteral)),
-            ]),
-          ),
+  tree.addTreeMethod(
+    ctx.id,
+    b.blockStatement([
+      valueVariableDeclaration,
+      IS_NOT_OBJECT_IF_STATEMENT,
+      b.expressionStatement(
+        b.assignmentExpression(
+          '=',
+          scope._,
+          b.callExpression(scope.fork, [
+            b.arrayExpression(nodes.map(toLiteral)),
+          ]),
         ),
-        IS_NULL_SCOPE_IF_STATEMENT,
-        generateEmitCall(ctx.id, ctx.iterator.modifiers),
-      ]),
-      'tree-method',
-    ],
-    [treeMethodCall(ctx.id, statelessFnParams), 'body'],
-  ]);
+      ),
+      IS_NULL_SCOPE_IF_STATEMENT,
+      generateEmitCall(ctx.id, ctx.iterator.modifiers),
+    ]),
+    'body',
+  );
 
   return true;
 };

@@ -5,6 +5,7 @@ import Iterator from '../iterator.mjs';
 import generateEmitCall from '../templates/emit-call.mjs';
 import scope from '../templates/scope.mjs';
 import ESTree from '../tree/tree.mjs';
+import JsonPathHashes from '../utils/jsonpath-hashes.mjs';
 import {
   generateFilterScriptExpression,
   generateMemberExpression,
@@ -14,33 +15,33 @@ import {
 } from './generators.mjs';
 
 export default function baseline(jsonPaths, opts) {
-  const tree = new ESTree(opts);
-  const hashes = new Map();
-  const callbacks = new Map();
+  const hashes = new JsonPathHashes();
+  const tree = new ESTree({
+    customShorthands: opts.customShorthands,
+    hashes,
+  });
 
-  traverse: for (const [id, nodes] of jsonPaths) {
+  traverse: for (const [expression, nodes] of jsonPaths) {
     const iterator = new Iterator(nodes);
 
     if (iterator.length === -1) {
       continue;
     }
 
-    const hash = JSON.stringify(iterator.nodes);
+    const hash = JsonPathHashes.generate(iterator.nodes);
     const existingHash = hashes.get(hash);
 
     if (existingHash !== void 0) {
-      void (
-        callbacks.get(existingHash)?.push(id) ??
-        callbacks.set(existingHash, [id])
-      );
-
       const method = tree.getMethodByHash(existingHash);
       let body = method.body.body;
 
-      body.push(generateEmitCall(id, iterator.modifiers));
+      body.push(
+        generateEmitCall(b.stringLiteral(expression), iterator.modifiers),
+      );
+      hashes.link(hash, expression);
       continue;
     } else {
-      hashes.set(hash, id);
+      hashes.set(hash, expression);
     }
 
     if (nodes.length > 0 && isDeep(nodes[0])) {
@@ -48,7 +49,7 @@ export default function baseline(jsonPaths, opts) {
     }
 
     const ctx = {
-      id,
+      id: b.stringLiteral(expression),
       iterator,
     };
 
@@ -110,11 +111,9 @@ export default function baseline(jsonPaths, opts) {
     branch.push(generateEmitCall(ctx.id, iterator.modifiers));
 
     if (iterator.feedback.stateOffset !== -1) {
-      tree.push(b.stringLiteral(id), 'stateful-traverse');
-      tree.push(b.blockStatement(branch), 'stateful-tree-method');
+      tree.addTreeMethod(ctx.id, b.blockStatement(branch), 'stateful-traverse');
     } else {
-      tree.push(b.stringLiteral(id), 'traverse');
-      tree.push(b.blockStatement(branch), 'tree-method');
+      tree.addTreeMethod(ctx.id, b.blockStatement(branch), 'traverse');
     }
 
     zone?.attach();
