@@ -1381,6 +1381,55 @@ describe('Nimma', () => {
     });
   });
 
+  it('$..[bar,baz]..[bar,foo]', () => {
+    const document = {
+      bar: {
+        baz: {
+          a: {
+            baz: [
+              {
+                bar: true,
+              },
+              {
+                foo: {
+                  baz: {
+                    foo: true,
+                    bar: false,
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      foo: {
+        baz: {
+          a: {},
+          baz: {},
+        },
+      },
+    };
+
+    const collected = collect(document, ['$..[bar,baz]..[bar,foo]']);
+
+    expect(collected).to.deep.eq({
+      '$..[bar,baz]..[bar,foo]': [
+        [true, ['bar', 'baz', 'a', 'baz', 0, 'bar']],
+        [
+          {
+            baz: {
+              foo: true,
+              bar: false,
+            },
+          },
+          ['bar', 'baz', 'a', 'baz', 1, 'foo'],
+        ],
+        [true, ['bar', 'baz', 'a', 'baz', 1, 'foo', 'baz', 'foo']],
+        [false, ['bar', 'baz', 'a', 'baz', 1, 'foo', 'baz', 'bar']],
+      ],
+    });
+  });
+
   forEach([
     Object.preventExtensions({
       shirts: Object.seal({

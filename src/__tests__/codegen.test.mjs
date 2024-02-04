@@ -278,6 +278,7 @@ export default function (input, callbacks) {
         '$.foo.[?(@.bar)]',
         '$.foo.[bar]',
         '$.foo.[bar,baz]',
+        '$..[bar,baz]..[bar,foo]',
         '$.paths..content.*.examples',
         '$..[?(@.example && @.schema)]..[?(@.example && @.schema)]',
         '$..[?(@.example && @.schema)]..foo.bar..[?(@.example && @.schema)]',
@@ -434,6 +435,16 @@ const tree = {
     if (scope.path[scope.path.length - 1] !== "bar" && scope.path[scope.path.length - 1] !== "baz") return;
     scope.emit("$.foo.[bar,baz]", 0, false);
   },
+  "$..[bar,baz]..[bar,foo]": function (scope, state) {
+    if (scope.path.length < 1) return;
+    if (state.initialValue >= 0) {
+      if (scope.path[scope.path.length - 1] === "bar" || scope.path[scope.path.length - 1] === "baz") {
+        state.value |= 1
+      }
+    }
+    if (state.initialValue < 1 || !(scope.path[scope.path.length - 1] === "bar" || scope.path[scope.path.length - 1] === "foo")) return;
+    scope.emit("$..[bar,baz]..[bar,foo]", 0, false);
+  },
   "$.paths..content.*.examples": function (scope) {
     if (scope.path.length < 4) return;
     if (scope.path[0] !== "paths") return;
@@ -546,6 +557,7 @@ export default function (input, callbacks) {
     const state9 = scope.allocState();
     const state10 = scope.allocState();
     const state11 = scope.allocState();
+    const state12 = scope.allocState();
     scope.traverse(() => {
       tree["$..empty"](scope);
       tree["$.baz..baz"](scope);
@@ -564,12 +576,13 @@ export default function (input, callbacks) {
       tree["$.foo.[?(@.bar)]"](scope);
       tree["$.foo.[bar]"](scope);
       tree["$.foo.[bar,baz]"](scope);
+      tree["$..[bar,baz]..[bar,foo]"](scope, state7);
       tree["$.paths..content.*.examples"](scope);
-      tree["$..[?(@.example && @.schema)]..[?(@.example && @.schema)]"](scope, state7);
-      tree["$..[?(@.example && @.schema)]..foo.bar..[?(@.example && @.schema)]"](scope, state8);
-      tree["$..[?( @property >= 400 )]..foo"](scope, state9);
-      tree["$..foo..[?( @property >= 900 )]..foo"](scope, state10);
-      tree["$.paths..content.bar..examples"](scope, state11);
+      tree["$..[?(@.example && @.schema)]..[?(@.example && @.schema)]"](scope, state8);
+      tree["$..[?(@.example && @.schema)]..foo.bar..[?(@.example && @.schema)]"](scope, state9);
+      tree["$..[?( @property >= 400 )]..foo"](scope, state10);
+      tree["$..foo..[?( @property >= 900 )]..foo"](scope, state11);
+      tree["$.paths..content.bar..examples"](scope, state12);
     }, null);
   } finally {
     scope.destroy();
@@ -1199,6 +1212,14 @@ export default function (input, callbacks) {
   }
 }
 `);
+    });
+
+    it('should refuse to use an undefined shorthand', () => {
+      expect(
+        generate.bind(null, ['$.components.schemas[*]..@@schema()'], {
+          customShorthands: {},
+        }),
+      ).to.throw(ReferenceError, "Shorthand 'schema' is not defined");
     });
   });
 });

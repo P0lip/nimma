@@ -97,16 +97,23 @@ export function generateMemberExpression(branch, iterator, node) {
 export function generateMultipleMemberExpression(branch, iterator, node) {
   const property = generatePropertyAccess(iterator);
 
+  const logicalOperator = iterator.state.usesState ? '||' : '&&';
+  const binaryOperator = iterator.state.usesState ? '===' : '!==';
+
   const condition = node.value
     .slice(1)
     .reduce(
       (concat, member) =>
         b.logicalExpression(
-          '&&',
+          logicalOperator,
           concat,
-          b.safeBinaryExpression('!==', property, b.literal(member)),
+          b.safeBinaryExpression(binaryOperator, property, b.literal(member)),
         ),
-      b.safeBinaryExpression('!==', property, b.literal(node.value[0])),
+      b.safeBinaryExpression(
+        binaryOperator,
+        property,
+        b.literal(node.value[0]),
+      ),
     );
 
   if (iterator.state.usesState) {
