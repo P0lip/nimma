@@ -236,6 +236,7 @@ const tree = {
     scope.emit("$.servers[*].url^^", 2, false);
   },
   "$..baz^^": function (scope) {
+    if (scope.path.length < 1) return;
     if (scope.path[scope.path.length - 1] !== "baz") return;
     scope.emit("$..baz^^", 2, false);
     scope.emit("$..baz~^^", 0, true);
@@ -287,6 +288,7 @@ export default function (input, callbacks) {
     ).to.eq(`import {Scope} from "nimma/runtime";
 const tree = {
   "$..empty": function (scope) {
+    if (scope.path.length < 1) return;
     if (scope.path[scope.path.length - 1] !== "empty") return;
     scope.emit("$..empty", 0, false);
   },
@@ -576,9 +578,39 @@ export default function (input, callbacks) {
 `);
   });
 
+  it('top-level-wildcard', () => {
+    expect(generate(['$[*]', '$.*', '$[*]^', '$[*]~'])).to
+      .eq(`import {Scope} from "nimma/runtime";
+const zones = {
+  "*": {}
+};
+const tree = {
+  "$[*]": function (scope) {
+    if (scope.path.length !== 1) return;
+    scope.emit("$[*]", 0, false);
+    scope.emit("$.*", 0, false);
+    scope.emit("$[*]^", 1, false);
+    scope.emit("$[*]~", 0, true);
+  }
+};
+export default function (input, callbacks) {
+  const scope = new Scope(input, callbacks);
+  try {
+    scope.traverse(() => {
+      tree["$[*]"](scope);
+    }, zones);
+  } finally {
+    scope.destroy();
+  }
+}
+`);
+  });
+
   it('trailing wildcards', () => {
     expect(
       generate([
+        '$.*',
+        '$..*',
         `$..examples.*`,
         `$..examples..*`,
         `$..examples..*~`,
@@ -587,6 +619,14 @@ export default function (input, callbacks) {
       ]),
     ).to.eq(`import {Scope} from "nimma/runtime";
 const tree = {
+  "$.*": function (scope) {
+    if (scope.path.length !== 1) return;
+    scope.emit("$.*", 0, false);
+  },
+  "$..*": function (scope) {
+    if (scope.path.length < 1) return;
+    scope.emit("$..*", 0, false);
+  },
   "$..examples.*": function (scope) {
     if (scope.path.length < 2) return;
     if (scope.path[scope.path.length - 2] !== "examples") return;
@@ -619,6 +659,8 @@ export default function (input, callbacks) {
   try {
     const state0 = scope.allocState();
     scope.traverse(() => {
+      tree["$.*"](scope);
+      tree["$..*"](scope);
       tree["$..examples.*"](scope);
       tree["$..examples..*"](scope, state0);
       tree["$.examples..*"](scope);
@@ -1001,34 +1043,6 @@ export default function (input, callbacks) {
     scope.traverse(() => {
       tree["$.."](scope);
     }, null);
-  } finally {
-    scope.destroy();
-  }
-}
-`);
-    });
-
-    it('top-level-wildcard', () => {
-      expect(generate(['$[*]', '$.*', '$[*]^', '$[*]~'])).to
-        .eq(`import {Scope} from "nimma/runtime";
-const zones = {
-  "*": {}
-};
-const tree = {
-  "$[*]": function (scope) {
-    if (scope.path.length !== 1) return;
-    scope.emit("$[*]", 0, false);
-    scope.emit("$.*", 0, false);
-    scope.emit("$[*]^", 1, false);
-    scope.emit("$[*]~", 0, true);
-  }
-};
-export default function (input, callbacks) {
-  const scope = new Scope(input, callbacks);
-  try {
-    scope.traverse(() => {
-      tree["$[*]"](scope);
-    }, zones);
   } finally {
     scope.destroy();
   }
