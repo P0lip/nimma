@@ -49,15 +49,14 @@ export default class ESTree {
   #tree = b.objectExpression([]);
   #shorthands = b.objectExpression([]);
   #runtimeDependencies;
-  #program = new Set();
-  #body = new Set();
-  #traverse = new Set();
+  #traverse = [];
   #availableShorthands;
   #states = -1;
 
   constructor({ hashes, customShorthands }) {
     this.#hashes = hashes;
     this.cacheInfo = {};
+    this.body = [];
     this.traversalZones = new TraversalZones();
     this.#availableShorthands = customShorthands;
     this.#runtimeDependencies = new Map([['Scope', 'Scope']]);
@@ -99,9 +98,9 @@ export default class ESTree {
 
     if (scope === 'stateful-traverse') {
       const state = generateAllocState(++this.#states);
-      this.#body.add(state);
+      this.body.push(state);
       this.#tree.properties.push(generateTreeMethod(id, block, true));
-      this.#traverse.add(generateStatefulTreeMethodCall(id, state));
+      this.#traverse.push(generateStatefulTreeMethodCall(id, state));
       return;
     }
 
@@ -109,17 +108,9 @@ export default class ESTree {
 
     const call = generateTreeMethodCall(id);
     if (scope === 'traverse') {
-      this.#traverse.add(call);
+      this.#traverse.push(call);
     } else {
-      this.#body.add(call);
-    }
-  }
-
-  push(node, placement) {
-    switch (placement) {
-      case 'body':
-        this.#body.add(node);
-        break;
+      this.body.push(call);
     }
   }
 
@@ -128,7 +119,6 @@ export default class ESTree {
 
     const program = b.program(
       [
-        ...this.#program,
         traversalZones,
         this.#tree.properties.length === 0
           ? null
@@ -149,8 +139,8 @@ export default class ESTree {
               b.tryStatement(
                 b.blockStatement(
                   [
-                    ...this.#body,
-                    this.#traverse.size === 0
+                    ...this.body,
+                    this.#traverse.length === 0
                       ? null
                       : b.expressionStatement(
                           b.callExpression(scope.traverse, [

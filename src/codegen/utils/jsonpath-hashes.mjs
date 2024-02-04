@@ -19,8 +19,6 @@ export default class JsonPathHashes {
     this.#expressions.set(value, key);
   }
 
-  toJSON() {}
-
   static generate(nodes) {
     return JSON.stringify(nodes);
   }

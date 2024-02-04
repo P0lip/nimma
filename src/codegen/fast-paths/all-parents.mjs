@@ -35,7 +35,7 @@ export default (nodes, tree, ctx) => {
     'traverse',
   );
 
-  tree.push(EMIT_ROOT_CALL_EXPRESSION, 'body');
+  tree.body.push(EMIT_ROOT_CALL_EXPRESSION);
 
   return true;
 };

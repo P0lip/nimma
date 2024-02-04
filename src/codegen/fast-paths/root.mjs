@@ -13,6 +13,6 @@ export default (nodes, tree) => {
     return false;
   }
 
-  tree.push(EMIT_ROOT_CALL_EXPRESSION, 'body');
+  tree.body.push(EMIT_ROOT_CALL_EXPRESSION);
   return true;
 };
