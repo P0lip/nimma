@@ -36,22 +36,18 @@ class State {
 }
 
 export default class Scope {
-  #parent;
-  #states;
-
-  constructor(root, callbacks, parent = null) {
+  constructor(root, callbacks) {
     this.root = root;
-    this.#parent = parent;
     this.path = [];
     this.errors = [];
-    this.#states = [];
+    this.states = [];
     this.sandbox = new Sandbox(this.path, root);
     this.callbacks = proxyCallbacks(callbacks, this.errors);
   }
 
   allocState() {
     const state = new State();
-    this.#states.push(state);
+    this.states.push(state);
     return state;
   }
 
@@ -59,8 +55,8 @@ export default class Scope {
     this.path.push(key);
     this.sandbox.push();
 
-    for (let i = 0; i < this.#states.length; i++) {
-      const state = this.#states[i];
+    for (let i = 0; i < this.states.length; i++) {
+      const state = this.states[i];
       state.enter(key);
     }
 
@@ -75,8 +71,8 @@ export default class Scope {
 
     this.sandbox.pop();
 
-    for (let i = 0; i < this.#states.length; i++) {
-      const state = this.#states[i];
+    for (let i = 0; i < this.states.length; i++) {
+      const state = this.states[i];
       state.exit(depth);
     }
 
@@ -84,7 +80,7 @@ export default class Scope {
   }
 
   fork(path) {
-    const newScope = new Scope(this.root, this.callbacks, this);
+    const newScope = new Scope(this.root, this.callbacks);
 
     for (const segment of path) {
       newScope.enter(segment);
@@ -140,7 +136,7 @@ export default class Scope {
 
   destroy() {
     this.path.length = 0;
-    this.#states.length = 0;
+    this.states.length = 0;
     this.sandbox.destroy();
 
     if (this.errors.length > 0) {
