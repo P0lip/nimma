@@ -54,9 +54,9 @@
   },
   "scripts": {
     "prebuild": "peggy --format es -o src/parser/parser.mjs src/parser/parser.peg",
-    "build": "export NODE_ENV=production; rollup -c",
-    "lint": "ls-lint && eslint --cache --cache-location .cache/ src && prettier --ignore-path .gitignore --check --cache --cache-location .cache/.prettier src",
-    "test": "export NODE_ENV=test; c8 mocha --config .mocharc ./**/__tests__/**/*.test.mjs && karma start karma.conf.cjs",
+    "build": "rollup -c",
+    "lint": "ls-lint && eslint --cache --cache-location .cache/ src && prettier --log-level error --ignore-path .gitignore --check --cache --cache-location .cache/.prettier src",
+    "test": "c8 mocha --config .mocharc ./src/**/__tests__/**/*.test.mjs && karma start karma.conf.cjs --log-level=error",
     "prepublishOnly": "npm run lint && npm run test && npm run build",
     "prepare": "husky"
   },

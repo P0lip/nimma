@@ -6,13 +6,11 @@
   ],
   "exclude": [
     "**/__*__/**",
-    "src/parser/parser.mjs",
-    "src/runtime/errors/aggregate-error.mjs",
-    "src/core/utils/determine-format.mjs"
+    "src/parser/parser.mjs"
   ],
   "reporter": [
     "lcovonly",
-    "text"
+    "html"
   ],
   "branches": 80,
   "lines": 75,
