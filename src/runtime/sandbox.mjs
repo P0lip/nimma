@@ -1,5 +1,3 @@
-import isObject from './codegen-functions/is-object.mjs';
-
 function printSegment(path, segment) {
   return path + `[${typeof segment === 'string' ? `'${segment}'` : segment}]`;
 }
@@ -50,13 +48,8 @@ export class Sandbox {
 
   push() {
     const length = this.#path.length;
-
-    this.property = length === 0 ? null : this.#path[length - 1];
-
-    const root =
-      this.property !== null && isObject(this.value)
-        ? this.value[this.property]
-        : null;
+    this.property = this.#path[length - 1];
+    const root = this.value[this.property];
 
     if (length + 1 > this.#history.length) {
       this.#history.push(root);
