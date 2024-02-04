@@ -57,7 +57,8 @@
     "build": "export NODE_ENV=production; rollup -c",
     "lint": "ls-lint && eslint --cache --cache-location .cache/ src && prettier --ignore-path .gitignore --check --cache --cache-location .cache/.prettier src",
     "test": "export NODE_ENV=test; c8 mocha --config .mocharc ./**/__tests__/**/*.test.mjs && karma start karma.conf.cjs",
-    "prepublishOnly": "npm run lint && npm run test && npm run build"
+    "prepublishOnly": "npm run lint && npm run test && npm run build",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@babel/core": "^7.23.9",
@@ -72,7 +73,7 @@
     "eslint-plugin-chai-friendly": "^0.7.4",
     "eslint-plugin-simple-import-sort": "^10.0.0",
     "globals": "^13.24.0",
-    "husky": "^4.3.8",
+    "husky": "^9.0.10",
     "iso-bench": "^2.4.7",
     "js-yaml": "^4.1.0",
     "json-schema-faker": "^0.5.5",
