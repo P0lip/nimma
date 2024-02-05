@@ -36,7 +36,7 @@ export default (nodes, tree, ctx) => {
   );
 
   if (!isDeep(nodes[0])) {
-    tree.traversalZones.create()?.resize().attach();
+    tree.traversalZones.create()?.resize();
   }
 
   return true;

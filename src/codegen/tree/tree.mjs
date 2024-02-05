@@ -115,7 +115,7 @@ export default class ESTree {
   }
 
   export(format) {
-    const traversalZones = this.traversalZones.root;
+    const traversalZones = this.traversalZones.build();
 
     const program = b.program(
       [

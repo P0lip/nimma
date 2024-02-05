@@ -13,6 +13,7 @@ describe('Code Generator', () => {
         '$.info',
         '$.info.contact',
         '$.info.contact.*',
+        '$[servers,paths][*]',
         '$.servers[*].url',
         '$.servers[0:2]',
         '$.servers[:5]',
@@ -24,36 +25,38 @@ describe('Code Generator', () => {
       ]),
     ).to.eq(`import {Scope, isObject} from "nimma/runtime";
 const zones = {
-  "info": {
-    "contact": {
-      "*": {}
+  keys: ["info", "servers", "paths", "channels"],
+  zones: [{
+    keys: ["contact"],
+    zones: [{
+      zone: {}
+    }]
+  }, {
+    zone: {
+      keys: ["url"],
+      zones: [{}]
     }
-  },
-  "servers": {
-    "*": {
-      "url": {}
+  }, {
+    zone: {
+      keys: [404, 202],
+      zones: [{}, {}]
     }
-  },
-  "paths": {
-    "*": {
-      "202": {},
-      "404": {}
-    }
-  },
-  "channels": {
-    "*": {
-      "publish": {
-        "*": {
-          "payload": {}
+  }, {
+    zone: {
+      keys: ["publish", "subscribe"],
+      zones: [{
+        zone: {
+          keys: ["payload"],
+          zones: [{}]
         }
-      },
-      "subscribe": {
-        "*": {
-          "payload": {}
+      }, {
+        zone: {
+          keys: ["payload"],
+          zones: [{}]
         }
-      }
+      }]
     }
-  }
+  }]
 };
 const tree = {
   "$.info": function (scope) {
@@ -75,6 +78,11 @@ const tree = {
     if (scope.path[0] !== "info") return;
     if (scope.path[1] !== "contact") return;
     scope.emit("$.info.contact.*", 0, false);
+  },
+  "$[servers,paths][*]": function (scope) {
+    if (scope.path.length !== 2) return;
+    if (scope.path[0] !== "servers" && scope.path[0] !== "paths") return;
+    scope.emit("$[servers,paths][*]", 0, false);
   },
   "$.servers[*].url": function (scope) {
     if (scope.path.length !== 3) return;
@@ -148,6 +156,7 @@ export default function (input, callbacks) {
     const state0 = scope.allocState();
     scope.traverse(() => {
       tree["$.info.contact.*"](scope);
+      tree["$[servers,paths][*]"](scope);
       tree["$.servers[*].url"](scope);
       tree["$.servers[0:2]"](scope);
       tree["$.servers[:5]"](scope);
@@ -166,11 +175,13 @@ export default function (input, callbacks) {
       expect(generate(['$.info~', '$.servers[*].url~', '$.servers[:5]~'])).to
         .eq(`import {Scope, isObject} from "nimma/runtime";
 const zones = {
-  "servers": {
-    "*": {
-      "url": {}
+  keys: ["servers"],
+  zones: [{
+    zone: {
+      keys: ["url"],
+      zones: [{}]
     }
-  }
+  }]
 };
 const tree = {
   "$.info~": function (scope) {
@@ -595,7 +606,7 @@ export default function (input, callbacks) {
     expect(generate(['$[*]', '$.*', '$[*]^', '$[*]~'])).to
       .eq(`import {Scope} from "nimma/runtime";
 const zones = {
-  "*": {}
+  zone: {}
 };
 const tree = {
   "$[*]": function (scope) {
@@ -698,7 +709,7 @@ export default function (input, callbacks) {
       ]),
     ).to.eq(`import {Scope, inBounds} from "nimma/runtime";
 const zones = {
-  "*": {}
+  zone: {}
 };
 const tree = {
   "$[0:2]": function (scope) {
@@ -816,9 +827,8 @@ export default function (input, callbacks) {
       expect(generate(['$.store..[price,bar,baz]', '$.book'])).to
         .eq(`import {Scope, isObject} from "nimma/runtime";
 const zones = {
-  "store": {
-    "**": null
-  }
+  keys: ["store"],
+  zones: [null]
 };
 const tree = {
   "$.store..[price,bar,baz]": function (scope) {
@@ -857,11 +867,12 @@ export default function (input, callbacks) {
         ]),
       ).to.eq(`import {Scope} from "nimma/runtime";
 const zones = {
-  "paths": {
-    "*": {
-      "**": null
+  keys: ["paths"],
+  zones: [{
+    zone: {
+      zone: null
     }
-  }
+  }]
 };
 const tree = {
   "$.paths[*][*]..content[*].examples[*]": function (scope) {
@@ -897,18 +908,15 @@ export default function (input, callbacks) {
       expect(generate(['$.data[*][*][city,street]..id'])).to
         .eq(`import {Scope} from "nimma/runtime";
 const zones = {
-  "data": {
-    "*": {
-      "*": {
-        "city": {
-          "**": null
-        },
-        "street": {
-          "**": null
-        }
+  keys: ["data"],
+  zones: [{
+    zone: {
+      zone: {
+        keys: ["city", "street"],
+        zones: [null, null]
       }
     }
-  }
+  }]
 };
 const tree = {
   "$.data[*][*][city,street]..id": function (scope) {
@@ -944,28 +952,28 @@ export default function (input, callbacks) {
         ]),
       ).to.eq(`import {Scope} from "nimma/runtime";
 const zones = {
-  "paths": {
-    "*": {
-      "*": {
-        "tags": {
-          "*": {}
-        },
-        "operationId": {}
+  keys: ["paths", "abc"],
+  zones: [{
+    zone: {
+      zone: {
+        keys: ["tags", "operationId"],
+        zones: [{
+          zone: {}
+        }, {}]
       }
     }
-  },
-  "abc": {
-    "*": {
-      "*": {
-        "*": {
-          "*": {
-            "baz": {},
-            "bar": {}
+  }, {
+    zone: {
+      zone: {
+        zone: {
+          zone: {
+            keys: ["baz", "bar"],
+            zones: [{}, {}]
           }
         }
       }
     }
-  }
+  }]
 };
 const tree = {
   "$.paths[*][*].tags[*]": function (scope) {
@@ -1015,6 +1023,39 @@ export default function (input, callbacks) {
       tree["$.abc[*][*].bar"](scope);
       tree["$.abc[*][*][*][*].baz"](scope);
       tree["$.abc[*][*][*][*].bar"](scope);
+    }, zones);
+  } finally {
+    scope.destroy();
+  }
+}
+`);
+    });
+
+    it('* and ** used as member property keys', () => {
+      expect(generate(['$.test[*]["*"]'])).to
+        .eq(`import {Scope} from "nimma/runtime";
+const zones = {
+  keys: ["test"],
+  zones: [{
+    zone: {
+      keys: ["*"],
+      zones: [{}]
+    }
+  }]
+};
+const tree = {
+  "$.test[*][\\"*\\"]": function (scope) {
+    if (scope.path.length !== 3) return;
+    if (scope.path[0] !== "test") return;
+    if (scope.path[2] !== "*") return;
+    scope.emit("$.test[*][\\"*\\"]", 0, false);
+  }
+};
+export default function (input, callbacks) {
+  const scope = new Scope(input, callbacks);
+  try {
+    scope.traverse(() => {
+      tree["$.test[*][\\"*\\"]"](scope);
     }, zones);
   } finally {
     scope.destroy();
@@ -1075,7 +1116,7 @@ export default function (input, callbacks) {
       ]),
     ).to.eq(`import {Scope} from "nimma/runtime";
 const zones = {
-  "*": {}
+  zone: {}
 };
 const tree = {
   "$[?(index(@)=='key')]": function (scope) {
@@ -1181,11 +1222,13 @@ export default function (input, callbacks) {
         }),
       ).to.eq(`import {Scope} from "nimma/runtime";
 const zones = {
-  "components": {
-    "schemas": {
-      "**": null
-    }
-  }
+  keys: ["components"],
+  zones: [{
+    keys: ["schemas"],
+    zones: [{
+      zone: null
+    }]
+  }]
 };
 const tree = {
   "$.components.schemas[*]..@@schema()": function (scope) {

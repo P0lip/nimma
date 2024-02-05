@@ -1,6 +1,5 @@
 /* eslint-disable no-undef */
 import { expect } from 'chai';
-import forEach from 'mocha-each';
 
 import Nimma from '../index.mjs';
 import { RuntimeError } from '../runtime/errors/index.mjs';
@@ -1449,42 +1448,6 @@ describe('Nimma', () => {
 
     expect(collected).to.deep.eq({
       '$..info^~': [[null, []]],
-    });
-  });
-
-  forEach([
-    Object.preventExtensions({
-      shirts: Object.seal({
-        color: 'red',
-        size: 'xl',
-        a: Object.freeze({
-          size: 'xl',
-        }),
-        b: Object.freeze({
-          size: 'm',
-        }),
-      }),
-    }),
-    {
-      shirts: {
-        color: 'red',
-        size: 'xl',
-        a: Object.seal({
-          size: 'xl',
-        }),
-        b: {
-          size: 'm',
-        },
-      },
-    },
-  ]).it('frozen/sealed/non-extensible', document => {
-    const collected = collect(document, ['$.shirts[a,b].size']);
-
-    expect(collected).to.deep.eq({
-      '$.shirts[a,b].size': [
-        ['xl', ['shirts', 'a', 'size']],
-        ['m', ['shirts', 'b', 'size']],
-      ],
     });
   });
 

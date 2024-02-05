@@ -77,11 +77,12 @@ export default function baseline(jsonPaths, opts) {
           ]
         : [];
 
-    const zone = tree.traversalZones.create();
+    let zone = tree.traversalZones.create();
 
     for (const node of iterator) {
       if (isDeep(node)) {
-        zone?.allIn();
+        zone?.unbind();
+        zone = null;
       }
 
       switch (node.type) {
@@ -115,8 +116,6 @@ export default function baseline(jsonPaths, opts) {
     } else {
       tree.addTreeMethod(ctx.id, b.blockStatement(branch), 'traverse');
     }
-
-    zone?.attach();
   }
 
   return tree;

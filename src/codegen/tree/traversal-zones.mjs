@@ -1,138 +1,139 @@
-import { isObject } from '../../runtime/index.mjs';
 import * as b from '../ast/builders.mjs';
-import buildJson from '../templates/build-json.mjs';
+
+const KEYS_IDENTIFIER = b.identifier('keys');
+const ZONE_IDENTIFIER = b.identifier('zone');
+const ZONES_IDENTIFIER = b.identifier('zones');
+
+function build(node) {
+  if (node.kind === 'unknown') {
+    return b.objectExpression([]);
+  } else if (node.kind === 'unbound') {
+    return b.nullLiteral();
+  } else if (node.kind === 'keyed') {
+    return b.objectExpression([
+      b.objectProperty(
+        KEYS_IDENTIFIER,
+        b.arrayExpression(node.keys.map(b.stringLiteral)),
+      ),
+      b.objectProperty(
+        ZONES_IDENTIFIER,
+        b.arrayExpression(node.zones.map(build)),
+      ),
+    ]);
+  } else if (node.kind === 'resized') {
+    return b.objectExpression([
+      b.objectProperty(ZONE_IDENTIFIER, build(node.zones[0])),
+    ]);
+  }
+}
 
 export default class TraversalZones {
   #isDestroyed = false;
-  #zones = [];
+  #root = new ZoneNode();
 
-  get root() {
-    if (this.#isDestroyed || this.#zones.length === 0) {
+  build() {
+    if (this.#isDestroyed) {
       return null;
     }
 
-    const zonesIdentifier = b.identifier('zones');
+    const built = build(this.#root);
 
-    return b.variableDeclaration('const', [
-      b.variableDeclarator(zonesIdentifier, buildJson(mergeZones(this.#zones))),
-    ]);
+    return built.properties.length === 0
+      ? null
+      : b.variableDeclaration('const', [
+          b.variableDeclarator(b.identifier('zones'), built),
+        ]);
   }
 
   destroy() {
     this.#isDestroyed = true;
   }
 
-  attach(zone) {
-    this.#zones.push(zone);
-  }
-
   create() {
-    if (this.#isDestroyed) {
-      return null;
-    }
-
-    return new Zone(this);
+    return this.#isDestroyed ? null : new Zone(this.#root);
   }
 }
 
 class Zone {
-  #zones;
-  #localZones;
-  #relationships;
+  #currentZones;
 
-  constructor(zones) {
-    this.#zones = zones;
-    this.root = {};
-    this.#localZones = [this.root];
-    this.#relationships = new Map();
-  }
-
-  attach() {
-    this.#zones.attach(this.root);
-    this.#relationships.clear();
+  constructor(root) {
+    this.#currentZones = [root];
   }
 
   expand(property) {
-    let i = 0;
-    for (const value of this.#localZones) {
-      if (value === null) continue;
-      if (property === '**') {
-        const parent = this.#relationships.get(value);
-        if (parent !== void 0 && '*' in parent) {
-          delete parent['*'];
-          parent['**'] = null;
+    const currentZones = [];
+    for (const currentZone of this.#currentZones) {
+      switch (currentZone.kind) {
+        case 'resized':
+          currentZones.push(currentZone.zones[0]);
           continue;
-        }
-
-        value[property] = null;
-      } else {
-        value[property] = {};
-        this.#relationships.set(value[property], value);
+        case 'keyed':
+        case 'unknown':
+          currentZone.kind = 'keyed';
+          currentZones.push(currentZone.addKey(property));
       }
-      this.#localZones[i++] = value[property];
     }
 
-    return this;
+    this.#currentZones = currentZones;
+    return currentZones;
   }
 
   expandMultiple(properties) {
-    const root = this.#localZones[0];
+    const prevCurrentZones = this.#currentZones;
 
-    if (root === null) {
-      return this;
-    }
-
-    let i = 0;
+    const currentZones = [];
     for (const property of properties) {
-      root[property] = property === '**' ? null : {};
-      if (this.#localZones.length < i) {
-        this.#localZones.push(root[property]);
-      } else {
-        this.#localZones[i++] = root[property];
-      }
+      this.#currentZones = prevCurrentZones;
+      currentZones.push(...this.expand(property));
     }
 
-    return this;
+    this.#currentZones = currentZones;
   }
 
   resize() {
-    return this.expand('*');
-  }
+    const currentZones = [];
+    for (const currentZone of this.#currentZones) {
+      if (currentZone.kind === 'unbound') continue;
+      if (currentZone.kind === 'resized') {
+        currentZones.push(currentZone.zones[0]);
+      } else {
+        currentZone.kind = 'resized';
 
-  allIn() {
-    return this.expand('**');
-  }
-}
+        if (currentZone.zones.length === 0) {
+          currentZone.zones.push(new ZoneNode());
+        } else {
+          currentZone.zones[0].kind = 'unknown';
+        }
 
-function pullAll(target) {
-  return Object.keys(target).reduce(
-    (obj, key) => Object.assign(obj, target[key]),
-    {},
-  );
-}
-
-function _mergeZones(target, source) {
-  if ('*' in source) {
-    const pulled = pullAll(target);
-    _mergeZones(pulled, pullAll(source));
-    target['*'] = '*' in pulled ? { '*': pulled['*'] } : pulled;
-  } else {
-    for (const key of Object.keys(source)) {
-      if (!(key in target)) {
-        target[key] = source[key];
-      } else if (isObject(source[key])) {
-        _mergeZones(target[key], source[key]);
+        currentZones.push(currentZone.zones[0]);
       }
+    }
+
+    this.#currentZones = currentZones;
+  }
+
+  unbind() {
+    for (const currentZone of this.#currentZones) {
+      currentZone.kind = 'unbound';
     }
   }
 }
 
-function mergeZones(zones) {
-  const target = zones[0];
+class ZoneNode {
+  kind = 'unknown';
+  keys = [];
+  zones = [];
 
-  for (let i = 1; i < zones.length; i++) {
-    _mergeZones(target, zones[i]);
+  addKey(key) {
+    const existingIndex = this.keys.indexOf(key);
+    if (existingIndex !== -1) {
+      return this.zones[existingIndex];
+    } else {
+      this.keys.push(key);
+      const newZone = new ZoneNode();
+      this.zones.push(newZone);
+      return newZone;
+    }
   }
-
-  return target;
 }
