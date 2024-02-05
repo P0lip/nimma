@@ -22,7 +22,7 @@ class State {
 
   enter() {
     this.#size++;
-    if (this.#values.length === this.#size - 1) {
+    if (this.#values.length === this.#size) {
       this.#values.push(0);
     }
 
