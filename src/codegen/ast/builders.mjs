@@ -26,14 +26,9 @@ export function expressionStatement(expression) {
 }
 
 export function literal(value) {
-  switch (typeof value) {
-    case 'number':
-      return numericLiteral(value);
-    case 'string':
-      return stringLiteral(value);
-    case 'boolean':
-      return booleanLiteral(value);
-  }
+  return typeof value === 'number'
+    ? numericLiteral(value)
+    : stringLiteral(value);
 }
 
 export function stringLiteral(value) {
@@ -89,7 +84,6 @@ export function logicalExpression(operator, left, right) {
 }
 
 export function ifStatement(test, consequent, alternate) {
-  if (!consequent) throw new Error('abc');
   return {
     type: 'IfStatement',
     test,
@@ -110,11 +104,10 @@ export function binaryExpression(operator, left, right) {
 export function safeBinaryExpression(operator, left, right) {
   let actualRight = right;
 
-  if (right.type === 'NumericLiteral') {
-    actualRight = stringLiteral(String(right.value));
-  } else if (
-    right.type === 'StringLiteral' &&
-    Number.isSafeInteger(Number(right.value))
+  if (
+    right.type === 'NumericLiteral' ||
+    (right.type === 'StringLiteral' &&
+      Number.isSafeInteger(Number(right.value)))
   ) {
     actualRight = stringLiteral(String(right.value));
   }
