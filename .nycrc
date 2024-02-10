@@ -5,8 +5,7 @@
     "src/**/*.mjs"
   ],
   "exclude": [
-    "**/__*__/**",
-    "src/parser/parser.mjs"
+    "**/__*__/**"
   ],
   "reporter": [
     "lcovonly",

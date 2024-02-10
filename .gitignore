@@ -6,4 +6,3 @@ coverage/
 *.log
 cjs/
 .gen/
-src/parser/parser.mjs

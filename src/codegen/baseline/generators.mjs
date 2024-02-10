@@ -431,7 +431,7 @@ function processAtIdentifier(tree, name) {
         );
       }
 
-      throw new SyntaxError(`Unsupported shorthand '${name}'`);
+      throw Error(`Unsupported shorthand "${name}"`);
   }
 }
 

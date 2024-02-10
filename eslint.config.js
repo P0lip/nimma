@@ -8,7 +8,6 @@ import globals from 'globals';
 export default [
   {
     files: ['**/*.mjs', '**/*.js'],
-    ignores: ['src/parser/parser.mjs'],
     languageOptions: {
       ecmaVersion: 2023,
       parser: babelParser,

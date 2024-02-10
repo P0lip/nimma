@@ -1,6 +1,6 @@
 {
   "name": "nimma",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "description": "Scalable JSONPath engine.",
   "keywords": [
     "json",
@@ -28,8 +28,8 @@
       "require": "./cjs/index.cjs"
     },
     "./parser": {
-      "import": "./src/parser/parser.mjs",
-      "require": "./cjs/parser/parser.cjs"
+      "import": "./src/parser/index.mjs",
+      "require": "./cjs/parser/index.cjs"
     },
     "./parser/jsep": {
       "import": "./src/parser/jsep.mjs",
@@ -53,7 +53,6 @@
     "url": "https://github.com/P0lip/nimma"
   },
   "scripts": {
-    "prebuild": "peggy --format es -o src/parser/parser.mjs src/parser/parser.peg",
     "build": "rollup -c",
     "lint": "ls-lint && eslint --cache --cache-location .cache/ src && prettier --log-level error --ignore-path .gitignore --check --cache --cache-location .cache/.prettier src",
     "test": "c8 mocha --config .mocharc ./src/**/__tests__/**/*.test.mjs && karma start karma.conf.cjs --log-level=error",
@@ -86,7 +85,6 @@
     "lodash-es": "^4.17.21",
     "mocha": "^10.2.0",
     "mocha-each": "^2.0.1",
-    "peggy": "^3.0.2",
     "prettier": "^3.2.5",
     "rollup": "^4.9.6"
   },

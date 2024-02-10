@@ -1,7 +1,6 @@
 /* eslint-disable no-undef */
 import { expect } from 'chai';
 
-import { ParserError } from '../../runtime/errors/index.mjs';
 import Nimma from '../index.mjs';
 
 describe('Core', () => {
@@ -13,10 +12,9 @@ describe('Core', () => {
     try {
       fn();
     } catch (e) {
-      expect(e.errors[0]).to.be.instanceof(ParserError);
-      expect(e.errors[0].cause.name).to.eq('SyntaxError');
+      expect(e.errors[0]).to.be.instanceof(SyntaxError);
       expect(e.errors[0].message).to.eq(
-        'Expected "^", "~", or end of input but "." found.',
+        'Expected "^", "~", or end of input but "." found at 4',
       );
     }
   });

@@ -128,8 +128,7 @@ describe('parseFilterExpression', () => {
 
     it('throws upon unknown shorthand', () => {
       expect(print.bind(null, `?(@foo())`)).to.throw(
-        SyntaxError,
-        `Unsupported shorthand '@foo'`,
+        `Unsupported shorthand "@foo"`,
       );
     });
   });

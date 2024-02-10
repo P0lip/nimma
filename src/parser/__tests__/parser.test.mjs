@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import forEach from 'mocha-each';
 
-import { parse } from '../parser.mjs';
+import parse from '../index.mjs';
 
 describe('Parser', () => {
   it('goessner samples', () => {
@@ -200,6 +200,37 @@ describe('Parser', () => {
   });
 
   it('filter expressions', () => {
+    expect(parse('$[(@.length-1)]')).to.deep.equal([
+      {
+        type: 'SliceExpression',
+        value: [-1, Infinity, 1],
+        deep: false,
+      },
+    ]);
+    expect(parse('$[( @.length - 2 )]')).to.deep.equal([
+      {
+        type: 'SliceExpression',
+        value: [-2, Infinity, 1],
+        deep: false,
+      },
+    ]);
+    expect(parse('$[( @[   "length" ] - 10 )]')).to.deep.equal([
+      {
+        type: 'SliceExpression',
+        value: [-10, Infinity, 1],
+        deep: false,
+      },
+    ]);
+    expect(parse('$[( @["length"] - 5 )]')).to.deep.equal([
+      {
+        type: 'SliceExpression',
+        value: [-5, Infinity, 1],
+        deep: false,
+      },
+    ]);
+  });
+
+  it('script filter expressions', () => {
     expect(parse('$[?(@property === "@.schema")]')).to.deep.equal([
       {
         type: 'ScriptFilterExpression',
@@ -346,6 +377,36 @@ describe('Parser', () => {
     },
   );
 
+  it('skips whitespaces', () => {
+    expect(parse('$.[ name ] [?( @.abc )]\t ..@@test( )')).to.deep.equal([
+      {
+        type: 'MemberExpression',
+        value: 'name',
+        deep: true,
+      },
+      {
+        type: 'ScriptFilterExpression',
+        value: ' @.abc ',
+        deep: false,
+      },
+      {
+        type: 'ScriptFilterExpression',
+        value: '@@test( )',
+        deep: true,
+      },
+    ]);
+  });
+
+  it.skip('handles escapable', () => {
+    expect(parse(`$["'name\\"'","test\\\\",'"a']`)).to.deep.equal([
+      {
+        type: 'MultipleMemberExpression',
+        value: ['name"', 'test\\'],
+        deep: false,
+      },
+    ]);
+  });
+
   describe('invalid expressions', () => {
     it('empty expression or does not start with $', () => {
       expect(() => parse('')).to.throw('Expected "$" but end of input found.');
@@ -355,56 +416,85 @@ describe('Parser', () => {
 
     it('invalid member expression', () => {
       expect(() => parse('$info')).to.throw(
-        'Expected ".", "..", "^", "~", or end of input but "i" found.',
+        'Expected ".", "..", "^", "~", or end of input but "i" found at 1.',
       );
       expect(() => parse('$.')).to.throw(
-        'Expected "*", "@", "[", [$_\\-], [0-9], or [A-Za-z] but end of input found.',
+        'Expected valid name but end of input found at 2.',
       );
     });
 
     it('key expression used in the wrong place', () => {
       expect(() => parse('$.name~.a')).to.throw(
-        'Expected "^", "~", or end of input but "." found.',
+        'Expected "^", "~", or end of input but "." found at 7.',
       );
     });
 
     it('unclosed quotes', () => {
       expect(() => parse('$.name["a]')).to.throw(
-        `Expected "\\"" or [^"] but end of input found.`,
+        `Expected """ but end of input found at 10.`,
       );
       expect(() => parse('$.name["\']')).to.throw(
-        `Expected "\\"" or [^"] but end of input found.`,
+        `Expected """ but end of input found at 10.`,
       );
     });
 
     it('invalid step in slice expressions', () => {
       expect(() => parse('$.name[::test]')).to.throw(
-        'Expected "-" or [0-9] but "t" found.',
+        'Expected "-" or [0-9] but "t" found at 9.',
+      );
+      expect(() => parse('$.name[::-]')).to.throw(
+        'Expected [0-9] but "]" found at 10.',
       );
     });
 
     it('invalid shorthands', () => {
-      expect(() => parse('$..@@()')).to.throw('Expected [a-z] but "(" found.');
+      expect(() => parse('$..@@()')).to.throw(
+        'Expected [a-z] but "(" found at 5.',
+      );
       expect(() => parse('$..@@test)')).to.throw(
-        'Expected "()" or [a-z] but ")" found.',
+        'Expected "(" but ")" found at 9.',
       );
       expect(() => parse('$..@@test(')).to.throw(
-        'Expected "()" or [a-z] but "(" found.',
-      );
-      expect(() => parse('$..@@test)')).to.throw(
-        'Expected "()" or [a-z] but ")" found.',
+        'Expected ")" but end of input found at 10.',
       );
       expect(() => parse('$..@')).to.throw(
-        'Expected "@" or [a-z] but end of input found.',
+        'Expected [a-z] but end of input found at 4.',
+      );
+    });
+
+    it('invalid filter expressions', () => {
+      expect(() => parse('$[(')).to.throw(
+        'Expected "@" but end of input found at 3.',
+      );
+      expect(() => parse('$[(@')).to.throw(
+        'Expected "." or "[" but end of input found at 4.',
+      );
+      expect(() => parse('$[(@.len - 1)]')).to.throw(
+        'Expected "length" but "len - " found at 11.',
+      );
+      expect(() => parse('$[(@length - 1)]')).to.throw(
+        'Expected "." or "[" but "l" found at 4.',
+      );
+      expect(() => parse('$[(@[length]-2)]')).to.throw(
+        `Expected """ or "'" at 5.`,
+      );
+      expect(() => parse('$[(@.length + 1))')).to.throw(
+        'Expected "-" but "+" found at 12.',
+      );
+      expect(() => parse('$[(@.length - -5))')).to.throw(
+        'Expected positive number but "-5" found at 14.',
+      );
+      expect(() => parse('$[(@.length - 0))')).to.throw(
+        'Expected positive number but "0" found at 14.',
       );
     });
 
     it('unclosed brackets', () => {
       expect(() => parse('$.name[0')).to.throw(
-        'Expected "\'", ",", ":", "\\"", "]", [$_\\-], [0-9], or [A-Za-z] but end of input found.',
+        'Expected "]" but end of input found at 8.',
       );
       expect(() => parse('$.store["[name]"')).to.throw(
-        'Expected "\'", ",", "\\"", "]", [$_\\-], [0-9], or [A-Za-z] but end of input found.',
+        'Expected "]" but end of input found at 16.',
       );
     });
   });
