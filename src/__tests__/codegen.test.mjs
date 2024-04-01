@@ -364,6 +364,7 @@ const tree = {
     scope.emit("$..[?(@.baz)]..baz", 0, false);
   },
   "$..[?( @property === 'get' || @property === 'put' || @property === 'post' )]": function (scope) {
+    if (scope.path.length < 1) return;
     if (!(scope.sandbox.property === 'get' || scope.sandbox.property === 'put' || scope.sandbox.property === 'post')) return;
     scope.emit("$..[?( @property === 'get' || @property === 'put' || @property === 'post' )]", 0, false);
   },
@@ -433,6 +434,7 @@ const tree = {
     scope.emit("$.bar[?( @property >= 400 )]..foo", 0, false);
   },
   "$.[?(@.bar)]": function (scope) {
+    if (scope.path.length < 1) return;
     if (!scope.sandbox.value.bar) return;
     scope.emit("$.[?(@.bar)]", 0, false);
   },
@@ -843,6 +845,7 @@ const tree = {
     scope.emit("$..headers..[?(@.example && @.schema)]", 0, false);
   },
   "$..[?(@ && @.example)]": function (scope) {
+    if (scope.path.length < 1) return;
     if (!(scope.sandbox.value && scope.sandbox.value.example)) return;
     scope.emit("$..[?(@ && @.example)]", 0, false);
   },

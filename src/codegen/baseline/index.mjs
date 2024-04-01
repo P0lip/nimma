@@ -61,21 +61,18 @@ export default function baseline(jsonPaths, opts) {
       }
     }
 
-    const branch =
-      iterator.feedback.minimumDepth !== -1
-        ? [
-            b.ifStatement(
-              b.binaryExpression(
-                iterator.feedback.fixed && iterator.feedback.stateOffset === -1
-                  ? '!=='
-                  : '<',
-                scope.depth,
-                b.numericLiteral(iterator.feedback.minimumDepth + 1),
-              ),
-              b.returnStatement(),
-            ),
-          ]
-        : [];
+    const branch = [
+      b.ifStatement(
+        b.binaryExpression(
+          iterator.feedback.fixed && iterator.feedback.stateOffset === -1
+            ? '!=='
+            : '<',
+          scope.depth,
+          b.numericLiteral(iterator.feedback.minimumDepth + 1),
+        ),
+        b.returnStatement(),
+      ),
+    ];
 
     let zone = tree.traversalZones.create();
 
