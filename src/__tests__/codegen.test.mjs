@@ -772,6 +772,46 @@ export default function (input, callbacks) {
   it('filter expressions', () => {
     expect(
       generate([
+        '$.servers[(@.length-1)]',
+        '$..[(@.length-1)]..[(@.length-1)]',
+      ]),
+    ).to.eq(`import {Scope, inBounds} from "nimma/runtime";
+const tree = {
+  "$.servers[(@.length-1)]": function (scope) {
+    if (scope.path.length !== 2) return;
+    if (scope.path[0] !== "servers") return;
+    if (typeof scope.path[1] !== "number" || !inBounds(scope.sandbox, scope.path[1], -1, Infinity, 1)) return;
+    scope.emit("$.servers[(@.length-1)]", 0, false);
+  },
+  "$..[(@.length-1)]..[(@.length-1)]": function (scope, state) {
+    if (scope.path.length < 1) return;
+    if (state.initialValue >= 0) {
+      if (!(typeof scope.path[scope.path.length - 1] !== "number" || !inBounds(scope.sandbox, scope.path[scope.path.length - 1], -1, Infinity, 1))) {
+        state.value |= 1
+      }
+    }
+    if (state.initialValue < 1 || !!(typeof scope.path[scope.path.length - 1] !== "number" || !inBounds(scope.sandbox, scope.path[scope.path.length - 1], -1, Infinity, 1))) return;
+    scope.emit("$..[(@.length-1)]..[(@.length-1)]", 0, false);
+  }
+};
+export default function (input, callbacks) {
+  const scope = new Scope(input, callbacks);
+  try {
+    const state0 = scope.allocState();
+    scope.traverse(() => {
+      tree["$.servers[(@.length-1)]"](scope);
+      tree["$..[(@.length-1)]..[(@.length-1)]"](scope, state0);
+    }, null);
+  } finally {
+    scope.destroy();
+  }
+}
+`);
+  });
+
+  it('script filter expressions', () => {
+    expect(
+      generate([
         `$.info..[?(@property.startsWith('foo'))]`,
         `$.info.*[?(@property.startsWith('foo'))]`,
         '$..headers..[?(@.example && @.schema)]',
