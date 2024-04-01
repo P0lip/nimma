@@ -8,10 +8,10 @@ import scenarios from './scenarios.mjs';
 import loadDocument from './utils/load-document.mjs';
 
 const options = {
-  scenario: {
+  document: {
     type: 'string',
   },
-  document: {
+  scenario: {
     type: 'string',
   },
 };
