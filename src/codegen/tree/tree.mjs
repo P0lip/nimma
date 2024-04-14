@@ -80,7 +80,7 @@ export default class ESTree {
         b.identifier(name),
         statefulFnParams,
         b.blockStatement([
-          b.returnStatement(jsep(this.#availableShorthands[name])),
+          b.returnStatement(jsep.parse(this.#availableShorthands[name])),
         ]),
       ),
     );

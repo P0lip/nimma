@@ -163,7 +163,19 @@ describe('Parser', () => {
       },
       {
         type: 'ScriptFilterExpression',
-        value: '@.isbn',
+        raw: '(@.isbn)',
+        value: {
+          type: 'MemberExpression',
+          computed: false,
+          object: {
+            type: 'Identifier',
+            name: '@',
+          },
+          property: {
+            type: 'Identifier',
+            name: 'isbn',
+          },
+        },
         deep: false,
       },
     ]);
@@ -234,7 +246,20 @@ describe('Parser', () => {
     expect(parse('$[?(@property === "@.schema")]')).to.deep.equal([
       {
         type: 'ScriptFilterExpression',
-        value: '@property === "@.schema"',
+        raw: '(@property === "@.schema")',
+        value: {
+          type: 'BinaryExpression',
+          left: {
+            type: 'Identifier',
+            name: '@property',
+          },
+          operator: '===',
+          right: {
+            type: 'Literal',
+            raw: '"@.schema"',
+            value: '@.schema',
+          },
+        },
         deep: false,
       },
     ]);
@@ -242,7 +267,91 @@ describe('Parser', () => {
     expect(parse('$[?(match(@.book[0].isbn, "123"))]')).to.deep.equal([
       {
         type: 'ScriptFilterExpression',
-        value: 'match(@.book[0].isbn, "123")',
+        raw: '(match(@.book[0].isbn, "123"))',
+        value: {
+          type: 'CallExpression',
+          arguments: [
+            {
+              type: 'MemberExpression',
+              object: {
+                type: 'MemberExpression',
+                object: {
+                  type: 'MemberExpression',
+                  object: {
+                    type: 'Identifier',
+                    name: '@',
+                  },
+                  property: {
+                    type: 'Identifier',
+                    name: 'book',
+                  },
+                  computed: false,
+                },
+                property: {
+                  type: 'Literal',
+                  raw: '0',
+                  value: 0,
+                },
+                computed: true,
+              },
+              computed: false,
+              property: {
+                type: 'Identifier',
+                name: 'isbn',
+              },
+            },
+            {
+              type: 'Literal',
+              raw: '"123"',
+              value: '123',
+            },
+          ],
+          callee: {
+            type: 'Identifier',
+            name: 'match',
+          },
+        },
+        deep: false,
+      },
+    ]);
+
+    expect(
+      parse('$["книги"][?(match(@.название, "Мастер и Маргарита"))]'),
+    ).to.deep.equal([
+      {
+        deep: false,
+        type: 'MemberExpression',
+        value: 'книги',
+      },
+      {
+        type: 'ScriptFilterExpression',
+        raw: '(match(@.название, "Мастер и Маргарита"))',
+        value: {
+          type: 'CallExpression',
+          arguments: [
+            {
+              type: 'MemberExpression',
+              object: {
+                name: '@',
+                type: 'Identifier',
+              },
+              property: {
+                name: 'название',
+                type: 'Identifier',
+              },
+              computed: false,
+            },
+            {
+              type: 'Literal',
+              raw: '"Мастер и Маргарита"',
+              value: 'Мастер и Маргарита',
+            },
+          ],
+          callee: {
+            type: 'Identifier',
+            name: 'match',
+          },
+        },
         deep: false,
       },
     ]);
@@ -260,7 +369,62 @@ describe('Parser', () => {
       },
       {
         type: 'ScriptFilterExpression',
-        value: '@.number > 20',
+        raw: '(@.number > 20)',
+        value: {
+          type: 'BinaryExpression',
+          left: {
+            type: 'MemberExpression',
+            object: {
+              type: 'Identifier',
+              name: '@',
+            },
+            property: {
+              type: 'Identifier',
+              name: 'number',
+            },
+            computed: false,
+          },
+          operator: '>',
+          right: {
+            type: 'Literal',
+            raw: '20',
+            value: 20,
+          },
+        },
+        deep: false,
+      },
+    ]);
+
+    expect(parse('$[?(match(@.test, "^((4|5)XX)$|^2"))]')).to.deep.equal([
+      {
+        type: 'ScriptFilterExpression',
+        raw: '(match(@.test, "^((4|5)XX)$|^2"))',
+        value: {
+          type: 'CallExpression',
+          arguments: [
+            {
+              type: 'MemberExpression',
+              computed: false,
+              object: {
+                type: 'Identifier',
+                name: '@',
+              },
+              property: {
+                type: 'Identifier',
+                name: 'test',
+              },
+            },
+            {
+              type: 'Literal',
+              raw: '"^((4|5)XX)$|^2"',
+              value: '^((4|5)XX)$|^2',
+            },
+          ],
+          callee: {
+            type: 'Identifier',
+            name: 'match',
+          },
+        },
         deep: false,
       },
     ]);
@@ -344,7 +508,15 @@ describe('Parser', () => {
       },
       {
         type: 'ScriptFilterExpression',
-        value: '@@schema()',
+        raw: '@@schema()',
+        value: {
+          type: 'CallExpression',
+          arguments: [],
+          callee: {
+            name: '@@schema',
+            type: 'Identifier',
+          },
+        },
         deep: true,
       },
     ]);
@@ -362,7 +534,15 @@ describe('Parser', () => {
       },
       {
         type: 'ScriptFilterExpression',
-        value: '@@schema()',
+        raw: '@@schema()',
+        value: {
+          type: 'CallExpression',
+          arguments: [],
+          callee: {
+            name: '@@schema',
+            type: 'Identifier',
+          },
+        },
         deep: false,
       },
     ]);
@@ -386,22 +566,55 @@ describe('Parser', () => {
       },
       {
         type: 'ScriptFilterExpression',
-        value: ' @.abc ',
+        raw: '( @.abc )',
+        value: {
+          type: 'MemberExpression',
+          computed: false,
+          object: {
+            type: 'Identifier',
+            name: '@',
+          },
+          property: {
+            type: 'Identifier',
+            name: 'abc',
+          },
+        },
         deep: false,
       },
       {
         type: 'ScriptFilterExpression',
-        value: '@@test( )',
+        raw: '@@test( )',
+        value: {
+          type: 'CallExpression',
+          arguments: [],
+          callee: {
+            type: 'Identifier',
+            name: '@@test',
+          },
+        },
         deep: true,
       },
     ]);
   });
 
-  it('handles escapable', () => {
+  it('handles escapable characters', () => {
     expect(parse('$[?(@ ~= "^P\\\\.")]')).to.deep.equal([
       {
         type: 'ScriptFilterExpression',
-        value: '@ ~= "^P\\."',
+        raw: '(@ ~= "^P\\\\.")',
+        value: {
+          type: 'BinaryExpression',
+          left: {
+            type: 'Identifier',
+            name: '@',
+          },
+          operator: '~=',
+          right: {
+            type: 'Literal',
+            raw: '"^P\\\\."',
+            value: '^P\\.',
+          },
+        },
         deep: false,
       },
     ]);
@@ -419,6 +632,14 @@ describe('Parser', () => {
         deep: false,
         type: 'MemberExpression',
         value: '\v\ntest\b',
+      },
+    ]);
+
+    expect(parse(`$["\\f\\r\\t"]`)).to.deep.equal([
+      {
+        deep: false,
+        type: 'MemberExpression',
+        value: '\f\r\t',
       },
     ]);
   });
@@ -506,12 +727,99 @@ describe('Parser', () => {
     });
 
     it('unclosed brackets', () => {
+      expect(() => parse('$.name[')).to.throw('Unexpected end of input at 7.');
       expect(() => parse('$.name[0')).to.throw(
         'Expected "]" but end of input found at 8.',
       );
       expect(() => parse('$.store["[name]"')).to.throw(
         'Expected "]" but end of input found at 16.',
       );
+    });
+
+    describe('invalid script filter expressions', () => {
+      it('unclosed parentheses', () => {
+        expect(() => parse('$[?(@.length - 1]')).to.throw(
+          'Expected ")" but "]" found at 16.',
+        );
+        expect(() => parse('$[?(@.length - 1))')).to.throw(
+          'Expected "]" but ")" found at 17.',
+        );
+
+        // args
+        expect(() => parse('$[?(abc(1]')).to.throw(
+          'Expected ")" or "," but "]" found at 9.',
+        );
+        expect(() => parse('$[?(abc(a]')).to.throw(
+          'Expected ")" or "," but "]" found at 9.',
+        );
+        expect(() => parse('$[?(abc(1 / (2 + 2) ]')).to.throw(
+          'Expected ")" or "," but "]" found at 20.',
+        );
+
+        // groups
+        expect(() => parse('$[?(1 / (2 + 2) ]')).to.throw(
+          'Expected ")" but "]" found at 16.',
+        );
+      });
+
+      it('unclosed brackets', () => {
+        expect(() => parse('$[?(@[length)]')).to.throw(
+          'Expected "]" but ")" found at 12.',
+        );
+        expect(() => parse('$[?(@.abc == [1)]')).to.throw(
+          'Expected "]" or "," but ")" found at 15.',
+        );
+      });
+
+      it('redundant comma in arguments', () => {
+        expect(() => parse('$[?(abc(2,))]')).to.throw(
+          'Expected ")" but "," found at 11.',
+        );
+        expect(() => parse('$[?(abc(2,,))]')).to.throw('Unexpected "," at 11.');
+        expect(() => parse('$[?(abc(,a))]')).to.throw('Unexpected "," at 9.');
+        expect(() => parse('$[?(abc(,))]')).to.throw('Unexpected "," at 9.');
+      });
+
+      it('missing argument in unary expression', () => {
+        expect(() => parse('$[?(@.value != -)]')).to.throw(
+          'Expected argument but ")" found at 16.',
+        );
+        expect(() => parse('$[?(@.value == +    )]')).to.throw(
+          'Expected argument but ")" found at 20.',
+        );
+      });
+
+      it('missing side in binary expression', () => {
+        expect(() => parse('$[?(@.value == 1 + )]')).to.throw(
+          'Expected expression after "+" at 19.',
+        );
+        expect(() => parse('$[?(@.value == 2 + 5 *    )]')).to.throw(
+          'Expected expression after "*" at 26.',
+        );
+      });
+
+      it('identifiers starting with a number', () => {
+        expect(() => parse('$[?(@.value == 1abc)]')).to.throw(
+          'Expected [0-9] or "." but "a" found at 16.',
+        );
+
+        expect(() => parse('$[?(@.value == .abc)]')).to.throw();
+      });
+
+      it('invalid numbers', () => {
+        expect(() => parse('$[?(@.value == 1.2.3)]')).to.throw(
+          'Unexpected "." at 18.',
+        );
+        expect(() => parse('$[?(@.value == .)]')).to.throw(
+          'Unexpected "." at 16.',
+        );
+      });
+
+      it('invalid identifiers', () => {
+        expect(() => parse('$[?(@.#value == 123)]')).to.throw(
+          'Expected a valid identifier char but "#" found at 6.',
+        );
+      });
     });
   });
 });

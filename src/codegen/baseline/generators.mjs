@@ -1,4 +1,3 @@
-import jsep from '../../parser/jsep.mjs';
 import * as b from '../ast/builders.mjs';
 import { isNegativeSliceExpression } from '../guards.mjs';
 import internalScope from '../templates/internal-scope.mjs';
@@ -258,10 +257,9 @@ export function generateWildcardExpression(branch, iterator) {
 export function generateFilterScriptExpression(
   branch,
   iterator,
-  { value },
+  { value: esTree },
   tree,
 ) {
-  const esTree = jsep(value);
   assertDefinedIdentifier(esTree);
   const node = rewriteESTree(tree, esTree);
 

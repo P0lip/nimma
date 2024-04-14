@@ -21,7 +21,7 @@ function print(expr) {
   return astring(branch[0].test);
 }
 
-describe('parseFilterExpression', () => {
+describe('generateFilterScriptExpression', () => {
   it('at member expression', () => {
     expect(print(`?(@.schema || @.ex)`)).to.eq(
       `!(scope.sandbox.value.schema || scope.sandbox.value.ex)`,
@@ -50,7 +50,14 @@ describe('parseFilterExpression', () => {
     );
   });
 
-  it('basic binary expressions', () => {
+  it('unary expressions', () => {
+    expect(print(`?(!@.amount)`)).to.eq(`!!scope.sandbox.value.amount`);
+    expect(print(`?(!@.line == -@.char)`)).to.eq(
+      '!(!scope.sandbox.value.line == -scope.sandbox.value.char)',
+    );
+  });
+
+  it('binary expressions', () => {
     expect(print(`?(@.amount + 2 === 4)`)).to.eq(
       `!(scope.sandbox.value.amount + 2 === 4)`,
     );

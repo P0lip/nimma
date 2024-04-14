@@ -294,7 +294,7 @@ Nimma consists of 3 major components. These are:
 - codegen (iterator/feedback + baseline),
 - runtime (scope + sandbox + traverse).
 
-Parser takes a JSON Path expression and generates an AST that's consumed by the codegen in the next step.
+Parser takes a JSON Path expression and generates an AST that's consumed by the codegen in the next step. Nimma has its own JSON Path expression parser that's different from all remaining ones, thus some there might be instances where Nimma will parse a given expression differently than JSONPath-plus or jsonpath.
 
 Codegen is a two-step process:
 

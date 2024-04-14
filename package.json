@@ -31,10 +31,6 @@
       "import": "./src/parser/index.mjs",
       "require": "./cjs/parser/index.cjs"
     },
-    "./parser/jsep": {
-      "import": "./src/parser/jsep.mjs",
-      "require": "./cjs/parser/jsep.cjs"
-    },
     "./runtime": {
       "import": "./src/runtime/index.mjs",
       "require": "./cjs/runtime/index.cjs"
@@ -91,7 +87,6 @@
   "dependencies": {
     "@jsep-plugin/regex": "^1.0.3",
     "@jsep-plugin/ternary": "^1.1.3",
-    "astring": "^1.8.6",
-    "jsep": "^1.3.8"
+    "astring": "^1.8.6"
   }
 }
