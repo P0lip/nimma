@@ -397,12 +397,28 @@ describe('Parser', () => {
     ]);
   });
 
-  it.skip('handles escapable', () => {
+  it('handles escapable', () => {
+    expect(parse('$[?(@ ~= "^P\\\\.")]')).to.deep.equal([
+      {
+        type: 'ScriptFilterExpression',
+        value: '@ ~= "^P\\."',
+        deep: false,
+      },
+    ]);
+
     expect(parse(`$["'name\\"'","test\\\\",'"a']`)).to.deep.equal([
       {
         type: 'MultipleMemberExpression',
-        value: ['name"', 'test\\'],
+        value: ["'name\"'", 'test\\', '"a'],
         deep: false,
+      },
+    ]);
+
+    expect(parse(`$["\\v\\ntest\\b"]`)).to.deep.equal([
+      {
+        deep: false,
+        type: 'MemberExpression',
+        value: '\v\ntest\b',
       },
     ]);
   });

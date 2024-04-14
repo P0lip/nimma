@@ -276,64 +276,47 @@ export function parser(expr) {
     };
   }
 
-  function eatEscapable() {
-    while (i < expr.length) {
-      const code = expr.charCodeAt(i);
-      if (
-        code === 0x5c /* "\\" */ ||
-        code === 0x2f /* "/" */ || // backslash
-        code === 0x62 || // backspace
-        code === 0x66 || // form feed
-        code === 0x6e || // line feed
-        code === 0x72 || // carriage return
-        code === 0x74 // horizontal tab
-      ) {
-        i++;
-      } else {
-        break;
-      }
-    }
-  }
-
   function parseString() {
     const leftQuoteCode = expr.charCodeAt(i);
     if (!isQuote(leftQuoteCode)) {
       throw SyntaxError(`Expected """ or "'" at ${i}.`);
     }
 
-    const start = i;
+    const leftQuote = expr[i];
+    let start = i;
+    let value = leftQuote;
     i++;
 
     while (i < expr.length) {
+      start = i;
       eatUnescaped();
-
-      const code = expr.charCodeAt(i);
-      if (code === leftQuoteCode) {
-        break;
+      if (start !== i) {
+        value += expr.slice(start, i);
       }
 
-      if (code === 0x5c /* "\\" */) {
-        i++;
+      const code = expr.charCodeAt(i);
 
-        if (expr.charCodeAt(i) === leftQuoteCode) {
-          i++;
-        } else {
-          eatEscapable();
+      if (isQuote(code)) {
+        value += expr[i];
+
+        if (code === leftQuoteCode) {
+          break;
         }
-      } else if (
-        (code === 0x22 && leftQuoteCode === 0x27) ||
-        (code === 0x27 && leftQuoteCode === 0x22)
-      ) {
+
+        i++;
+      } else if (code === 0x5c /* "\\" */) {
+        assertNotEndOfInput();
+        value += getEscapable(expr.charCodeAt(++i));
         i++;
       } else {
         break;
       }
     }
 
-    assertNotEndOfInput(`"${expr[start]}"`);
+    assertNotEndOfInput(`"${leftQuote}"`);
     eat(leftQuoteCode);
 
-    return expr.slice(start, i);
+    return value;
   }
 
   function eatUnescaped() {
@@ -506,4 +489,25 @@ function isChar(code) {
 
 function isDigit(code) {
   return code >= 0x30 /* "0" */ && code <= 0x39 /* "9" */;
+}
+
+function getEscapable(code) {
+  switch (code) {
+    case 0x5c /* "\\" */:
+      return '\\';
+    case 0x62 /* "b"; backspace */:
+      return '\b';
+    case 0x66 /* "f"; form feed */:
+      return '\f';
+    case 0x6e /* "n"; line feed */:
+      return '\n';
+    case 0x72 /* "r"; carriage return */:
+      return '\r';
+    case 0x74 /* "t"; horizontal tab */:
+      return '\t';
+    case 0x76 /* "v"; vertical tab */:
+      return '\v';
+    default:
+      return String.fromCharCode(code);
+  }
 }
