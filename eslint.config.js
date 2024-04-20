@@ -1,4 +1,3 @@
-import babelParser from '@babel/eslint-parser';
 import js from '@eslint/js';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
 
@@ -7,7 +6,6 @@ export default [
     files: ['**/*.mjs', '**/*.js'],
     languageOptions: {
       ecmaVersion: 2023,
-      parser: babelParser,
       sourceType: 'module',
     },
     plugins: {
