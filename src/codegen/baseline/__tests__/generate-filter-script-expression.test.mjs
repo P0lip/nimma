@@ -1,5 +1,5 @@
-import { expect } from 'chai';
-import forEach from 'mocha-each';
+import * as assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
 
 import parse from '../../../parser/index.mjs';
 import astring from '../../dump.mjs';
@@ -23,47 +23,54 @@ function print(expr) {
 
 describe('generateFilterScriptExpression', () => {
   it('at member expression', () => {
-    expect(print(`?(@.schema || @.ex)`)).to.eq(
+    assert.equal(
+      print(`?(@.schema || @.ex)`),
       `!(scope.sandbox.value.schema || scope.sandbox.value.ex)`,
     );
 
-    expect(print(`?(@.schema['d'] || @.ex.baz)`)).to.eq(
+    assert.equal(
+      print(`?(@.schema['d'] || @.ex.baz)`),
       `!(scope.sandbox.value.schema['d'] || scope.sandbox.value.ex.baz)`,
     );
 
-    expect(print(`?(!@.summary)`)).to.eq(`!!scope.sandbox.value.summary`);
+    assert.equal(print(`?(!@.summary)`), `!!scope.sandbox.value.summary`);
   });
 
   it('"unknown" identifier', () => {
-    expect(print(`?(@.schema === undefined)`)).to.eq(
+    assert.equal(
+      print(`?(@.schema === undefined)`),
       `!(scope.sandbox.value.schema === void 0)`,
     );
   });
 
   it('at in a string', () => {
-    expect(print(`?(@property === "@.schema")`)).to.eq(
+    assert.equal(
+      print(`?(@property === "@.schema")`),
       `!(scope.sandbox.property === "@.schema")`,
     );
 
-    expect(print(`?(@property === "@string")`)).to.eq(
+    assert.equal(
+      print(`?(@property === "@string")`),
       `!(scope.sandbox.property === "@string")`,
     );
   });
 
   it('unary expressions', () => {
-    expect(print(`?(!@.amount)`)).to.eq(`!!scope.sandbox.value.amount`);
-    expect(print(`?(!@.line == -@.char)`)).to.eq(
+    assert.equal(print(`?(!@.amount)`), `!!scope.sandbox.value.amount`);
+    assert.equal(
+      print(`?(!@.line == -@.char)`),
       '!(!scope.sandbox.value.line == -scope.sandbox.value.char)',
     );
   });
 
   it('binary expressions', () => {
-    expect(print(`?(@.amount + 2 === 4)`)).to.eq(
+    assert.equal(
+      print(`?(@.amount + 2 === 4)`),
       `!(scope.sandbox.value.amount + 2 === 4)`,
     );
   });
 
-  forEach([
+  for (const expression of [
     `@property === Array`,
     `Array.isArray`,
     `Array`,
@@ -71,83 +78,96 @@ describe('generateFilterScriptExpression', () => {
     `Array + Object`,
     `Array()`,
     `Array()()()`,
-  ]).it('disallows usage of untrusted identifiers in %s', expression => {
-    expect(print.bind(null, `?(${expression})`)).to.throw(
-      ReferenceError,
-      `'Array' is not defined`,
-    );
-  });
+  ]) {
+    it(`disallows usage of untrusted identifiers in "${expression}"`, () => {
+      assert.throws(
+        () => print(`?(${expression})`),
+        ReferenceError,
+        `"Array" is not defined`,
+      );
+    });
+  }
 
-  context('jsonpath-plus exclusive additions', () => {
+  describe('jsonpath-plus exclusive additions', () => {
     it('@property', () => {
-      expect(print(`?(@property === 'foo')`)).to.eq(
+      assert.equal(
+        print(`?(@property === 'foo')`),
         `!(scope.sandbox.property === 'foo')`,
       );
     });
 
     it('@path', () => {
-      expect(print(`?(@path.includes("foo"))`)).to.eq(
+      assert.equal(
+        print(`?(@path.includes("foo"))`),
         `!scope.sandbox.path.includes("foo")`,
       );
     });
 
     it('@parent', () => {
-      expect(print(`?(@parent.version === 1)`)).to.eq(
+      assert.equal(
+        print(`?(@parent.version === 1)`),
         `!(scope.sandbox.parentValue.version === 1)`,
       );
     });
 
-    forEach(['string', 'boolean', 'number']).it('@%s', kind => {
-      expect(print(`?(@${kind}())`)).to.eq(
-        `!(typeof scope.sandbox.value === "${kind}")`,
-      );
-    });
+    for (const kind of ['string', 'boolean', 'number']) {
+      it(`@${kind}`, () => {
+        assert.equal(
+          print(`?(@${kind}())`),
+          `!(typeof scope.sandbox.value === "${kind}")`,
+        );
+      });
+    }
 
     it('@scalar()', () => {
-      expect(print(`?(@scalar())`)).to.eq(
+      assert.equal(
+        print(`?(@scalar())`),
         `!(scope.sandbox.value === null || typeof scope.sandbox.value !== "object")`,
       );
     });
 
     it('@null()', () => {
-      expect(print(`?(@null())`)).to.eq(`!(scope.sandbox.value === null)`);
+      assert.equal(print(`?(@null())`), `!(scope.sandbox.value === null)`);
     });
 
     it('@array()', () => {
-      expect(print(`?(@array())`)).to.eq(`!Array.isArray(scope.sandbox.value)`);
+      assert.equal(print(`?(@array())`), `!Array.isArray(scope.sandbox.value)`);
     });
 
     it('@object()', () => {
-      expect(print(`?(@object())`)).to.eq(
+      assert.equal(
+        print(`?(@object())`),
         `!(scope.sandbox.value !== null && typeof scope.sandbox.value === "object")`,
       );
     });
 
     it('@integer()', () => {
-      expect(print(`?(@integer())`)).to.eq(
+      assert.equal(
+        print(`?(@integer())`),
         `!Number.isInteger(scope.sandbox.value)`,
       );
     });
 
     it('supports custom handlers', () => {
-      expect(print(`?(@@schema())`)).to.eq(`!shorthands.schema(scope)`);
+      assert.equal(print(`?(@@schema())`), `!shorthands.schema(scope)`);
     });
 
     it('throws upon unknown shorthand', () => {
-      expect(print.bind(null, `?(@foo())`)).to.throw(
-        `Unsupported shorthand "@foo"`,
+      assert.throws(
+        () => print(`?(@foo())`),
+        Error(`Unsupported shorthand "@foo"`),
       );
     });
   });
 
   it('supports ~= operator', () => {
-    expect(print(`?(@ ~= "abc")`)).to.eq('!/abc/.test(scope.sandbox.value)');
+    assert.equal(print(`?(@ ~= "abc")`), '!/abc/.test(scope.sandbox.value)');
   });
 
   it('prohibits the use of ~= operator for nodes other than Literals', () => {
-    expect(print.bind(null, `?(@ ~= baz)`)).to.throw(
-      SyntaxError,
-      '~= must be used with strings',
+    assert.throws(
+      () => print(`?(@ ~= baz)`),
+      SyntaxError('~= must be used with strings'),
     );
   });
 });

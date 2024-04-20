@@ -1,4 +1,5 @@
-import { expect } from 'chai';
+import * as assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
 
 import dump from '../../dump.mjs';
 import TraversalZones from '../traversal-zones.mjs';
@@ -18,7 +19,7 @@ describe('TraversalZones', () => {
     anotherZone.expandMultiple(['contact', 'address']);
     anotherZone.expand('abc');
 
-    expect(output(zones)).to.deep.eq({
+    assert.deepEqual(output(zones), {
       keys: ['info', 'contact', 'address'],
       zones: [
         {
@@ -46,7 +47,7 @@ describe('TraversalZones', () => {
     anotherZone.expand('abc');
     anotherZone.expandMultiple(['contact', 'address']);
 
-    expect(output(zones)).to.deep.eq({
+    assert.deepEqual(output(zones), {
       zone: {
         keys: ['info', 'contact', 'address'],
         zones: [{}, {}, {}],
@@ -62,7 +63,7 @@ describe('TraversalZones', () => {
     zone.resize();
     zone.expand('test');
 
-    expect(output(zones)).to.deep.eq({
+    assert.deepEqual(output(zones), {
       keys: ['info'],
       zones: [
         {

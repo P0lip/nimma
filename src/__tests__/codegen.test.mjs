@@ -1,4 +1,5 @@
-import { expect } from 'chai';
+import * as assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
 
 import Nimma from '../core/index.mjs';
 
@@ -8,7 +9,7 @@ function generate(expressions, opts) {
 
 describe('Code Generator', () => {
   it('fixed', () => {
-    expect(
+    assert.equal(
       generate([
         '$.info',
         '$.info.contact',
@@ -24,7 +25,7 @@ describe('Code Generator', () => {
         '$.paths[*][404,202]',
         '$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload',
       ]),
-    ).to.eq(`import {Scope, isObject} from "nimma/runtime";
+      `import {Scope, isObject} from "nimma/runtime";
 const zones = {
   keys: ["info", "servers", "paths", "channels"],
   zones: [{
@@ -175,13 +176,15 @@ export default function (input, callbacks) {
     scope.destroy();
   }
 }
-`);
+`,
+    );
   });
 
   describe('modifiers', () => {
     it('keys', () => {
-      expect(generate(['$.info~', '$.servers[*].url~', '$.servers[:5]~'])).to
-        .eq(`import {Scope, isObject} from "nimma/runtime";
+      assert.equal(
+        generate(['$.info~', '$.servers[*].url~', '$.servers[:5]~']),
+        `import {Scope, isObject} from "nimma/runtime";
 const zones = {
   keys: ["servers"],
   zones: [{
@@ -224,11 +227,12 @@ export default function (input, callbacks) {
     scope.destroy();
   }
 }
-`);
+`,
+      );
     });
 
     it('parents', () => {
-      expect(
+      assert.equal(
         generate([
           '$^',
           '$.info^',
@@ -238,7 +242,7 @@ export default function (input, callbacks) {
           '$..baz^^',
           '$..baz~^^',
         ]),
-      ).to.eq(`import {Scope, isObject} from "nimma/runtime";
+        `import {Scope, isObject} from "nimma/runtime";
 const tree = {
   "$.info^": function (scope) {
     const value = scope.sandbox.root;
@@ -273,12 +277,13 @@ export default function (input, callbacks) {
     scope.destroy();
   }
 }
-`);
+`,
+      );
     });
   });
 
   it('deep', () => {
-    expect(
+    assert.equal(
       generate([
         '$..empty',
         '$.baz..baz',
@@ -305,7 +310,7 @@ export default function (input, callbacks) {
         '$..foo..[?( @property >= 900 )]..foo',
         '$.paths..content.bar..examples',
       ]),
-    ).to.eq(`import {Scope} from "nimma/runtime";
+      `import {Scope} from "nimma/runtime";
 const tree = {
   "$..empty": function (scope) {
     if (scope.path.length < 1) return;
@@ -609,12 +614,14 @@ export default function (input, callbacks) {
     scope.destroy();
   }
 }
-`);
+`,
+    );
   });
 
   it('top-level-wildcard', () => {
-    expect(generate(['$[*]', '$.*', '$[*]^', '$[*]~'])).to
-      .eq(`import {Scope} from "nimma/runtime";
+    assert.equal(
+      generate(['$[*]', '$.*', '$[*]^', '$[*]~']),
+      `import {Scope} from "nimma/runtime";
 const zones = {
   zone: {}
 };
@@ -637,11 +644,12 @@ export default function (input, callbacks) {
     scope.destroy();
   }
 }
-`);
+`,
+    );
   });
 
   it('trailing wildcards', () => {
-    expect(
+    assert.equal(
       generate([
         '$.*',
         '$..*',
@@ -651,7 +659,7 @@ export default function (input, callbacks) {
         `$.examples..*`,
         `$.examples.*`,
       ]),
-    ).to.eq(`import {Scope} from "nimma/runtime";
+      `import {Scope} from "nimma/runtime";
 const tree = {
   "$.*": function (scope) {
     if (scope.path.length !== 1) return;
@@ -704,11 +712,12 @@ export default function (input, callbacks) {
     scope.destroy();
   }
 }
-`);
+`,
+    );
   });
 
   it('slice expressions', () => {
-    expect(
+    assert.equal(
       generate([
         '$[0:2]',
         '$[:5]',
@@ -717,7 +726,7 @@ export default function (input, callbacks) {
         '$[1::2]',
         '$[1:-5:-2]',
       ]),
-    ).to.eq(`import {Scope, inBounds} from "nimma/runtime";
+      `import {Scope, inBounds} from "nimma/runtime";
 const zones = {
   zone: {}
 };
@@ -768,16 +777,17 @@ export default function (input, callbacks) {
     scope.destroy();
   }
 }
-`);
+`,
+    );
   });
 
   it('filter expressions', () => {
-    expect(
+    assert.equal(
       generate([
         '$.servers[(@.length-1)]',
         '$..[(@.length-1)]..[(@.length-1)]',
       ]),
-    ).to.eq(`import {Scope, inBounds} from "nimma/runtime";
+      `import {Scope, inBounds} from "nimma/runtime";
 const tree = {
   "$.servers[(@.length-1)]": function (scope) {
     if (scope.path.length !== 2) return;
@@ -808,11 +818,12 @@ export default function (input, callbacks) {
     scope.destroy();
   }
 }
-`);
+`,
+    );
   });
 
   it('script filter expressions', () => {
-    expect(
+    assert.equal(
       generate([
         `$.info..[?(@property.startsWith('foo'))]`,
         `$.info.*[?(@property.startsWith('foo'))]`,
@@ -820,7 +831,7 @@ export default function (input, callbacks) {
         '$..[?(@ && @.example)]',
         '$[?(@ && @.example)]',
       ]),
-    ).to.eq(`import {Scope} from "nimma/runtime";
+      `import {Scope} from "nimma/runtime";
 const tree = {
   "$.info..[?(@property.startsWith('foo'))]": function (scope) {
     if (scope.path.length < 2) return;
@@ -870,13 +881,15 @@ export default function (input, callbacks) {
     scope.destroy();
   }
 }
-`);
+`,
+    );
   });
 
   describe('traversal zones', () => {
     it('nested deep', () => {
-      expect(generate(['$.store..[price,bar,baz]', '$.book'])).to
-        .eq(`import {Scope, isObject} from "nimma/runtime";
+      assert.equal(
+        generate(['$.store..[price,bar,baz]', '$.book']),
+        `import {Scope, isObject} from "nimma/runtime";
 const zones = {
   keys: ["store"],
   zones: [null]
@@ -907,16 +920,17 @@ export default function (input, callbacks) {
     scope.destroy();
   }
 }
-`);
+`,
+      );
     });
 
     it('nested deep #2', () => {
-      expect(
+      assert.equal(
         generate([
           '$.paths[*][*]..content[*].examples[*]',
           '$.paths[*][*]..parameters[*].examples[*]',
         ]),
-      ).to.eq(`import {Scope} from "nimma/runtime";
+        `import {Scope} from "nimma/runtime";
 const zones = {
   keys: ["paths"],
   zones: [{
@@ -952,12 +966,14 @@ export default function (input, callbacks) {
     scope.destroy();
   }
 }
-`);
+`,
+      );
     });
 
     it('nested deep #3', () => {
-      expect(generate(['$.data[*][*][city,street]..id'])).to
-        .eq(`import {Scope} from "nimma/runtime";
+      assert.equal(
+        generate(['$.data[*][*][city,street]..id']),
+        `import {Scope} from "nimma/runtime";
 const zones = {
   keys: ["data"],
   zones: [{
@@ -988,11 +1004,12 @@ export default function (input, callbacks) {
     scope.destroy();
   }
 }
-`);
+`,
+      );
     });
 
     it('subsequently nested wildcard expressions', () => {
-      expect(
+      assert.equal(
         generate([
           '$.paths[*][*].tags[*]',
           '$.paths[*][*].operationId',
@@ -1001,7 +1018,7 @@ export default function (input, callbacks) {
           '$.abc[*][*][*][*].baz',
           '$.abc[*][*][*][*].bar',
         ]),
-      ).to.eq(`import {Scope} from "nimma/runtime";
+        `import {Scope} from "nimma/runtime";
 const zones = {
   keys: ["paths", "abc"],
   zones: [{
@@ -1079,12 +1096,14 @@ export default function (input, callbacks) {
     scope.destroy();
   }
 }
-`);
+`,
+      );
     });
 
     it('* and ** used as member property keys', () => {
-      expect(generate(['$.test[*]["*"]'])).to
-        .eq(`import {Scope} from "nimma/runtime";
+      assert.equal(
+        generate(['$.test[*]["*"]']),
+        `import {Scope} from "nimma/runtime";
 const zones = {
   keys: ["test"],
   zones: [{
@@ -1112,13 +1131,16 @@ export default function (input, callbacks) {
     scope.destroy();
   }
 }
-`);
+`,
+      );
     });
   });
 
   describe('fast paths', () => {
     it('root', () => {
-      expect(generate(['$'])).to.eq(`import {Scope} from "nimma/runtime";
+      assert.equal(
+        generate(['$']),
+        `import {Scope} from "nimma/runtime";
 export default function (input, callbacks) {
   const scope = new Scope(input, callbacks);
   try {
@@ -1127,12 +1149,14 @@ export default function (input, callbacks) {
     scope.destroy();
   }
 }
-`);
+`,
+      );
     });
 
     it('all parent members', () => {
-      expect(generate(['$..', '$..^', '$..~'])).to
-        .eq(`import {Scope, isObject} from "nimma/runtime";
+      assert.equal(
+        generate(['$..', '$..^', '$..~']),
+        `import {Scope, isObject} from "nimma/runtime";
 const tree = {
   "$..": function (scope) {
     if (!isObject(scope.sandbox.value)) return;
@@ -1152,20 +1176,21 @@ export default function (input, callbacks) {
     scope.destroy();
   }
 }
-`);
+`,
+      );
     });
   });
 
   it('filter expression draft proposals', () => {
     // https://datatracker.ietf.org/doc/draft-ietf-jsonpath-base/01/
     // #3.5.9
-    expect(
+    assert.equal(
       generate([
         "$[?(index(@)=='key')]",
         "$[?(@ in ['red','green','blue'])]",
         "$[?(@ ~= 'test')]",
       ]),
-    ).to.eq(`import {Scope} from "nimma/runtime";
+      `import {Scope} from "nimma/runtime";
 const zones = {
   zone: {}
 };
@@ -1198,13 +1223,14 @@ export default function (input, callbacks) {
     scope.destroy();
   }
 }
-`);
+`,
+    );
   });
 
   it('deduplicate', () => {
-    expect(
+    assert.equal(
       generate(['$.info.contact', '$.info["contact"]', "$.info['contact']"]),
-    ).to.eq(`import {Scope, isObject} from "nimma/runtime";
+      `import {Scope, isObject} from "nimma/runtime";
 const tree = {
   "$.info.contact": function (scope) {
     const value = scope.sandbox.root?.["info"];
@@ -1224,18 +1250,19 @@ export default function (input, callbacks) {
     scope.destroy();
   }
 }
-`);
+`,
+    );
   });
 
   it('aggressive deduplication', () => {
-    expect(
+    assert.equal(
       generate([
         '$.info.contact',
         '$.info.contact~',
         '$.info.contact^',
         '$.info.contact^~',
       ]),
-    ).to.eq(`import {Scope, isObject} from "nimma/runtime";
+      `import {Scope, isObject} from "nimma/runtime";
 const tree = {
   "$.info.contact": function (scope) {
     const value = scope.sandbox.root?.["info"];
@@ -1256,7 +1283,8 @@ export default function (input, callbacks) {
     scope.destroy();
   }
 }
-`);
+`,
+    );
   });
 
   describe('custom shorthands', () => {
@@ -1267,11 +1295,11 @@ export default function (input, callbacks) {
           .join(' || '),
       };
 
-      expect(
+      assert.equal(
         generate(['$.components.schemas[*]..@@schema()'], {
           customShorthands: shorthands,
         }),
-      ).to.eq(`import {Scope} from "nimma/runtime";
+        `import {Scope} from "nimma/runtime";
 const zones = {
   keys: ["components"],
   zones: [{
@@ -1305,15 +1333,18 @@ export default function (input, callbacks) {
     scope.destroy();
   }
 }
-`);
+`,
+      );
     });
 
     it('should refuse to use an undefined shorthand', () => {
-      expect(
+      assert.throws(
         generate.bind(null, ['$.components.schemas[*]..@@schema()'], {
           customShorthands: {},
         }),
-      ).to.throw(ReferenceError, "Shorthand 'schema' is not defined");
+        ReferenceError,
+        "Shorthand 'schema' is not defined",
+      );
     });
   });
 });

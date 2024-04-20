@@ -438,5 +438,5 @@ const KNOWN_IDENTIFIERS = [scope._.name, 'index'];
 function assertDefinedIdentifier(node) {
   if (node.type !== 'Identifier') return;
   if (KNOWN_IDENTIFIERS.includes(node.name)) return;
-  throw ReferenceError(`'${node.name}' is not defined`);
+  throw ReferenceError(`"${node.name}" is not defined`);
 }

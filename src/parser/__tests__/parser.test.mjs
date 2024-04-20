@@ -1,11 +1,11 @@
-import { expect } from 'chai';
-import forEach from 'mocha-each';
+import * as assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
 
 import parse from '../index.mjs';
 
 describe('Parser', () => {
   it('goessner samples', () => {
-    expect(parse('$.store.book[foo,bar].author')).to.deep.equal([
+    assert.deepEqual(parse('$.store.book[foo,bar].author'), [
       {
         type: 'MemberExpression',
         value: 'store',
@@ -28,7 +28,7 @@ describe('Parser', () => {
       },
     ]);
 
-    expect(parse('$.store.book[*].author')).to.deep.equal([
+    assert.deepEqual(parse('$.store.book[*].author'), [
       {
         type: 'MemberExpression',
         value: 'store',
@@ -52,7 +52,7 @@ describe('Parser', () => {
   });
 
   it('slice expressions', () => {
-    expect(parse('$..book[:2]')).to.deep.equal([
+    assert.deepEqual(parse('$..book[:2]'), [
       {
         type: 'MemberExpression',
         value: 'book',
@@ -64,7 +64,7 @@ describe('Parser', () => {
         deep: false,
       },
     ]);
-    expect(parse('$..book[0:2]')).to.deep.equal([
+    assert.deepEqual(parse('$..book[0:2]'), [
       {
         type: 'MemberExpression',
         value: 'book',
@@ -76,7 +76,7 @@ describe('Parser', () => {
         value: [0, 2, 1],
       },
     ]);
-    expect(parse('$..book[-1:]')).to.deep.equal([
+    assert.deepEqual(parse('$..book[-1:]'), [
       {
         type: 'MemberExpression',
         value: 'book',
@@ -91,7 +91,7 @@ describe('Parser', () => {
   });
 
   it('extra', () => {
-    expect(parse("$.test1.test2['test3.test4.test5']")).to.deep.equal([
+    assert.deepEqual(parse("$.test1.test2['test3.test4.test5']"), [
       {
         type: 'MemberExpression',
         value: 'test1',
@@ -109,7 +109,7 @@ describe('Parser', () => {
       },
     ]);
 
-    expect(parse('$..book[(@.length-1)]')).to.deep.equal([
+    assert.deepEqual(parse('$..book[(@.length-1)]'), [
       {
         type: 'MemberExpression',
         value: 'book',
@@ -122,7 +122,7 @@ describe('Parser', () => {
       },
     ]);
 
-    expect(parse('$..book')).to.deep.equal([
+    assert.deepEqual(parse('$..book'), [
       {
         type: 'MemberExpression',
         value: 'book',
@@ -130,7 +130,7 @@ describe('Parser', () => {
       },
     ]);
 
-    expect(parse('$.store["book"]')).to.deep.equal([
+    assert.deepEqual(parse('$.store["book"]'), [
       {
         type: 'MemberExpression',
         value: 'store',
@@ -142,7 +142,8 @@ describe('Parser', () => {
         deep: false,
       },
     ]);
-    expect(parse('$.books[0,1]')).to.deep.equal([
+
+    assert.deepEqual(parse('$.books[0,1]'), [
       {
         type: 'MemberExpression',
         value: 'books',
@@ -155,7 +156,7 @@ describe('Parser', () => {
       },
     ]);
 
-    expect(parse('$.books[?(@.isbn)]')).to.deep.equal([
+    assert.deepEqual(parse('$.books[?(@.isbn)]'), [
       {
         type: 'MemberExpression',
         value: 'books',
@@ -182,7 +183,7 @@ describe('Parser', () => {
   });
 
   it('modifiers', () => {
-    expect(parse('$.info^~')).to.deep.equal([
+    assert.deepEqual(parse('$.info^~'), [
       {
         type: 'MemberExpression',
         value: 'info',
@@ -196,7 +197,7 @@ describe('Parser', () => {
       },
     ]);
 
-    expect(parse('$.name^^')).to.deep.equal([
+    assert.deepEqual(parse('$.name^^'), [
       {
         type: 'MemberExpression',
         value: 'name',
@@ -212,28 +213,28 @@ describe('Parser', () => {
   });
 
   it('filter expressions', () => {
-    expect(parse('$[(@.length-1)]')).to.deep.equal([
+    assert.deepEqual(parse('$[(@.length-1)]'), [
       {
         type: 'SliceExpression',
         value: [-1, Infinity, 1],
         deep: false,
       },
     ]);
-    expect(parse('$[( @.length - 2 )]')).to.deep.equal([
+    assert.deepEqual(parse('$[( @.length - 2 )]'), [
       {
         type: 'SliceExpression',
         value: [-2, Infinity, 1],
         deep: false,
       },
     ]);
-    expect(parse('$[( @[   "length" ] - 10 )]')).to.deep.equal([
+    assert.deepEqual(parse('$[( @[   "length" ] - 10 )]'), [
       {
         type: 'SliceExpression',
         value: [-10, Infinity, 1],
         deep: false,
       },
     ]);
-    expect(parse('$[( @["length"] - 5 )]')).to.deep.equal([
+    assert.deepEqual(parse('$[( @["length"] - 5 )]'), [
       {
         type: 'SliceExpression',
         value: [-5, Infinity, 1],
@@ -243,7 +244,7 @@ describe('Parser', () => {
   });
 
   it('script filter expressions', () => {
-    expect(parse('$[?(@property === "@.schema")]')).to.deep.equal([
+    assert.deepEqual(parse('$[?(@property === "@.schema")]'), [
       {
         type: 'ScriptFilterExpression',
         raw: '(@property === "@.schema")',
@@ -264,7 +265,7 @@ describe('Parser', () => {
       },
     ]);
 
-    expect(parse('$[?(match(@.book[0].isbn, "123"))]')).to.deep.equal([
+    assert.deepEqual(parse('$[?(match(@.book[0].isbn, "123"))]'), [
       {
         type: 'ScriptFilterExpression',
         raw: '(match(@.book[0].isbn, "123"))',
@@ -315,48 +316,49 @@ describe('Parser', () => {
       },
     ]);
 
-    expect(
+    assert.deepEqual(
       parse('$["книги"][?(match(@.название, "Мастер и Маргарита"))]'),
-    ).to.deep.equal([
-      {
-        deep: false,
-        type: 'MemberExpression',
-        value: 'книги',
-      },
-      {
-        type: 'ScriptFilterExpression',
-        raw: '(match(@.название, "Мастер и Маргарита"))',
-        value: {
-          type: 'CallExpression',
-          arguments: [
-            {
-              type: 'MemberExpression',
-              object: {
-                name: '@',
-                type: 'Identifier',
-              },
-              property: {
-                name: 'название',
-                type: 'Identifier',
-              },
-              computed: false,
-            },
-            {
-              type: 'Literal',
-              raw: '"Мастер и Маргарита"',
-              value: 'Мастер и Маргарита',
-            },
-          ],
-          callee: {
-            type: 'Identifier',
-            name: 'match',
-          },
+      [
+        {
+          deep: false,
+          type: 'MemberExpression',
+          value: 'книги',
         },
-        deep: false,
-      },
-    ]);
+        {
+          type: 'ScriptFilterExpression',
+          raw: '(match(@.название, "Мастер и Маргарита"))',
+          value: {
+            type: 'CallExpression',
+            arguments: [
+              {
+                type: 'MemberExpression',
+                object: {
+                  name: '@',
+                  type: 'Identifier',
+                },
+                property: {
+                  name: 'название',
+                  type: 'Identifier',
+                },
+                computed: false,
+              },
+              {
+                type: 'Literal',
+                raw: '"Мастер и Маргарита"',
+                value: 'Мастер и Маргарита',
+              },
+            ],
+            callee: {
+              type: 'Identifier',
+              name: 'match',
+            },
+          },
+          deep: false,
+        },
+      ],
+    );
 
-    expect(parse('$..address.street[?(@.number > 20)]')).to.deep.equal([
+    assert.deepEqual(parse('$..address.street[?(@.number > 20)]'), [
       {
         type: 'MemberExpression',
         deep: true,
@@ -395,12 +397,25 @@ describe('Parser', () => {
       },
     ]);
 
-    expect(parse('$[?(match(@.test, "^((4|5)XX)$|^2"))]')).to.deep.equal([
+    assert.deepEqual(parse('$[?(/^([45]XX)$|^2/i.test(@.value))]'), [
       {
         type: 'ScriptFilterExpression',
-        raw: '(match(@.test, "^((4|5)XX)$|^2"))',
+        raw: '(/^([45]XX)$|^2/i.test(@.value))',
         value: {
           type: 'CallExpression',
+          callee: {
+            type: 'MemberExpression',
+            computed: false,
+            object: {
+              type: 'Literal',
+              raw: '/^([45]XX)$|^2/i',
+              value: /^([45]XX)$|^2/i,
+            },
+            property: {
+              type: 'Identifier',
+              name: 'test',
+            },
+          },
           arguments: [
             {
               type: 'MemberExpression',
@@ -411,19 +426,10 @@ describe('Parser', () => {
               },
               property: {
                 type: 'Identifier',
-                name: 'test',
+                name: 'value',
               },
             },
-            {
-              type: 'Literal',
-              raw: '"^((4|5)XX)$|^2"',
-              value: '^((4|5)XX)$|^2',
-            },
           ],
-          callee: {
-            type: 'Identifier',
-            name: 'match',
-          },
         },
         deep: false,
       },
@@ -432,13 +438,13 @@ describe('Parser', () => {
 
   it('all parent', () => {
     // '$..', '$..^', '$..~'
-    expect(parse('$..')).to.deep.equal([
+    assert.deepEqual(parse('$..'), [
       {
         type: 'AllParentExpression',
       },
     ]);
 
-    expect(parse('$..^')).to.deep.equal([
+    assert.deepEqual(parse('$..^'), [
       {
         type: 'AllParentExpression',
       },
@@ -447,7 +453,7 @@ describe('Parser', () => {
       },
     ]);
 
-    expect(parse('$..~')).to.deep.equal([
+    assert.deepEqual(parse('$..~'), [
       {
         type: 'AllParentExpression',
       },
@@ -456,7 +462,7 @@ describe('Parser', () => {
       },
     ]);
 
-    expect(parse('$..^^')).to.deep.equal([
+    assert.deepEqual(parse('$..^^'), [
       {
         type: 'AllParentExpression',
       },
@@ -468,7 +474,7 @@ describe('Parser', () => {
       },
     ]);
 
-    expect(parse('$..^^~')).to.deep.equal([
+    assert.deepEqual(parse('$..^^~'), [
       {
         type: 'AllParentExpression',
       },
@@ -484,18 +490,20 @@ describe('Parser', () => {
     ]);
   });
 
-  forEach(['$$ref', '$ref', '0abc', 'bar-baz']).it('%s', member => {
-    expect(parse(`$..${member}`)).to.deep.equal([
-      {
-        type: 'MemberExpression',
-        value: member,
-        deep: true,
-      },
-    ]);
-  });
+  for (const member of ['$$ref', '$ref', '0abc', 'bar-baz']) {
+    it(`parses $..${member}`, () => {
+      assert.deepEqual(parse(`$..${member}`), [
+        {
+          type: 'MemberExpression',
+          value: member,
+          deep: true,
+        },
+      ]);
+    });
+  }
 
   it('parses @@', () => {
-    expect(parse('$.components.schemas..@@schema()')).to.deep.equal([
+    assert.deepEqual(parse('$.components.schemas..@@schema()'), [
       {
         type: 'MemberExpression',
         value: 'components',
@@ -521,7 +529,7 @@ describe('Parser', () => {
       },
     ]);
 
-    expect(parse('$.components.schemas.@@schema()')).to.deep.equal([
+    assert.deepEqual(parse('$.components.schemas.@@schema()'), [
       {
         type: 'MemberExpression',
         value: 'components',
@@ -548,17 +556,17 @@ describe('Parser', () => {
     ]);
   });
 
-  forEach(['$.[enum]', '$.[?(@.enum)]', '$.foo.[bar,baz]']).it(
-    'given %s, should should treat .[ as ..',
-    expr => {
-      expect(parse(expr)).to.deep.equal(
+  for (const expr of ['$.[enum]', '$.[?(@.enum)]', '$.foo.[bar,baz]']) {
+    it(`given "${expr}", should should treat .[ as ..`, () => {
+      assert.deepEqual(
+        parse(expr),
         parse(expr.replace(/\.\?=(\[\?\()|{\.}1\[/g, '..')),
       );
-    },
-  );
+    });
+  }
 
   it('skips whitespaces', () => {
-    expect(parse('$.[ name ] [?( @.abc )]\t ..@@test( )')).to.deep.equal([
+    assert.deepEqual(parse('$.[ name ] [?( @.abc )]\t ..@@test( )'), [
       {
         type: 'MemberExpression',
         value: 'name',
@@ -598,7 +606,7 @@ describe('Parser', () => {
   });
 
   it('handles escapable characters', () => {
-    expect(parse('$[?(@ ~= "^P\\\\.")]')).to.deep.equal([
+    assert.deepEqual(parse('$[?(@ ~= "^P\\\\.")]'), [
       {
         type: 'ScriptFilterExpression',
         raw: '(@ ~= "^P\\\\.")',
@@ -619,7 +627,7 @@ describe('Parser', () => {
       },
     ]);
 
-    expect(parse(`$["'name\\"'","test\\\\",'"a']`)).to.deep.equal([
+    assert.deepEqual(parse(`$["'name\\"'","test\\\\",'"a']`), [
       {
         type: 'MultipleMemberExpression',
         value: ["'name\"'", 'test\\', '"a'],
@@ -627,7 +635,7 @@ describe('Parser', () => {
       },
     ]);
 
-    expect(parse(`$["\\v\\ntest\\b"]`)).to.deep.equal([
+    assert.deepEqual(parse(`$["\\v\\ntest\\b"]`), [
       {
         deep: false,
         type: 'MemberExpression',
@@ -635,7 +643,7 @@ describe('Parser', () => {
       },
     ]);
 
-    expect(parse(`$["\\f\\r\\t"]`)).to.deep.equal([
+    assert.deepEqual(parse(`$["\\f\\r\\t"]`), [
       {
         deep: false,
         type: 'MemberExpression',
@@ -646,178 +654,242 @@ describe('Parser', () => {
 
   describe('invalid expressions', () => {
     it('empty expression or does not start with $', () => {
-      expect(() => parse('')).to.throw('Expected "$" but end of input found.');
-      expect(() => parse('a')).to.throw('Expected "$" but "a" found.');
-      expect(() => parse(' $')).to.throw('Expected "$" but " " found.');
+      assert.throws(
+        () => parse(''),
+        SyntaxError('Expected "$" but end of input found.'),
+      );
+      assert.throws(
+        () => parse('a'),
+        SyntaxError('Expected "$" but "a" found.'),
+      );
+      assert.throws(
+        () => parse(' $'),
+        SyntaxError('Expected "$" but " " found.'),
+      );
     });
 
     it('invalid member expression', () => {
-      expect(() => parse('$info')).to.throw(
-        'Expected ".", "..", "^", "~", or end of input but "i" found at 1.',
+      assert.throws(
+        () => parse('$info'),
+        SyntaxError(
+          'Expected ".", "..", "^", "~", or end of input but "i" found at 1.',
+        ),
       );
-      expect(() => parse('$.')).to.throw(
-        'Expected valid name but end of input found at 2.',
+      assert.throws(
+        () => parse('$.'),
+        SyntaxError('Expected valid name but end of input found at 2.'),
       );
     });
 
     it('key expression used in the wrong place', () => {
-      expect(() => parse('$.name~.a')).to.throw(
-        'Expected "^", "~", or end of input but "." found at 7.',
+      assert.throws(
+        () => parse('$.name~.a'),
+        SyntaxError('Expected "^", "~", or end of input but "." found at 7.'),
       );
     });
 
     it('unclosed quotes', () => {
-      expect(() => parse('$.name["a]')).to.throw(
-        `Expected """ but end of input found at 10.`,
+      assert.throws(
+        () => parse('$.name["a]'),
+        SyntaxError(`Expected """ but end of input found at 10.`),
       );
-      expect(() => parse('$.name["\']')).to.throw(
-        `Expected """ but end of input found at 10.`,
+      assert.throws(
+        () => parse('$.name["\']'),
+        SyntaxError(`Expected """ but end of input found at 10.`),
       );
     });
 
     it('invalid step in slice expressions', () => {
-      expect(() => parse('$.name[::test]')).to.throw(
-        'Expected "-" or [0-9] but "t" found at 9.',
+      assert.throws(
+        () => parse('$.name[::test]'),
+        SyntaxError('Expected "-" or [0-9] but "t" found at 9.'),
       );
-      expect(() => parse('$.name[::-]')).to.throw(
-        'Expected [0-9] but "]" found at 10.',
+      assert.throws(
+        () => parse('$.name[::-]'),
+        SyntaxError('Expected [0-9] but "]" found at 10.'),
       );
     });
 
     it('invalid shorthands', () => {
-      expect(() => parse('$..@@()')).to.throw(
-        'Expected [a-z] but "(" found at 5.',
+      assert.throws(
+        () => parse('$..@@()'),
+        SyntaxError('Expected [a-z] but "(" found at 5.'),
       );
-      expect(() => parse('$..@@test)')).to.throw(
-        'Expected "(" but ")" found at 9.',
+      assert.throws(
+        () => parse('$..@@test)'),
+        SyntaxError('Expected "(" but ")" found at 9.'),
       );
-      expect(() => parse('$..@@test(')).to.throw(
-        'Expected ")" but end of input found at 10.',
+      assert.throws(
+        () => parse('$..@@test('),
+        SyntaxError('Expected ")" but end of input found at 10.'),
       );
-      expect(() => parse('$..@')).to.throw(
-        'Expected [a-z] but end of input found at 4.',
+      assert.throws(
+        () => parse('$..@'),
+        SyntaxError('Expected [a-z] but end of input found at 4.'),
       );
     });
 
     it('invalid filter expressions', () => {
-      expect(() => parse('$[(')).to.throw(
-        'Expected "@" but end of input found at 3.',
+      assert.throws(
+        () => parse('$[('),
+        SyntaxError('Expected "@" but end of input found at 3.'),
       );
-      expect(() => parse('$[(@')).to.throw(
-        'Expected "." or "[" but end of input found at 4.',
+      assert.throws(
+        () => parse('$[(@'),
+        SyntaxError('Expected "." or "[" but end of input found at 4.'),
       );
-      expect(() => parse('$[(@.len - 1)]')).to.throw(
-        'Expected "length" but "len - " found at 11.',
+      assert.throws(
+        () => parse('$[(@.len - 1)]'),
+        SyntaxError('Expected "length" but "len - " found at 11.'),
       );
-      expect(() => parse('$[(@length - 1)]')).to.throw(
-        'Expected "." or "[" but "l" found at 4.',
+      assert.throws(
+        () => parse('$[(@length - 1)]'),
+        SyntaxError('Expected "." or "[" but "l" found at 4.'),
       );
-      expect(() => parse('$[(@[length]-2)]')).to.throw(
-        `Expected """ or "'" at 5.`,
+      assert.throws(
+        () => parse('$[(@[length]-2)]'),
+        SyntaxError(`Expected """ or "'" at 5.`),
       );
-      expect(() => parse('$[(@.length + 1))')).to.throw(
-        'Expected "-" but "+" found at 12.',
+      assert.throws(
+        () => parse('$[(@.length + 1))'),
+        SyntaxError('Expected "-" but "+" found at 12.'),
       );
-      expect(() => parse('$[(@.length - -5))')).to.throw(
-        'Expected positive number but "-5" found at 14.',
+      assert.throws(
+        () => parse('$[(@.length - -5))'),
+        SyntaxError('Expected positive number but "-5" found at 14.'),
       );
-      expect(() => parse('$[(@.length - 0))')).to.throw(
-        'Expected positive number but "0" found at 14.',
+      assert.throws(
+        () => parse('$[(@.length - 0))'),
+        SyntaxError('Expected positive number but "0" found at 14.'),
       );
     });
 
     it('unclosed brackets', () => {
-      expect(() => parse('$.name[')).to.throw('Unexpected end of input at 7.');
-      expect(() => parse('$.name[0')).to.throw(
-        'Expected "]" but end of input found at 8.',
+      assert.throws(
+        () => parse('$.name['),
+        SyntaxError('Unexpected end of input at 7.'),
       );
-      expect(() => parse('$.store["[name]"')).to.throw(
-        'Expected "]" but end of input found at 16.',
+      assert.throws(
+        () => parse('$.name[0'),
+        SyntaxError('Expected "]" but end of input found at 8.'),
+      );
+      assert.throws(
+        () => parse('$.store["[name]"'),
+        SyntaxError('Expected "]" but end of input found at 16.'),
       );
     });
 
     describe('invalid script filter expressions', () => {
       it('unclosed parentheses', () => {
-        expect(() => parse('$[?(@.length - 1]')).to.throw(
-          'Expected ")" but "]" found at 16.',
+        assert.throws(
+          () => parse('$[?(@.length - 1]'),
+          SyntaxError('Expected ")" but "]" found at 16.'),
         );
-        expect(() => parse('$[?(@.length - 1))')).to.throw(
-          'Expected "]" but ")" found at 17.',
+        assert.throws(
+          () => parse('$[?(@.length - 1))'),
+          SyntaxError('Expected "]" but ")" found at 17.'),
         );
 
         // args
-        expect(() => parse('$[?(abc(1]')).to.throw(
-          'Expected ")" or "," but "]" found at 9.',
+        assert.throws(
+          () => parse('$[?(abc(1]'),
+          SyntaxError('Expected ")" or "," but "]" found at 9.'),
         );
-        expect(() => parse('$[?(abc(a]')).to.throw(
-          'Expected ")" or "," but "]" found at 9.',
+        assert.throws(
+          () => parse('$[?(abc(a]'),
+          SyntaxError('Expected ")" or "," but "]" found at 9.'),
         );
-        expect(() => parse('$[?(abc(1 / (2 + 2) ]')).to.throw(
-          'Expected ")" or "," but "]" found at 20.',
+        assert.throws(
+          () => parse('$[?(abc(1 / (2 + 2) ]'),
+          SyntaxError('Expected ")" or "," but "]" found at 20.'),
         );
 
         // groups
-        expect(() => parse('$[?(1 / (2 + 2) ]')).to.throw(
-          'Expected ")" but "]" found at 16.',
+        assert.throws(
+          () => parse('$[?(1 / (2 + 2) ]'),
+          SyntaxError('Expected ")" but "]" found at 16.'),
         );
       });
 
       it('unclosed brackets', () => {
-        expect(() => parse('$[?(@[length)]')).to.throw(
-          'Expected "]" but ")" found at 12.',
+        assert.throws(
+          () => parse('$[?(@[length)]'),
+          SyntaxError('Expected "]" but ")" found at 12.'),
         );
-        expect(() => parse('$[?(@.abc == [1)]')).to.throw(
-          'Expected "]" or "," but ")" found at 15.',
+        assert.throws(
+          () => parse('$[?(@.abc == [1)]'),
+          SyntaxError('Expected "]" or "," but ")" found at 15.'),
         );
       });
 
       it('redundant comma in arguments', () => {
-        expect(() => parse('$[?(abc(2,))]')).to.throw(
-          'Expected ")" but "," found at 11.',
+        assert.throws(
+          () => parse('$[?(abc(2,))]'),
+          SyntaxError('Expected ")" but "," found at 11.'),
         );
-        expect(() => parse('$[?(abc(2,,))]')).to.throw('Unexpected "," at 11.');
-        expect(() => parse('$[?(abc(,a))]')).to.throw('Unexpected "," at 9.');
-        expect(() => parse('$[?(abc(,))]')).to.throw('Unexpected "," at 9.');
+        assert.throws(
+          () => parse('$[?(abc(2,,))]'),
+          SyntaxError('Unexpected "," at 11.'),
+        );
+        assert.throws(
+          () => parse('$[?(abc(,a))]'),
+          SyntaxError('Unexpected "," at 9.'),
+        );
+        assert.throws(
+          () => parse('$[?(abc(,))]'),
+          SyntaxError('Unexpected "," at 9.'),
+        );
       });
 
       it('missing argument in unary expression', () => {
-        expect(() => parse('$[?(@.value != -)]')).to.throw(
-          'Expected argument but ")" found at 16.',
+        assert.throws(
+          () => parse('$[?(@.value != -)]'),
+          SyntaxError('Expected argument but ")" found at 16.'),
         );
-        expect(() => parse('$[?(@.value == +    )]')).to.throw(
-          'Expected argument but ")" found at 20.',
+        assert.throws(
+          () => parse('$[?(@.value == +    )]'),
+          SyntaxError('Expected argument but ")" found at 20.'),
         );
       });
 
       it('missing side in binary expression', () => {
-        expect(() => parse('$[?(@.value == 1 + )]')).to.throw(
-          'Expected expression after "+" at 19.',
+        assert.throws(
+          () => parse('$[?(@.value == 1 + )]'),
+          SyntaxError('Expected expression after "+" at 19.'),
         );
-        expect(() => parse('$[?(@.value == 2 + 5 *    )]')).to.throw(
-          'Expected expression after "*" at 26.',
+        assert.throws(
+          () => parse('$[?(@.value == 2 + 5 *    )]'),
+          SyntaxError('Expected expression after "*" at 26.'),
         );
       });
 
       it('identifiers starting with a number', () => {
-        expect(() => parse('$[?(@.value == 1abc)]')).to.throw(
-          'Expected [0-9] or "." but "a" found at 16.',
+        assert.throws(
+          () => parse('$[?(@.value == 1abc)]'),
+          SyntaxError('Expected [0-9] or "." but "a" found at 16.'),
         );
 
-        expect(() => parse('$[?(@.value == .abc)]')).to.throw();
+        assert.throws(
+          () => parse('$[?(@.value == .abc)]'),
+          SyntaxError('Expected [0-9] but "a" found at 16.'),
+        );
       });
 
       it('invalid numbers', () => {
-        expect(() => parse('$[?(@.value == 1.2.3)]')).to.throw(
-          'Unexpected "." at 18.',
+        assert.throws(
+          () => parse('$[?(@.value == 1.2.3)]'),
+          SyntaxError('Unexpected "." at 18.'),
         );
-        expect(() => parse('$[?(@.value == .)]')).to.throw(
-          'Unexpected "." at 16.',
+        assert.throws(
+          () => parse('$[?(@.value == .)]'),
+          SyntaxError('Unexpected "." at 16.'),
         );
       });
 
       it('invalid identifiers', () => {
-        expect(() => parse('$[?(@.#value == 123)]')).to.throw(
-          'Expected a valid identifier char but "#" found at 6.',
+        assert.throws(
+          () => parse('$[?(@.#value == 123)]'),
+          SyntaxError('Expected a valid identifier char but "#" found at 6.'),
         );
       });
     });

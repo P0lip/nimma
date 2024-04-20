@@ -1,5 +1,5 @@
 // tests based on https://github.com/JSONPath-Plus/JSONPath
-import forEach from 'mocha-each';
+import { describe, it } from 'node:test';
 
 import { compare } from './__helpers__/jsonpath.mjs';
 
@@ -41,9 +41,11 @@ const json = {
 };
 
 describe('Compatibility tests', () => {
-  forEach(['$.store.bicycle', "$['store']['bicycle']"]).it('%s', path => {
-    compare(json, path);
-  });
+  for (const path of ['$.store.bicycle', "$['store']['bicycle']"]) {
+    it(path, () => {
+      compare(json, path);
+    });
+  }
 
   describe('JSONPath - Array', function () {
     const json = {
@@ -65,12 +67,15 @@ describe('Compatibility tests', () => {
       },
     };
 
-    forEach(['$.store.book', '$.store.books', '$.store.books[*].author']).it(
-      '%s',
-      path => {
+    for (const path of [
+      '$.store.book',
+      '$.store.books',
+      '$.store.books[*].author',
+    ]) {
+      it(path, () => {
         compare(json, path);
-      },
-    );
+      });
+    }
 
     it('query single element arr w/array value', () => {
       const authors = ['Dickens', 'Lancaster'];
@@ -606,7 +611,7 @@ describe('Compatibility tests', () => {
       compare(json, '$.children[1:3]^');
     });
 
-    xit('select sibling via parent, return both path and value', () => {
+    it.skip('select sibling via parent, return both path and value', () => {
       compare(
         json,
         '$..[?(@.name && @.name.match(/3_1$/))]^[?(@.name.match(/_2$/))]',
@@ -691,7 +696,7 @@ describe('Compatibility tests', () => {
       compare(json, '$.children[1:3]^');
     });
 
-    xit('select sibling via parent', () => {
+    it.skip('select sibling via parent', () => {
       compare(
         json,
         '$..[?(@.name && @.name.match(/3_1$/))]^[?(@.name.match(/_2$/))]',
@@ -713,7 +718,7 @@ describe('Compatibility tests', () => {
       compare(json, '$.name^^');
     });
 
-    xit('select sibling via parent (with non-match present)', () => {
+    it.skip('select sibling via parent (with non-match present)', () => {
       const jsonMultipleChildren = {
         name: 'root',
         children: [
@@ -739,7 +744,7 @@ describe('Compatibility tests', () => {
       );
     });
 
-    xit('select sibling via parent (with multiple results)', () => {
+    it.skip('select sibling via parent (with multiple results)', () => {
       const jsonMultipleChildren = {
         name: 'root',
         children: [

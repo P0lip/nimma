@@ -1,5 +1,5 @@
-/* eslint-disable no-undef */
-import { expect } from 'chai';
+import * as assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
 
 import Nimma from '../index.mjs';
 
@@ -7,13 +7,14 @@ describe('Core', () => {
   it('given unsupported, should throw', () => {
     const fn = () => new Nimma(['$.a^.a']);
 
-    expect(fn).to.throw(AggregateError, 'Error parsing $.a^.a');
+    assert.throws(fn, AggregateError, 'Error parsing $.a^.a');
 
     try {
       fn();
     } catch (e) {
-      expect(e.errors[0]).to.be.instanceof(SyntaxError);
-      expect(e.errors[0].message).to.eq(
+      assert.ok(e.errors[0] instanceof SyntaxError);
+      assert.equal(
+        e.errors[0].message,
         'Expected "^", "~", or end of input but "." found at 4',
       );
     }
@@ -29,7 +30,7 @@ describe('Core', () => {
     n.query({ doc: true }, { $ });
     n.query({ foo: false }, { $ });
 
-    expect(values).to.deep.eq([
+    assert.deepEqual(values, [
       [[], { doc: true }],
       [[], { foo: false }],
     ]);

@@ -261,7 +261,7 @@ function parseFilterExpression(ctx) {
   }
 
   if (member !== 'length') {
-    throw Error(`Expected "length" but "${member}" found at ${ctx.i}.`);
+    throw SyntaxError(`Expected "length" but "${member}" found at ${ctx.i}.`);
   }
 
   skipWhitespace(ctx);

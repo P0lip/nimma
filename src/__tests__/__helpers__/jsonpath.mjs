@@ -1,4 +1,5 @@
-import { expect } from 'chai';
+import * as assert from 'node:assert/strict';
+
 import * as JSONPath from 'jsonpath-plus';
 import toPath from 'lodash-es/toPath.js';
 
@@ -37,8 +38,8 @@ export function compare(document, path) {
   jsonPathPlus.paths.sort(compareFn);
   jsonPathPlus.results.sort(compareFn);
 
-  expect(nimma.paths).to.deep.eq(jsonPathPlus.paths);
-  expect(nimma.results).to.deep.eq(jsonPathPlus.results);
+  assert.deepEqual(nimma.paths, jsonPathPlus.paths);
+  assert.deepEqual(nimma.results, jsonPathPlus.results);
 }
 
 const compareFn = (a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b));

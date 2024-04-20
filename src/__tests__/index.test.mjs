@@ -1,5 +1,5 @@
-/* eslint-disable no-undef */
-import { expect } from 'chai';
+import * as assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
 
 import Nimma from '../index.mjs';
 import { RuntimeError } from '../runtime/errors/index.mjs';
@@ -35,7 +35,7 @@ describe('Nimma', () => {
     };
 
     const collected = collect(document, ['$']);
-    expect(collected).to.deep.equal({
+    assert.deepEqual(collected, {
       $: [[document, []]],
     });
   });
@@ -51,7 +51,7 @@ describe('Nimma', () => {
     };
 
     const collected = collect(document, ['$.info.contact']);
-    expect(collected).to.deep.equal({
+    assert.deepEqual(collected, {
       '$.info.contact': [[{ test: 'c' }, ['info', 'contact']]],
     });
   });
@@ -68,7 +68,7 @@ describe('Nimma', () => {
     };
 
     const collected = collect(document, ['$.info.contact.*']);
-    expect(collected).to.deep.equal({
+    assert.deepEqual(collected, {
       '$.info.contact.*': [
         ['bar', ['info', 'contact', 'foo']],
         ['c', ['info', 'contact', 'test']],
@@ -93,7 +93,7 @@ describe('Nimma', () => {
       '$.info..[?(@property.startsWith("foo"))]',
     ]);
 
-    expect(collected).to.deep.equal({
+    assert.deepEqual(collected, {
       '$.info..[?(@property.startsWith("foo"))]': [
         ['a', ['info', 'contact', 'foo']],
         ['b', ['info', 'contact', 'foo-2']],
@@ -119,7 +119,7 @@ describe('Nimma', () => {
       '$.info..*[?(@property.startsWith("foo"))]',
     ]);
 
-    expect(collected).to.deep.equal({
+    assert.deepEqual(collected, {
       '$.info..*[?(@property.startsWith("foo"))]': [
         ['a', ['info', 'contact', 'foo']],
         ['b', ['info', 'contact', 'foo-2']],
@@ -152,7 +152,7 @@ describe('Nimma', () => {
       "$.paths.*[?( @property === 'get' || @property === 'put' || @property === 'post' )]",
     ]);
 
-    expect(collected).to.deep.equal({
+    assert.deepEqual(collected, {
       "$.paths.*[?( @property === 'get' || @property === 'put' || @property === 'post' )]":
         [
           [{ put: { baz: 2 } }, ['paths', 'bar', 'get']],
@@ -186,7 +186,7 @@ describe('Nimma', () => {
       "$..[?( @property === 'get' || @property === 'put' || @property === 'post' )]",
     ]);
 
-    expect(collected).to.deep.equal({
+    assert.deepEqual(collected, {
       "$..[?( @property === 'get' || @property === 'put' || @property === 'post' )]":
         [
           [{ put: { baz: 2 } }, ['paths', 'bar', 'get']],
@@ -222,7 +222,7 @@ describe('Nimma', () => {
       "$..paths..[?( @property === 'get' || @property === 'put' || @property === 'post' )]",
     ]);
 
-    expect(collected).to.deep.equal({
+    assert.deepEqual(collected, {
       "$..paths..[?( @property === 'get' || @property === 'put' || @property === 'post' )]":
         [
           [{ put: { baz: 2 } }, ['paths', 'bar', 'get']],
@@ -257,7 +257,7 @@ describe('Nimma', () => {
     const collected = collect(document, [
       "$..paths..*[?( @property === 'get' || @property === 'put' || @property === 'post' )]",
     ]);
-    expect(collected).to.deep.equal({
+    assert.deepEqual(collected, {
       "$..paths..*[?( @property === 'get' || @property === 'put' || @property === 'post' )]":
         [
           [{ put: { baz: 2 } }, ['paths', 'bar', 'get']],
@@ -291,7 +291,7 @@ describe('Nimma', () => {
     };
 
     const collected = collect(document, ['$..paths..get']);
-    expect(collected).to.deep.equal({
+    assert.deepEqual(collected, {
       '$..paths..get': [
         [{ put: { baz: 2 } }, ['paths', 'bar', 'get']],
         [{ post: {} }, ['paths', 'foo', 'get']],
@@ -326,7 +326,7 @@ describe('Nimma', () => {
     };
 
     const collected = collect(document, ['$..bar..c']);
-    expect(collected).to.deep.equal({
+    assert.deepEqual(collected, {
       '$..bar..c': [
         [true, ['bar', 'foo', 'bar', 'c']],
         [false, ['bar', 'foo', 'bar', 'bar', 'x', 'c']],
@@ -357,7 +357,7 @@ describe('Nimma', () => {
     };
 
     const collected = collect(document, ['$.bar[?( @property >= 400 )]..foo']);
-    expect(collected).to.deep.equal({
+    assert.deepEqual(collected, {
       '$.bar[?( @property >= 400 )]..foo': [
         ['c', ['bar', '401', 'foo']],
         ['e', ['bar', '401', 'z', '900', 'foo']],
@@ -388,7 +388,7 @@ describe('Nimma', () => {
     };
 
     const collected = collect(document, ['$..[?( @property >= 400 )]..foo']);
-    expect(collected).to.deep.equal({
+    assert.deepEqual(collected, {
       '$..[?( @property >= 400 )]..foo': [
         ['c', ['bar', '401', 'foo']],
         ['e', ['bar', '401', 'z', '900', 'foo']],
@@ -423,7 +423,7 @@ describe('Nimma', () => {
       '$..foo..[?( @property >= 900 )]..foo',
     ]);
 
-    expect(collected).to.deep.equal({
+    assert.deepEqual(collected, {
       '$..foo..[?( @property >= 900 )]..foo': [
         ['e', ['bar', '401', 'z', 'foo', '900', 'foo']],
       ],
@@ -443,7 +443,7 @@ describe('Nimma', () => {
     };
 
     const collected = collect(document, ['$..examples.*', '$..examples..*']);
-    expect(collected).to.deep.equal({
+    assert.deepEqual(collected, {
       '$..examples.*': [
         ['a', ['bar', 'examples', 'foo']],
         [{ foo: 'b' }, ['bar', 'examples', 'z']],
@@ -467,7 +467,7 @@ describe('Nimma', () => {
 
     const collected = collect(document, ['$.info']);
 
-    expect(collected).to.deep.equal({
+    assert.deepEqual(collected, {
       '$.info': [[{ contact: { test: 'c' } }, ['info']]],
     });
   });
@@ -492,7 +492,7 @@ describe('Nimma', () => {
     const collected = collect(document, [
       "$..parameters[?(@.in === 'header')]",
     ]);
-    expect(collected).to.deep.equal({
+    assert.deepEqual(collected, {
       "$..parameters[?(@.in === 'header')]": [
         [{ in: 'header', name: 'fooA' }, ['parameters', 0]],
         [{ in: 'header', name: 'd 1' }, ['foo', 'parameters', 0]],
@@ -517,7 +517,7 @@ describe('Nimma', () => {
       "$..[?((@parentProperty === 'foo' || @parentProperty === 'bar') && @.name)]",
       "$..[?(@parent && @parent.user && @parent.user.name === 'Eva')]",
     ]);
-    expect(collected).to.deep.equal({
+    assert.deepEqual(collected, {
       "$..[?((@parentProperty === 'foo' || @parentProperty === 'bar') && @.name)]":
         [
           [{ name: 'Eva' }, ['bar', 'user']],
@@ -548,7 +548,7 @@ describe('Nimma', () => {
     };
 
     const collected = collect(document, ['$.examples..*']);
-    expect(collected).to.deep.eq({
+    assert.deepEqual(collected, {
       '$.examples..*': [
         [{ name: 'Eva' }, ['examples', 'user']],
         ['Eva', ['examples', 'user', 'name']],
@@ -583,7 +583,7 @@ describe('Nimma', () => {
       '$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload',
     ]);
 
-    expect(collected).to.deep.eq({
+    assert.deepEqual(collected, {
       '$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload':
         [
           [2, ['channels', '/a', 'publish', 'a', 'payload']],
@@ -612,7 +612,7 @@ describe('Nimma', () => {
 
     const collected = collect(document, ['$..parameters[?(@.in)]']);
 
-    expect(collected).to.deep.eq({
+    assert.deepEqual(collected, {
       '$..parameters[?(@.in)]': [
         [
           { in: 'header', value: 'value' },
@@ -646,7 +646,7 @@ describe('Nimma', () => {
 
     const collected = collect(document, ['$.address~', '$[*]~']);
 
-    expect(collected).to.deep.eq({
+    assert.deepEqual(collected, {
       '$.address~': [['address', ['address']]],
       '$[*]~': [
         ['firstName', ['firstName']],
@@ -667,7 +667,7 @@ describe('Nimma', () => {
 
     const collected = collect(document, ['$[?(@ && @.example)]']);
 
-    expect(collected).to.deep.eq({
+    assert.deepEqual(collected, {
       '$[?(@ && @.example)]': [[{ example: true }, ['test1']]],
     });
   });
@@ -688,7 +688,7 @@ describe('Nimma', () => {
       '$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload',
     ]);
 
-    expect(collected).to.deep.eq({
+    assert.deepEqual(collected, {
       '$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload':
         [[2, ['channels', 0, 'publish', 'foo', 'payload']]],
     });
@@ -738,7 +738,7 @@ describe('Nimma', () => {
       // '$.continents[:1].countries[0,1,2].name',
     ]);
 
-    expect(collected).to.deep.eq({
+    assert.deepEqual(collected, {
       // '$.continents[:1].countries[0,1,2].name': [
       //   ['Austria', ['continents', 0, 'countries', 0, 'name']],
       //   ['Belgium', ['continents', 0, 'countries', 1, 'name']],
@@ -777,7 +777,7 @@ describe('Nimma', () => {
       '$[1:5:3]',
     ]);
 
-    expect(collected).to.deep.eq({
+    assert.deepEqual(collected, {
       '$[1:-5:2]': [
         ['Saint Petersburg', [1]],
         ['Novosibirsk', [3]],
@@ -805,7 +805,7 @@ describe('Nimma', () => {
 
     const collected = collect(document, ['$.size', "$['size']"]);
 
-    expect(collected).to.deep.eq({
+    assert.deepEqual(collected, {
       '$.size': [['xl', ['size']]],
       "$['size']": [['xl', ['size']]],
     });
@@ -825,7 +825,7 @@ describe('Nimma', () => {
 
     const collected = collect(document, ['$.Europe[*]..cities[?(@ ~= "^P")]']);
 
-    expect(collected).to.deep.eq({
+    assert.deepEqual(collected, {
       '$.Europe[*]..cities[?(@ ~= "^P")]': [
         ['Poznań', ['Europe', 'East', 'Poland', 'cities', 0]],
       ],
@@ -852,7 +852,7 @@ describe('Nimma', () => {
       '$.paths..parameters[?(@.name ~= "^id$|_?(id|Id)$")].schema',
     ]);
 
-    expect(collected).to.deep.eq({
+    assert.deepEqual(collected, {
       '$.paths..parameters[?(@.name ~= "^id$|_?(id|Id)$")].schema': [
         [
           { type: 'integer' },
@@ -878,7 +878,7 @@ describe('Nimma', () => {
       '$.Europe[*]..cities[?(@ ~= "^P\\\\.")]',
     ]);
 
-    expect(collected).to.deep.eq({
+    assert.deepEqual(collected, {
       '$.Europe[*]..cities[?(@ ~= "^P\\\\.")]': [
         ['P.Zdrój', ['Europe', 'East', 'Poland', 'cities', 1]],
       ],
@@ -898,7 +898,7 @@ describe('Nimma', () => {
       '$.Asia[0:-3:-3]',
     ]);
 
-    expect(collected).to.deep.eq({
+    assert.deepEqual(collected, {
       '$.Europe[2:-2:2]': [['Czechia', ['Europe', 2]]],
       '$.Asia[0:5]': [
         ['Malaysia', ['Asia', 0]],
@@ -920,7 +920,7 @@ describe('Nimma', () => {
 
     const collected = collect(document, ['$[2][country,languages]']);
 
-    expect(collected).to.deep.eq({});
+    assert.deepEqual(collected, {});
   });
 
   it('works #33', () => {
@@ -941,7 +941,7 @@ describe('Nimma', () => {
 
     const collected = collect(document, ['$[1][country,languages]']);
 
-    expect(collected).to.deep.eq({
+    assert.deepEqual(collected, {
       '$[1][country,languages]': [
         ['Czech Republic', [1, 'country']],
         [[], [1, 'languages']],
@@ -972,7 +972,7 @@ describe('Nimma', () => {
 
     const collected = collect(document, ['$.data[*][*][city,street]..id']);
 
-    expect(collected).to.deep.eq({
+    assert.deepEqual(collected, {
       '$.data[*][*][city,street]..id': [
         [123, ['data', 'geo', 'countries', 'city', 'id']],
         [456, ['data', 'geo', 'countries', 'city', 'code', 'id']],
@@ -1026,7 +1026,7 @@ describe('Nimma', () => {
         },
       );
 
-      expect(collected).to.deep.eq({
+      assert.deepEqual(collected, {
         '$.components.schemas[*]..@@schema()': [
           [
             { type: 'string' },
@@ -1091,7 +1091,7 @@ describe('Nimma', () => {
       '$.definitions.*.allOf.*.properties',
     ]);
 
-    expect(collected).to.deep.eq({
+    assert.deepEqual(collected, {
       '$.definitions.*.properties': [
         [{ a: {} }, ['definitions', 'propA', 'properties']],
       ],
@@ -1124,7 +1124,7 @@ describe('Nimma', () => {
       '$.foo.[bar,baz]',
     ]);
 
-    expect(collected).to.deep.eq({
+    assert.deepEqual(collected, {
       '$.[?(@.bar)]': [
         [{ bar: 'foo-bar', baz: 'foo-baz' }, ['foo']],
         [{ bar: 'baz-foo-bar' }, ['baz', 'foo']],
@@ -1163,7 +1163,7 @@ describe('Nimma', () => {
 
     const collected = collect(document, ['$.paths.*.*.responses[401,404]']);
 
-    expect(collected).to.deep.eq({
+    assert.deepEqual(collected, {
       '$.paths.*.*.responses[401,404]': [
         [
           { description: 'Unauthorized' },
@@ -1202,7 +1202,7 @@ describe('Nimma', () => {
       '$..[?(@.example && @.schema)]..[?(@.example && @.schema)][*].foo',
     ]);
 
-    expect(collected).to.deep.eq({
+    assert.deepEqual(collected, {
       '$..[?(@.example && @.schema)]..[?(@.example && @.schema)]..foo': [
         [true, ['foo', 'example', 'abc', 'foo']],
         [false, ['foo', 'example', 'foo']],
@@ -1238,7 +1238,7 @@ describe('Nimma', () => {
       '$..[?(@.foo)]..baz..foo',
     ]);
 
-    expect(collected).to.deep.eq({
+    assert.deepEqual(collected, {
       '$.baz[*].baz..foo': [[true, ['baz', 'x', 'baz', 'foo']]],
       '$.baz[*]..baz..foo': [
         [true, ['baz', 'a', 'foo', 'baz', 'foo']],
@@ -1270,7 +1270,7 @@ describe('Nimma', () => {
 
     const collected = collect(document, ['$.baz..baz.baz..foo']);
 
-    expect(collected).to.deep.eq({
+    assert.deepEqual(collected, {
       '$.baz..baz.baz..foo': [
         [true, ['baz', 'baz', 'baz', 'foo']],
         [true, ['baz', 'baz', 'baz', 'baz', 'foo']],
@@ -1331,7 +1331,7 @@ describe('Nimma', () => {
       '$.baz..baz.baz..foo.foo..foo',
     ]);
 
-    expect(collected).to.deep.eq({
+    assert.deepEqual(collected, {
       '$.baz..baz.baz..foo.foo..foo': [
         [
           'matched',
@@ -1411,7 +1411,7 @@ describe('Nimma', () => {
 
     const collected = collect(document, ['$..[bar,baz]..[bar,foo]']);
 
-    expect(collected).to.deep.eq({
+    assert.deepEqual(collected, {
       '$..[bar,baz]..[bar,foo]': [
         [true, ['bar', 'baz', 'a', 'baz', 0, 'bar']],
         [
@@ -1436,7 +1436,7 @@ describe('Nimma', () => {
 
     const collected = collect(document, ['$..info^^']);
 
-    expect(collected).to.deep.eq({});
+    assert.deepEqual(collected, {});
   });
 
   it('$..info^~', () => {
@@ -1446,7 +1446,7 @@ describe('Nimma', () => {
 
     const collected = collect(document, ['$..info^~']);
 
-    expect(collected).to.deep.eq({
+    assert.deepEqual(collected, {
       '$..info^~': [[null, []]],
     });
   });
@@ -1479,28 +1479,18 @@ describe('Nimma', () => {
       },
     );
 
-    expect(fn).to.throw(AggregateError, 'Error running Nimma');
-
-    try {
-      fn();
-    } catch (e) {
-      expect(e.errors).to.have.length(6);
-      expect(e.errors[0]).to.be.instanceof(RuntimeError);
-      expect(e.errors[1]).to.be.instanceof(RuntimeError);
-      expect(e.errors[2]).to.be.instanceof(RuntimeError);
-      expect(e.errors[3]).to.be.instanceof(RuntimeError);
-      expect(e.errors[4]).to.be.instanceof(RuntimeError);
-      expect(e.errors[5]).to.be.instanceof(RuntimeError);
-      expect(e.errors[0].message).to.eq('$.a threw: "Oops"');
-      expect(e.errors[1].message).to.eq('$.b threw: unknown');
-      expect(e.errors[2].message).to.eq('$.c threw: Error("Ah!")');
-      expect(e.errors[3].message).to.eq(
-        '$.d threw: TypeError("{}.c is not a function")',
-      );
-      expect(e.errors[4].message).to.eq('$.e threw: Error("I have no name!")');
-      expect(e.errors[5].message).to.eq(
-        'coolName threw: Error("That is a really cool name")',
-      );
-    }
+    assert.throws(
+      fn,
+      new AggregateError(
+        [
+          new RuntimeError('$.a threw: "Oops"'),
+          new RuntimeError('$.b threw: unknown'),
+          new RuntimeError('$.c threw: Error("Ah!")'),
+          new RuntimeError('$.d threw: TypeError("{}.c is not a function")'),
+          new RuntimeError('$.e threw: Error("I have no name!")'),
+        ],
+        'Error running Nimma',
+      ),
+    );
   });
 });
