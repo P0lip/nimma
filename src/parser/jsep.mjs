@@ -2,9 +2,6 @@
 // this is a custom fork of jsep
 // certain functionalities were dropped,
 // and it re-uses parts of code from Nimma's own JSON Path expression parser
-import regex from '@jsep-plugin/regex';
-import ternary from '@jsep-plugin/ternary';
-
 import { parseString } from './shared.mjs';
 import { isChar, isDigit, skipWhitespace } from './utils.mjs';
 
@@ -31,79 +28,6 @@ import { isChar, isDigit, skipWhitespace } from './utils.mjs';
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
-/**
- * @implements {IHooks}
- */
-class Hooks {
-  /**
-   * @callback HookCallback
-   * @this {*|Jsep} this
-   * @param {Jsep} env
-   * @returns: void
-   */
-  /**
-   * Adds the given callback to the list of callbacks for the given hook.
-   *
-   * The callback will be invoked when the hook it is registered for is run.
-   *
-   * One callback function can be registered to multiple hooks and the same hook multiple times.
-   *
-   * @param {string} name The name of the hook, or an object of callbacks keyed by name
-   * @param {HookCallback|boolean} callback The callback function which is given environment variables.
-   * @public
-   */
-  add(name, callback) {
-    this[name] ??= [];
-    this[name].push(callback);
-  }
-
-  /**
-   * Runs a hook invoking all registered callbacks with the given environment variables.
-   *
-   * Callbacks will be invoked synchronously and in the order in which they were registered.
-   *
-   * @param {string} name The name of the hook.
-   * @param {Object<string, any>} env The environment variables of the hook passed to all callbacks registered.
-   * @public
-   */
-  run(name, env) {
-    this[name] ??= [];
-    for (const callback of this[name]) {
-      callback.call(env?.context, env);
-    }
-  }
-}
-
-/**
- * @implements {IPlugins}
- */
-class Plugins {
-  constructor(jsep) {
-    this.jsep = jsep;
-    this.registered = {};
-  }
-
-  /**
-   * @callback PluginSetup
-   * @this {Jsep} jsep
-   * @returns: void
-   */
-  /**
-   * Adds the given plugin(s) to the registry
-   *
-   * @param {object} plugins
-   * @param {string} plugins.name The name of the plugin
-   * @param {PluginSetup} plugins.init The init function
-   * @public
-   */
-  register(...plugins) {
-    for (const plugin of plugins) {
-      plugin.init(this.jsep);
-      this.registered[plugin.name] = plugin;
-    }
-  }
-}
 
 export default class Jsep {
   /**
@@ -181,44 +105,12 @@ export default class Jsep {
   }
 
   /**
-   * Run a given hook
-   * @param {string} name
-   * @param {jsep.Expression|false} [node]
-   * @returns {?jsep.Expression}
-   */
-  runHook(name, node) {
-    if (Jsep.hooks[name]) {
-      const env = { context: this, node };
-      Jsep.hooks.run(name, env);
-      return env.node;
-    }
-    return node;
-  }
-
-  /**
-   * Runs a given hook until one returns a node
-   * @param {string} name
-   * @returns {?jsep.Expression}
-   */
-  searchHook(name) {
-    if (Jsep.hooks[name]) {
-      const env = { context: this };
-      Jsep.hooks[name].find(function (callback) {
-        callback.call(env.context, env);
-        return env.node;
-      });
-      return env.node;
-    }
-  }
-
-  /**
    * Push `index` up to the next non-space character
    */
   gobbleSpaces() {
     const ctx = { expr: this.expr, i: this.index };
     skipWhitespace(ctx);
     this.index = ctx.i;
-    this.runHook('gobble-spaces');
   }
 
   /**
@@ -226,10 +118,7 @@ export default class Jsep {
    * @returns {jsep.Expression}
    */
   parse() {
-    this.runHook('before-all');
-    const node = this.gobbleExpression();
-    // If there's only one expression just try returning the expression
-    return this.runHook('after-all', node);
+    return this.gobbleExpression();
   }
 
   /**
@@ -237,11 +126,9 @@ export default class Jsep {
    * @returns {?jsep.Expression}
    */
   gobbleExpression() {
-    const node =
-      this.searchHook('gobble-expression') || this.gobbleBinaryExpression();
+    const node = this.gobbleBinaryExpression();
     this.gobbleSpaces();
-
-    return this.runHook('after-expression', node);
+    return node;
   }
 
   /**
@@ -364,31 +251,76 @@ export default class Jsep {
     return node;
   }
 
+  // largely follows @jsep-plugin/regex
+  gobbleRegexLiteral() {
+    const patternIndex = ++this.index;
+
+    let inCharSet = false;
+    while (this.index < this.expr.length) {
+      if (this.code === Jsep.FSLASH_CODE && !inCharSet) {
+        const pattern = this.expr.slice(patternIndex, this.index);
+
+        let flags = '';
+        while (++this.index < this.expr.length) {
+          const { code } = this;
+          if (isChar(code) || isDigit(code)) {
+            flags += this.char;
+          } else {
+            break;
+          }
+        }
+
+        let value;
+        try {
+          value = new RegExp(pattern, flags);
+        } catch (e) {
+          this.throwError(e.message);
+        }
+
+        const node = {
+          type: Jsep.LITERAL,
+          value,
+          raw: this.expr.slice(patternIndex - 1, this.index),
+        };
+
+        // allow . [] and () after regex: /regex/.test(a)
+        return this.gobbleTokenProperty(node);
+      }
+      if (this.code === Jsep.OBRACK_CODE) {
+        inCharSet = true;
+      } else if (inCharSet && this.code === Jsep.CBRACK_CODE) {
+        inCharSet = false;
+      }
+      this.index += this.code === Jsep.BSLASH_CODE ? 2 : 1;
+    }
+
+    this.throwError('Unclosed Regex');
+  }
+
   /**
    * An individual part of a binary expression:
    * e.g. `foo.bar(baz)`, `1`, `"abc"`, `(a % 2)` (because it's in parentheses)
    * @returns {boolean|jsep.Expression|jsep.Literal}
    */
   gobbleToken() {
-    let ch, to_check, tc_len, node;
-
     this.gobbleSpaces();
-    node = this.searchHook('gobble-token');
-    if (node) {
-      return this.runHook('after-token', node);
+
+    const { code } = this;
+
+    if (code === Jsep.FSLASH_CODE) {
+      return this.gobbleRegexLiteral();
     }
 
-    ch = this.code;
-
-    if (isDigit(ch) || ch === Jsep.PERIOD_CODE) {
+    if (isDigit(code) || code === Jsep.PERIOD_CODE) {
       // Char code 46 is a dot `.` which can start off a numeric literal
       return this.gobbleNumericLiteral();
     }
 
-    if (ch === Jsep.SQUOTE_CODE || ch === Jsep.DQUOTE_CODE) {
+    let to_check, tc_len, node;
+    if (code === Jsep.SQUOTE_CODE || code === Jsep.DQUOTE_CODE) {
       // Single or double quotes
       node = this.gobbleStringLiteral();
-    } else if (ch === Jsep.OBRACK_CODE) {
+    } else if (code === Jsep.OBRACK_CODE) {
       node = this.gobbleArray();
     } else {
       to_check = this.expr.slice(this.index, this.index + Jsep.max_unop_len);
@@ -411,18 +343,18 @@ export default class Jsep {
           if (!argument) {
             this.throwError(`Expected argument but "${this.char}" found`);
           }
-          return this.runHook('after-token', {
+          return {
             type: Jsep.UNARY_EXP,
             operator: to_check,
             argument,
             prefix: true,
-          });
+          };
         }
 
         to_check = to_check.substr(0, --tc_len);
       }
 
-      if (Jsep.isIdentifierStart(ch)) {
+      if (Jsep.isIdentifierStart(code)) {
         node = this.gobbleIdentifier();
         if (Object.hasOwn(Jsep.literals, node.name)) {
           node = {
@@ -431,18 +363,17 @@ export default class Jsep {
             raw: node.name,
           };
         }
-      } else if (ch === Jsep.OPAREN_CODE) {
+      } else if (code === Jsep.OPAREN_CODE) {
         // open parenthesis
         node = this.gobbleGroup();
       }
     }
 
     if (!node) {
-      return this.runHook('after-token', false);
+      return false;
     }
 
-    node = this.gobbleTokenProperty(node);
-    return this.runHook('after-token', node);
+    return this.gobbleTokenProperty(node);
   }
 
   /**
@@ -688,9 +619,6 @@ export default class Jsep {
     };
   }
 
-  static hooks = new Hooks();
-  static plugins = new Plugins(Jsep);
-
   // Node Types
   // ----------
   // This is the full set of types that any JSEP node can be.
@@ -699,6 +627,7 @@ export default class Jsep {
   static MEMBER_EXP = 'MemberExpression';
   static LITERAL = 'Literal';
   static CALL_EXP = 'CallExpression';
+  static CONDITIONAL_EXP = 'ConditionalExpression';
   static UNARY_EXP = 'UnaryExpression';
   static BINARY_EXP = 'BinaryExpression';
   static ARRAY_EXP = 'ArrayExpression';
@@ -711,6 +640,8 @@ export default class Jsep {
   static CPAREN_CODE = 41; // )
   static OBRACK_CODE = 91; // [
   static CBRACK_CODE = 93; // ]
+  static BSLASH_CODE = 92; // '\\'
+  static FSLASH_CODE = 47; // '/'
   static QUMARK_CODE = 63; // ?
   static COLON_CODE = 58; // :
 
@@ -767,5 +698,3 @@ export default class Jsep {
 
 Jsep.max_unop_len = 4;
 Jsep.max_binop_len = 3;
-
-Jsep.plugins.register(ternary, regex);
