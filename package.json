@@ -51,7 +51,7 @@
   "scripts": {
     "build": "rollup -c",
     "lint": "ls-lint && eslint --cache --cache-location .cache/ src && prettier --log-level error --ignore-path .gitignore --check --cache --cache-location .cache/.prettier src",
-    "test": "node --test --experimental-test-coverage --test-reporter=lcov --test-reporter=dot --test-reporter-destination=coverage/lcov.info --test-reporter-destination=stdout src",
+    "test": "mkdir -p coverage; node --test --experimental-test-coverage --test-reporter=lcov --test-reporter=dot --test-reporter-destination=coverage/lcov.info --test-reporter-destination=stdout src",
     "prepublishOnly": "npm run lint && npm run test && npm run build",
     "prepare": "husky"
   },
