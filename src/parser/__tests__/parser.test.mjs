@@ -180,6 +180,14 @@ describe('Parser', () => {
         deep: false,
       },
     ]);
+
+    assert.deepEqual(parse("$.'application/json'"), [
+      {
+        type: 'MemberExpression',
+        value: 'application/json',
+        deep: false,
+      },
+    ]);
   });
 
   it('modifiers', () => {

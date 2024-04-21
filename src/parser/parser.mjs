@@ -318,6 +318,12 @@ function parseNumber(ctx) {
 function parseMember(ctx) {
   const { expr } = ctx;
   let { i } = ctx;
+
+  // jsonpath-plus compatibility
+  if (isQuote(expr.charCodeAt(i))) {
+    return parseString(ctx).slice(1, -1);
+  }
+
   const start = i;
   let hasOnlyDigits = true;
 
