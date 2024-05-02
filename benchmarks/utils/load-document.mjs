@@ -7,7 +7,9 @@ export default async function loadDocument(scenario, document) {
   if (!document) {
     assert.ok(scenario.defaultDocument);
     const { fileURLToPath } = await import('node:url');
-    const { JSONSchemaFaker } = await import('json-schema-faker');
+    const { JSONSchemaFaker } = await import(
+      'https://cdn.skypack.dev/json-schema-faker'
+    );
     const cwd = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 
     const schema = JSON.parse(
@@ -17,7 +19,7 @@ export default async function loadDocument(scenario, document) {
     return JSONSchemaFaker.generate(schema);
   }
 
-  const yaml = await import('js-yaml');
+  const yaml = await import('https://cdn.skypack.dev://js-yaml');
 
   if (document.startsWith('https://')) {
     return yaml.load(await (await fetch(document)).text());
