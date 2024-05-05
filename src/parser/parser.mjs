@@ -9,7 +9,34 @@ import {
   skipWhitespace,
 } from './utils.mjs';
 
+/**
+ * @typedef {WildcardExpression | MemberExpression | MultipleMemberExpression | SliceExpression | ScriptFilterExpression} Node
+ *
+ * @typedef {Object} WildcardExpression
+ * @property {boolean} deep - Indicates a descendant node.
+ *
+ * @typedef {Object} MemberExpression
+ * @property {string} value - The member name.
+ * @property {boolean} deep - Indicates a descendant node.
+ *
+ * @typedef {Object} MultipleMemberExpression
+ * @property {string[]} value - The member names.
+ * @property {boolean} deep - Indicates a descendant node.
+ *
+ * @typedef {Object} SliceExpression
+ * @property {[number, number, number]} value - The slice range.
+ * @property {boolean} deep - Indicates a descendant node.
+ *
+ * @typedef {Object} ScriptFilterExpression
+ * @property {string} raw - The raw expression.
+ * @property {*} value - The parsed expression.
+ */
+
 /* eslint-disable sort-keys */
+/**
+ * @param expr
+ * @returns {Node[]}
+ */
 export function parser(expr) {
   if (expr.length === 0) {
     throw SyntaxError('Expected "$" but end of input found.');
