@@ -254,6 +254,26 @@ export function generateWildcardExpression(branch, iterator) {
   }
 }
 
+export function generateCustomShorthandExpression(branch, iterator, node) {
+  branch.push(
+    b.ifStatement(
+      b.unaryExpression(
+        '!',
+        b.callExpression(
+          b.memberExpression(
+            internalScope.shorthands,
+            b.identifier(node.value),
+          ),
+          iterator.state.usesState
+            ? [scope._, state._, b.numericLiteral(iterator.state.numbers[0])]
+            : [scope._],
+        ),
+      ),
+      b.returnStatement(),
+    ),
+  );
+}
+
 export function generateFilterScriptExpression(
   branch,
   iterator,
@@ -417,18 +437,6 @@ function processAtIdentifier(tree, name) {
         [sandbox.value],
       );
     default:
-      if (name.startsWith('@@')) {
-        const shorthandName = name.slice(2);
-        tree.attachCustomShorthand(shorthandName);
-        return b.callExpression(
-          b.memberExpression(
-            internalScope.shorthands,
-            b.identifier(shorthandName),
-          ),
-          [scope._],
-        );
-      }
-
       throw Error(`Unsupported shorthand "${name}"`);
   }
 }

@@ -510,8 +510,8 @@ describe('Parser', () => {
     });
   }
 
-  it('parses @@', () => {
-    assert.deepEqual(parse('$.components.schemas..@@schema()'), [
+  it.only('parses shorthand expressions', () => {
+    assert.deepEqual(parse('$.components.schemas..@@schema(0)'), [
       {
         type: 'MemberExpression',
         value: 'components',
@@ -523,21 +523,14 @@ describe('Parser', () => {
         deep: false,
       },
       {
-        type: 'ScriptFilterExpression',
-        raw: '@@schema()',
-        value: {
-          type: 'CallExpression',
-          arguments: [],
-          callee: {
-            name: '@@schema',
-            type: 'Identifier',
-          },
-        },
+        type: 'CustomShorthandExpression',
+        value: 'schema',
+        arguments: [0],
         deep: true,
       },
     ]);
 
-    assert.deepEqual(parse('$.components.schemas.@@schema()'), [
+    assert.deepEqual(parse('$.components.schemas.@@schema(2)'), [
       {
         type: 'MemberExpression',
         value: 'components',
@@ -549,16 +542,9 @@ describe('Parser', () => {
         deep: false,
       },
       {
-        type: 'ScriptFilterExpression',
-        raw: '@@schema()',
-        value: {
-          type: 'CallExpression',
-          arguments: [],
-          callee: {
-            name: '@@schema',
-            type: 'Identifier',
-          },
-        },
+        type: 'CustomShorthandExpression',
+        value: 'schema',
+        arguments: [2],
         deep: false,
       },
     ]);
@@ -574,7 +560,7 @@ describe('Parser', () => {
   }
 
   it('skips whitespaces', () => {
-    assert.deepEqual(parse('$.[ name ] [?( @.abc )]\t ..@@test( )'), [
+    assert.deepEqual(parse('$.[ name ] [?( @.abc )]\t ..@@test ( 5 )'), [
       {
         type: 'MemberExpression',
         value: 'name',
@@ -598,16 +584,9 @@ describe('Parser', () => {
         deep: false,
       },
       {
-        type: 'ScriptFilterExpression',
-        raw: '@@test( )',
-        value: {
-          type: 'CallExpression',
-          arguments: [],
-          callee: {
-            type: 'Identifier',
-            name: '@@test',
-          },
-        },
+        type: 'CustomShorthandExpression',
+        value: 'test',
+        arguments: [5],
         deep: true,
       },
     ]);
@@ -720,8 +699,20 @@ describe('Parser', () => {
 
     it('invalid shorthands', () => {
       assert.throws(
+        () => parse('$..@()'),
+        SyntaxError('Expected [a-z] but "(" found at 4.'),
+      );
+      assert.throws(
+        () => parse('$..@1()'),
+        SyntaxError('Expected [a-z] but "1" found at 4.'),
+      );
+      assert.throws(
         () => parse('$..@@()'),
         SyntaxError('Expected [a-z] but "(" found at 5.'),
+      );
+      assert.throws(
+        () => parse('$..@@1()'),
+        SyntaxError('Expected [a-z] but "1" found at 5.'),
       );
       assert.throws(
         () => parse('$..@@test)'),
@@ -729,7 +720,15 @@ describe('Parser', () => {
       );
       assert.throws(
         () => parse('$..@@test('),
-        SyntaxError('Expected ")" but end of input found at 10.'),
+        SyntaxError('Expected [0-9] but end of input found at 10.'),
+      );
+      assert.throws(
+        () => parse('$..@@test(5'),
+        SyntaxError('Expected ")" but end of input found at 11.'),
+      );
+      assert.throws(
+        () => parse('$..@@test()'),
+        SyntaxError('Expected [0-9] but ")" found at 10.'),
       );
       assert.throws(
         () => parse('$..@'),

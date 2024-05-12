@@ -7,8 +7,16 @@ export type EmittedScope = {
   readonly value: unknown;
 };
 
+export type State = {
+  value: number;
+  initialValue: number;
+};
+
 export type Options = {
-  customShorthands?: Record<string, string> | null;
+  customShorthands?: Record<
+    string,
+    (path: JsonPath, state?: State, initialValue?: number) => void
+  >;
   module?: 'esm' | 'commonjs';
 };
 

@@ -56,7 +56,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #2', () => {
+  it('works#2', () => {
     const document = {
       info: {
         contact: {
@@ -76,7 +76,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #3', () => {
+  it('works#3', () => {
     const document = {
       info: {
         contact: {
@@ -102,7 +102,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #4', () => {
+  it('works#4', () => {
     const document = {
       info: {
         contact: {
@@ -128,7 +128,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #5', () => {
+  it('works#5', () => {
     const document = {
       paths: {
         bar: {
@@ -162,7 +162,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #6', () => {
+  it('works#6', () => {
     const document = {
       paths: {
         bar: {
@@ -198,7 +198,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #7', () => {
+  it('works#7', () => {
     const document = {
       paths: {
         bar: {
@@ -234,7 +234,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #8', () => {
+  it('works#8', () => {
     const document = {
       paths: {
         bar: {
@@ -269,7 +269,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #9', () => {
+  it('works#9', () => {
     const document = {
       paths: {
         bar: {
@@ -300,7 +300,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #10', () => {
+  it('works#10', () => {
     const document = {
       bar: {
         foo: {
@@ -335,7 +335,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #11', () => {
+  it('works#11', () => {
     const document = {
       bar: {
         200: {
@@ -366,7 +366,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #12', () => {
+  it('works#12', () => {
     const document = {
       bar: {
         200: {
@@ -397,7 +397,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #13', () => {
+  it('works#13', () => {
     const document = {
       bar: {
         200: {
@@ -430,7 +430,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #14', () => {
+  it('works#14', () => {
     const document = {
       bar: {
         examples: {
@@ -456,7 +456,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #15', () => {
+  it('works#15', () => {
     const document = {
       info: {
         contact: {
@@ -472,7 +472,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #16', () => {
+  it('works#16', () => {
     const document = {
       parameters: [
         {
@@ -500,7 +500,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #17', () => {
+  it('works#17', () => {
     const document = {
       bar: {
         user: {
@@ -529,7 +529,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #18', () => {
+  it('works#18', () => {
     const document = {
       example: 'test',
       examples: {
@@ -559,7 +559,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #19', () => {
+  it('works#19', () => {
     const document = {
       channels: {
         '/a': {
@@ -592,7 +592,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #20', () => {
+  it('works#20', () => {
     const document = {
       openapi: '3.0.2',
       components: {
@@ -622,7 +622,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #21', () => {
+  it('works#21', () => {
     const document = {
       firstName: 'John',
       lastName: 'doe',
@@ -658,7 +658,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #22', () => {
+  it('works#22', () => {
     const document = {
       test1: {
         example: true,
@@ -672,7 +672,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #24', () => {
+  it('works#24', () => {
     const document = {
       channels: [
         {
@@ -694,7 +694,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #25', () => {
+  it('works#25', () => {
     const document = {
       continents: [
         {
@@ -755,7 +755,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #26', () => {
+  it('works#26', () => {
     const document = [
       'Moscow',
       'Saint Petersburg',
@@ -798,7 +798,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #27', () => {
+  it('works#27', () => {
     const document = {
       size: 'xl',
     };
@@ -811,7 +811,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #28', () => {
+  it('works#28', () => {
     const document = {
       Europe: {
         East: {
@@ -832,7 +832,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #29', () => {
+  it('works#29', () => {
     const document = {
       paths: {
         '/some-url/{someId}': {
@@ -862,7 +862,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #30', () => {
+  it('works#30', () => {
     const document = {
       Europe: {
         East: {
@@ -885,7 +885,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #31', () => {
+  it('works#31', () => {
     const document = {
       Asia: ['Malaysia', 'Indonesia', 'Thailand', 'Laos', 'Myanmar', 'Vietnam'],
       Europe: ['Austria', 'Belgium', 'Czechia', 'France', 'Germany'],
@@ -910,7 +910,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #32', () => {
+  it('works#32', () => {
     const document = [
       {
         country: 'Poland',
@@ -923,7 +923,7 @@ describe('Nimma', () => {
     assert.deepEqual(collected, {});
   });
 
-  it('works #33', () => {
+  it('works#33', () => {
     const document = [
       {
         country: 'Poland',
@@ -949,7 +949,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #34', () => {
+  it('works#34', () => {
     const document = {
       data: {
         geo: {
@@ -981,9 +981,30 @@ describe('Nimma', () => {
     });
   });
 
-  describe('custom shorthands', () => {
-    it('should be supported', () => {
+  describe.only('custom shorthands', () => {
+    it('should support deep shorthands', () => {
       const document = {
+        paths: {
+          '/users': {
+            get: {
+              responses: {
+                200: {
+                  description: 'A list of users.',
+                  content: {
+                    'application/json': {
+                      schema: {
+                        type: 'array',
+                        items: {
+                          $ref: '#/components/schemas/User',
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
         components: {
           schemas: {
             User: {
@@ -1007,46 +1028,170 @@ describe('Nimma', () => {
               patternProperties: {
                 '^x-': true,
               },
+              additionalProperties: false,
+              'x-ignore': {
+                type: 'object',
+                properties: {
+                  foo: {
+                    type: 'string',
+                  },
+                },
+              },
+            },
+            Name: {
+              oneOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
             },
           },
         },
       };
 
       const shorthands = {
-        schema: ['patternProperties', 'properties']
-          .map(k => `scope.path[scope.path.length - 2] === '${k}'`)
-          .join(' || '),
+        schema: function (scope, state, initialValue) {
+          if (state.value < initialValue) return;
+
+          const nextValue = (initialValue << 1) + 1;
+          if (state.initialValue === initialValue) {
+            if (isSchema(scope.sandbox.value)) {
+              state.value = nextValue;
+              return true;
+            }
+
+            state.value = -1;
+            return false;
+          }
+
+          if (state.initialValue === nextValue) {
+            const property = scope.path.at(-1);
+            switch (true) {
+              case ARRAY_ONLY_SCHEMA.includes(property):
+                if (Array.isArray(scope.sandbox.value)) {
+                  state.value = initialValue;
+                } else {
+                  state.value = -1;
+                }
+
+                return false;
+              case OBJECT_ONLY_SCHEMA.includes(property):
+                if (isPlainObject(scope.sandbox.value)) {
+                  state.value = initialValue;
+                } else {
+                  state.value = -1;
+                }
+
+                return false;
+              case property === 'items':
+                if (Array.isArray(scope.sandbox.value)) {
+                  state.value = initialValue;
+                } else if (isSchema(scope.sandbox.value)) {
+                  state.value = nextValue;
+                  return true;
+                } else {
+                  state.value = -1;
+                }
+
+                return false;
+              case TOP_LEVEL.includes(property):
+                if (isSchema(scope.sandbox.value)) {
+                  state.value = nextValue;
+                  return true;
+                }
+
+                state.value = -1;
+                return false;
+              default:
+                state.value = -1;
+                return false;
+            }
+          }
+
+          return state.initialValue === initialValue;
+        },
       };
+
+      const ARRAY_ONLY_SCHEMA = ['allOf', 'oneOf', 'anyOf', 'prefixItems'];
+
+      const OBJECT_ONLY_SCHEMA = [
+        'properties',
+        'patternProperties',
+        '$defs',
+        'definitions',
+      ];
+
+      const TOP_LEVEL = [
+        'if',
+        'then',
+        'else',
+        'not',
+        'additionalProperties',
+        'unevaluatedProperties',
+        'items',
+        'contains',
+        'additionalItems',
+        'unevaluatedItems',
+      ];
+
+      function isSchema(value) {
+        return (
+          (isPlainObject(value) && !Object.hasOwn(value, '$ref')) ||
+          typeof value === 'boolean'
+        );
+      }
+
+      function isPlainObject(value) {
+        return (
+          typeof value === 'object' && value !== null && !Array.isArray(value)
+        );
+      }
 
       const collected = collect(
         document,
-        ['$.components.schemas[*]..@@schema()'],
+        [
+          '$.paths[*][get,put].responses[*].content[*].schema..@@schema(2)',
+          '$.components.schemas[*]..@@schema(2)',
+        ],
         {
           customShorthands: shorthands,
         },
       );
 
       assert.deepEqual(collected, {
-        '$.components.schemas[*]..@@schema()': [
+        '$.paths[*][get,put].responses[*].content[*].schema..@@schema(2)': [
           [
-            { type: 'string' },
+            document.paths['/users'].get.responses[200].content[
+              'application/json'
+            ].schema,
+            [
+              'paths',
+              '/users',
+              'get',
+              'responses',
+              '200',
+              'content',
+              'application/json',
+              'schema',
+            ],
+          ],
+        ],
+        '$.components.schemas[*]..@@schema(2)': [
+          [document.components.schemas.User, ['components', 'schemas', 'User']],
+          [
+            document.components.schemas.User.properties.id,
             ['components', 'schemas', 'User', 'properties', 'id'],
           ],
           [
-            {
-              type: 'object',
-              properties: {
-                street: {
-                  type: 'string',
-                },
-              },
-            },
+            document.components.schemas.User.properties.address,
             ['components', 'schemas', 'User', 'properties', 'address'],
           ],
           [
-            {
-              type: 'string',
-            },
+            document.components.schemas.User.properties.address.properties
+              .street,
             [
               'components',
               'schemas',
@@ -1058,15 +1203,32 @@ describe('Nimma', () => {
             ],
           ],
           [
-            true,
+            document.components.schemas.Extensions,
+            ['components', 'schemas', 'Extensions'],
+          ],
+          [
+            document.components.schemas.Extensions.patternProperties['^x-'],
             ['components', 'schemas', 'Extensions', 'patternProperties', '^x-'],
+          ],
+          [
+            document.components.schemas.Extensions.additionalProperties,
+            ['components', 'schemas', 'Extensions', 'additionalProperties'],
+          ],
+          [document.components.schemas.Name, ['components', 'schemas', 'Name']],
+          [
+            document.components.schemas.Name.oneOf[0],
+            ['components', 'schemas', 'Name', 'oneOf', 0],
+          ],
+          [
+            document.components.schemas.Name.oneOf[1],
+            ['components', 'schemas', 'Name', 'oneOf', 1],
           ],
         ],
       });
     });
   });
 
-  it('works #35', () => {
+  it('works#35', () => {
     const document = {
       definitions: {
         propA: {
@@ -1101,7 +1263,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #36', () => {
+  it('works#36', () => {
     const document = {
       foo: {
         bar: 'foo-bar',
@@ -1137,7 +1299,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #37', () => {
+  it('works#37', () => {
     const document = {
       paths: {
         '/pet': {
@@ -1177,7 +1339,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #38', () => {
+  it('works#38', () => {
     const document = {
       foo: {
         example: {
@@ -1215,7 +1377,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #39', () => {
+  it('works#39', () => {
     const document = {
       baz: {
         a: {
@@ -1248,7 +1410,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #40', () => {
+  it('works#40', () => {
     const document = {
       baz: {
         baz: {
@@ -1278,7 +1440,7 @@ describe('Nimma', () => {
     });
   });
 
-  it('works #41', () => {
+  it('works#41', () => {
     const document = {
       baz: {
         baz: {

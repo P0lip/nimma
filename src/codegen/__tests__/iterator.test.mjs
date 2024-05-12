@@ -13,6 +13,7 @@ describe('Iterator', () => {
         fixed: true,
         inverseOffset: -1,
         minimumDepth: 0,
+        shorthands: 0,
         stateOffset: -1,
       });
     });
@@ -24,6 +25,7 @@ describe('Iterator', () => {
         fixed: false,
         inverseOffset: -1,
         minimumDepth: 1,
+        shorthands: 0,
         stateOffset: -1,
       });
     });
@@ -35,6 +37,7 @@ describe('Iterator', () => {
         fixed: false,
         inverseOffset: 1,
         minimumDepth: 2,
+        shorthands: 0,
         stateOffset: -1,
       });
     });
@@ -46,6 +49,7 @@ describe('Iterator', () => {
         fixed: false,
         inverseOffset: -1,
         minimumDepth: 1,
+        shorthands: 0,
         stateOffset: 1,
       });
     });
@@ -57,6 +61,7 @@ describe('Iterator', () => {
         fixed: false,
         inverseOffset: -1,
         minimumDepth: 0,
+        shorthands: 0,
         stateOffset: 0,
       });
     });
@@ -68,6 +73,7 @@ describe('Iterator', () => {
         fixed: true,
         inverseOffset: -1,
         minimumDepth: 2,
+        shorthands: 0,
         stateOffset: -1,
       });
     });
@@ -79,6 +85,7 @@ describe('Iterator', () => {
         fixed: false,
         inverseOffset: -1,
         minimumDepth: 1,
+        shorthands: 0,
         stateOffset: 1,
       });
     });
@@ -90,6 +97,7 @@ describe('Iterator', () => {
         fixed: false,
         inverseOffset: -1,
         minimumDepth: 0,
+        shorthands: 0,
         stateOffset: 0,
       });
     });
@@ -101,6 +109,7 @@ describe('Iterator', () => {
         fixed: false,
         inverseOffset: 0,
         minimumDepth: 1,
+        shorthands: 0,
         stateOffset: -1,
       });
     });
@@ -114,6 +123,7 @@ describe('Iterator', () => {
         fixed: true,
         inverseOffset: -1,
         minimumDepth: 3,
+        shorthands: 0,
         stateOffset: 3,
       });
     });
@@ -125,6 +135,7 @@ describe('Iterator', () => {
         fixed: true,
         inverseOffset: -1,
         minimumDepth: 1,
+        shorthands: 0,
         stateOffset: 1,
       });
     });
@@ -136,6 +147,7 @@ describe('Iterator', () => {
         fixed: false,
         inverseOffset: 2,
         minimumDepth: 3,
+        shorthands: 0,
         stateOffset: -1,
       });
     });
@@ -147,6 +159,7 @@ describe('Iterator', () => {
         fixed: false,
         inverseOffset: 0,
         minimumDepth: 1,
+        shorthands: 0,
         stateOffset: -1,
       });
     });
@@ -158,6 +171,7 @@ describe('Iterator', () => {
         fixed: false,
         inverseOffset: 0,
         minimumDepth: 2,
+        shorthands: 0,
         stateOffset: -1,
       });
     });
@@ -169,7 +183,20 @@ describe('Iterator', () => {
         fixed: true,
         inverseOffset: -1,
         minimumDepth: 3,
+        shorthands: 0,
         stateOffset: -1,
+      });
+    });
+
+    it('$.components.schemas[*]..@@schema(2)', () => {
+      const ast = parse('$.components.schemas[*]..@@schema(2)');
+
+      assert.deepEqual(Iterator.analyze(ast), {
+        fixed: false,
+        inverseOffset: -1,
+        minimumDepth: 2,
+        shorthands: 1,
+        stateOffset: 3,
       });
     });
   });

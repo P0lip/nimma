@@ -21,6 +21,7 @@ export default {
     true,
   ),
   sandbox: b.memberExpression(SCOPE_IDENTIFIER, b.identifier('sandbox')),
+  shorthands: b.memberExpression(SCOPE_IDENTIFIER, b.identifier('shorthands')),
   traverse: b.memberExpression(SCOPE_IDENTIFIER, b.identifier('traverse')),
   value: b.memberExpression(SCOPE_IDENTIFIER, b.identifier('value')),
 };

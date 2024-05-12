@@ -1289,16 +1289,8 @@ export default function (input, callbacks) {
 
   describe('custom shorthands', () => {
     it('should be supported', () => {
-      const shorthands = {
-        schema: ['patternProperties', 'properties']
-          .map(k => `scope.path[scope.path.length - 2] === '${k}'`)
-          .join(' || '),
-      };
-
       assert.equal(
-        generate(['$.components.schemas[*]..@@schema()'], {
-          customShorthands: shorthands,
-        }),
+        generate(['$.components.schemas[*]..@@schema(0)']),
         `import {Scope} from "nimma/runtime";
 const zones = {
   keys: ["components"],
@@ -1310,24 +1302,19 @@ const zones = {
   }]
 };
 const tree = {
-  "$.components.schemas[*]..@@schema()": function (scope) {
-    if (scope.path.length < 4) return;
+  "$.components.schemas[*]..@@schema(0)": function (scope, shorthands) {
+    if (scope.path.length < 3) return;
     if (scope.path[0] !== "components") return;
     if (scope.path[1] !== "schemas") return;
     if (!shorthands.schema(scope)) return;
-    scope.emit("$.components.schemas[*]..@@schema()", 0, false);
+    scope.emit("$.components.schemas[*]..@@schema(0)", 0, false);
   }
 };
-const shorthands = {
-  schema: function (scope, state) {
-    return scope.path[scope.path.length - 2] === 'patternProperties' || scope.path[scope.path.length - 2] === 'properties';
-  }
-};
-export default function (input, callbacks) {
+export default function (input, callbacks, shorthands) {
   const scope = new Scope(input, callbacks);
   try {
     scope.traverse(() => {
-      tree["$.components.schemas[*]..@@schema()"](scope);
+      tree["$.components.schemas[*]..@@schema(0)"](scope, shorthands);
     }, zones);
   } finally {
     scope.destroy();
@@ -1337,13 +1324,46 @@ export default function (input, callbacks) {
       );
     });
 
-    it('should refuse to use an undefined shorthand', () => {
-      assert.throws(
-        generate.bind(null, ['$.components.schemas[*]..@@schema()'], {
-          customShorthands: {},
-        }),
-        ReferenceError,
-        "Shorthand 'schema' is not defined",
+    it('should adjust state', () => {
+      assert.deepEqual(
+        generate(['$.components.schemas[*]..abc..@@schema(2)..enum']),
+        `import {Scope} from "nimma/runtime";
+const zones = {
+  keys: ["components"],
+  zones: [{
+    keys: ["schemas"],
+    zones: [{
+      zone: null
+    }]
+  }]
+};
+const tree = {
+  "$.components.schemas[*]..abc..@@schema(2)..enum": function (scope, state, shorthands) {
+    if (scope.path.length < 4) return;
+    if (scope.path[0] !== "components") return;
+    if (scope.path[1] !== "schemas") return;
+    if (state.initialValue >= 0) {
+      if (scope.path[scope.path.length - 1] === "abc") {
+        state.value |= 1
+      }
+    }
+    if (!shorthands.schema(scope, state, 1)) return;
+    if (state.initialValue < 15 || !(scope.path[scope.path.length - 1] === "enum")) return;
+    scope.emit("$.components.schemas[*]..abc..@@schema(2)..enum", 0, false);
+  }
+};
+export default function (input, callbacks, shorthands) {
+  const scope = new Scope(input, callbacks);
+  try {
+    const state0 = scope.allocState();
+    scope.traverse(() => {
+      tree["$.components.schemas[*]..abc..@@schema(2)..enum"](scope, state0, shorthands);
+    }, zones);
+  } finally {
+    scope.destroy();
+  }
+}
+`,
       );
     });
   });

@@ -30,6 +30,9 @@ import {
  * @typedef {Object} ScriptFilterExpression
  * @property {string} raw - The raw expression.
  * @property {*} value - The parsed expression.
+ *
+ * @typedef {Object} CustomShorthandExpression
+ * @property {string} name - The shorthand name.
  */
 
 /* eslint-disable sort-keys */
@@ -83,7 +86,7 @@ function parseNode(ctx, nodes, jsep) {
     case expr.charCodeAt(i) === 0x2e /* "." */:
       ctx.i++;
       if (expr.charCodeAt(ctx.i) === 0x40 /* "@" */) {
-        nodes.push(parseCustomShorthand(ctx));
+        nodes.push(parseShorthand(ctx));
       } else {
         nodes.push(parseNamed(ctx));
       }
@@ -120,7 +123,7 @@ function parseNode(ctx, nodes, jsep) {
 
       break;
     case expr.charCodeAt(i) === 0x40 /* "@" */:
-      nodes.push(parseCustomShorthand(ctx));
+      nodes.push(parseShorthand(ctx));
       break;
     default:
       throw SyntaxError(
@@ -135,7 +138,7 @@ function parseDeepNode(ctx, jsep) {
     ctx.i++;
     return parseBracket(ctx, jsep);
   } else if (expr.charCodeAt(ctx.i) === 0x40 /* "@" */) {
-    return parseCustomShorthand(ctx);
+    return parseShorthand(ctx);
   } else if (ctx.i === expr.length) {
     return { type: 'AllParentExpression' };
   } else if (
@@ -384,16 +387,16 @@ function parseMember(ctx) {
   return hasOnlyDigits ? Number.parseInt(member, 10) : member;
 }
 
-function parseCustomShorthand(ctx) {
+function parseShorthand(ctx) {
   const { expr } = ctx;
   let { i } = ctx;
-  const start = i;
+  let start = i;
 
   ctx.i = ++i;
 
   if (i < expr.length && expr.charCodeAt(i) === 0x40 /* "@" */) {
     ctx.i = ++i;
-    assertNotEndOfInput(ctx, '[a-z]');
+    return parseCustomShorthand(ctx);
   }
 
   ctx.i = i;
@@ -405,8 +408,9 @@ function parseCustomShorthand(ctx) {
 
   while (++i < expr.length && isChar(expr.charCodeAt(i)));
 
-  ctx.i = i;
   const name = expr.slice(start, i);
+  ctx.i = i;
+  skipWhitespace(ctx);
   eat(ctx, 0x28 /* "(" */);
   skipWhitespace(ctx);
   eat(ctx, 0x29 /* ")" */);
@@ -422,6 +426,52 @@ function parseCustomShorthand(ctx) {
         name,
       },
     },
+    deep: false,
+  };
+}
+
+function parseCustomShorthand(ctx) {
+  assertNotEndOfInput(ctx, '[a-z]');
+
+  const { expr } = ctx;
+  let { i } = ctx;
+  let start = i;
+
+  if (!isChar(expr.charCodeAt(i))) {
+    throw SyntaxError(`Expected [a-z] but "${expr[i]}" found at ${i}.`);
+  }
+
+  while (++i < expr.length) {
+    const code = expr.charCodeAt(i);
+    if (!isDigit(code) && !isChar(code)) {
+      break;
+    }
+  }
+
+  const name = expr.slice(start, i);
+  ctx.i = i;
+  skipWhitespace(ctx);
+  eat(ctx, 0x28 /* "(" */);
+  skipWhitespace(ctx);
+  assertNotEndOfInput(ctx, '[0-9]');
+
+  i = ctx.i;
+  start = i;
+  while (isDigit(expr.charCodeAt(i))) i++;
+  if (start === i) {
+    throw SyntaxError(`Expected [0-9] but "${expr[i]}" found at ${i}.`);
+  }
+
+  const depth = Number.parseInt(expr.slice(start, i), 10);
+  ctx.i = i;
+
+  skipWhitespace(ctx);
+  eat(ctx, 0x29 /* ")" */);
+
+  return {
+    type: 'CustomShorthandExpression',
+    value: name,
+    arguments: [depth],
     deep: false,
   };
 }

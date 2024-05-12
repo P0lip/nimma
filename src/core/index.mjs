@@ -6,11 +6,13 @@ export default class Nimma {
   #compiledFn;
   #module;
   #sourceCode;
+  #customShorthands;
 
   constructor(expressions, { module = 'esm', customShorthands = null } = {}) {
     this.#compiledFn = null;
     this.#module = module;
     this.#sourceCode = null;
+    this.#customShorthands = customShorthands;
 
     this.tree = codegen(parseExpressions(expressions), {
       customShorthands,
@@ -29,7 +31,11 @@ export default class Nimma {
       `${String(this.tree.export('commonjs'))};return module.exports`,
     )({}, () => runtime);
 
-    this.#compiledFn(input, callbacks);
+    if (this.#customShorthands === null) {
+      this.#compiledFn(input, callbacks);
+    } else {
+      this.#compiledFn(input, callbacks, this.#customShorthands);
+    }
   }
 
   static query(input, callbacks, options) {

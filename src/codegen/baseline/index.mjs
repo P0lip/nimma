@@ -4,9 +4,15 @@ import { isDeep } from '../guards.mjs';
 import Iterator from '../iterator.mjs';
 import generateEmitCall from '../templates/emit-call.mjs';
 import scope from '../templates/scope.mjs';
+import {
+  NEEDS_SHORTHANDS,
+  NEEDS_STATE,
+  NEEDS_TRAVERSAL,
+} from '../tree/consts.mjs';
 import ESTree from '../tree/tree.mjs';
 import JsonPathHashes from '../utils/jsonpath-hashes.mjs';
 import {
+  generateCustomShorthandExpression,
   generateFilterScriptExpression,
   generateMemberExpression,
   generateMultipleMemberExpression,
@@ -14,10 +20,9 @@ import {
   generateWildcardExpression,
 } from './generators.mjs';
 
-export default function baseline(jsonPaths, opts) {
+export default function baseline(jsonPaths) {
   const hashes = new JsonPathHashes();
   const tree = new ESTree({
-    customShorthands: opts.customShorthands,
     hashes,
   });
 
@@ -103,16 +108,23 @@ export default function baseline(jsonPaths, opts) {
           generateWildcardExpression(branch, iterator, node, tree);
           zone?.resize();
           break;
+        case 'CustomShorthandExpression':
+          generateCustomShorthandExpression(branch, iterator, node, tree);
+          break;
       }
     }
 
     branch.push(generateEmitCall(ctx.id, iterator.modifiers));
 
+    let feedback = NEEDS_TRAVERSAL;
     if (iterator.feedback.stateOffset !== -1) {
-      tree.addTreeMethod(ctx.id, b.blockStatement(branch), 'stateful-traverse');
-    } else {
-      tree.addTreeMethod(ctx.id, b.blockStatement(branch), 'traverse');
+      feedback |= NEEDS_STATE;
     }
+    if (iterator.feedback.shorthands > 0) {
+      feedback |= NEEDS_SHORTHANDS;
+    }
+
+    tree.addTreeMethod(ctx.id, b.blockStatement(branch), feedback);
   }
 
   return tree;

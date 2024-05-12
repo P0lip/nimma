@@ -3,6 +3,7 @@ import {
   isModifierExpression,
   isNegativeSliceExpression,
   isScriptFilterExpression,
+  isShorthandExpression,
   isWildcardExpression,
 } from './guards.mjs';
 
@@ -84,6 +85,7 @@ export default class Iterator {
       fixed: true,
       inverseOffset: -1,
       minimumDepth: -1,
+      shorthands: 0,
       stateOffset: -1,
     };
 
@@ -92,6 +94,16 @@ export default class Iterator {
 
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i];
+
+      if (isShorthandExpression(node)) {
+        if (node.arguments[0] > 0) {
+          feedback.stateOffset = i;
+        }
+
+        feedback.minimumDepth = i - 1;
+        feedback.shorthands++;
+        feedback.fixed = false;
+      }
 
       if (!isDeep(node)) {
         if (isScriptFilterExpression(node) || isNegativeSliceExpression(node)) {
@@ -123,9 +135,11 @@ export default class Iterator {
       deep = i;
     }
 
-    feedback.fixed = deep === -1;
-    feedback.minimumDepth =
-      feedback.stateOffset === -1 ? nodes.length - 1 : feedback.stateOffset;
+    if (feedback.shorthands === 0) {
+      feedback.fixed = deep === -1;
+      feedback.minimumDepth =
+        feedback.stateOffset === -1 ? nodes.length - 1 : feedback.stateOffset;
+    }
 
     return feedback;
   }
@@ -135,7 +149,6 @@ export default class Iterator {
 
     Object.assign(state, emptyState());
 
-    let statePos = 0;
     for (let i = 0; i < nodes.length; i++) {
       state.absoluteOffset = i;
 
@@ -160,21 +173,27 @@ export default class Iterator {
       }
 
       if (state.usesState) {
-        if (statePos === 0) {
+        if (state.numbers[0] === -1) {
           state.numbers[0] = 0;
           state.numbers[1] = 1;
         } else {
           state.numbers[0] = state.numbers[1];
-          state.numbers[1] = state.numbers[1] + 2 ** statePos;
+          state.numbers[1] = (state.numbers[1] << 1) + 1;
         }
 
         state.groupNumbers.push(state.numbers[0]);
-        statePos++;
       }
 
       state.isLastNode = i === nodes.length - 1;
 
       yield nodes[i];
+
+      if (isShorthandExpression(nodes[i])) {
+        let depth = nodes[i].arguments[0];
+        while (depth-- > 0) {
+          state.numbers[1] = (state.numbers[1] << 1) + 1;
+        }
+      }
     }
   }
 }

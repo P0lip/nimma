@@ -4,6 +4,7 @@
 import * as b from '../ast/builders.mjs';
 import generateEmitCall from '../templates/emit-call.mjs';
 import sandbox from '../templates/sandbox.mjs';
+import { NEEDS_TRAVERSAL } from '../tree/consts.mjs';
 
 const IS_OBJECT_IDENTIFIER = b.identifier('isObject');
 const IS_NOT_OBJECT_IF_STATEMENT = b.ifStatement(
@@ -32,7 +33,7 @@ export default (nodes, tree, ctx) => {
       IS_NOT_OBJECT_IF_STATEMENT,
       generateEmitCall(ctx.id, ctx.iterator.modifiers),
     ]),
-    'traverse',
+    NEEDS_TRAVERSAL,
   );
 
   tree.body.push(EMIT_ROOT_CALL_EXPRESSION);

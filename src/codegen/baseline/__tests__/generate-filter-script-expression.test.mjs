@@ -148,10 +148,6 @@ describe('generateFilterScriptExpression', () => {
       );
     });
 
-    it('supports custom handlers', () => {
-      assert.equal(print(`?(@@schema())`), `!shorthands.schema(scope)`);
-    });
-
     it('throws upon unknown shorthand', () => {
       assert.throws(
         () => print(`?(@foo())`),

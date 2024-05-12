@@ -6,6 +6,10 @@ export function isScriptFilterExpression(node) {
   return node.type === 'ScriptFilterExpression';
 }
 
+export function isShorthandExpression(node) {
+  return node.type === 'CustomShorthandExpression';
+}
+
 export function isNegativeSliceExpression(node) {
   return node.type === 'SliceExpression' && node.value.some(isNegativeNumber);
 }

@@ -1,16 +1,3 @@
-// Examples
-// $.info
-// $.info.foo
-// $.foo.bar.baz
-/**
- *  function (scope, fn) {
- *    const value = scope.sandbox.root?.info;
- *    if (isObject(value)) {
- *      fn(scope.fork(['info', 'foo']).emit());
- *    }
- *  }
- */
-
 import * as b from '../ast/builders.mjs';
 import { isDeep, isMemberExpression } from '../guards.mjs';
 import generateEmitCall from '../templates/emit-call.mjs';
@@ -74,7 +61,7 @@ export default (nodes, tree, ctx) => {
       IS_NULL_SCOPE_IF_STATEMENT,
       generateEmitCall(ctx.id, ctx.iterator.modifiers),
     ]),
-    'body',
+    0,
   );
 
   return true;
