@@ -7,16 +7,27 @@ export type EmittedScope = {
   readonly value: unknown;
 };
 
+export type Scope = {
+  sandbox: {
+    value: unknown;
+  };
+  path: (string | number)[];
+  callbacks: Record<string, Callback>;
+};
+
 export type State = {
   value: number;
   initialValue: number;
 };
 
+export type CustomShorthand = (
+  scope: Scope,
+  state: State,
+  initialValue: number,
+) => void;
+
 export type Options = {
-  customShorthands?: Record<
-    string,
-    (path: JsonPath, state?: State, initialValue?: number) => void
-  >;
+  customShorthands?: Record<string, CustomShorthand>;
   module?: 'esm' | 'commonjs';
 };
 
