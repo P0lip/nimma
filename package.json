@@ -62,7 +62,7 @@
     "eslint-plugin-simple-import-sort": "^12.1.0",
     "husky": "^9.0.10",
     "iso-bench": "^2.4.7",
-    "jsonpath-plus": "^8.0.0",
+    "jsonpath-plus": "^10.0.0",
     "lodash-es": "^4.17.21",
     "prettier": "^3.2.5",
     "rollup": "^4.9.6"
