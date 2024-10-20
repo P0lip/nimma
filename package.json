@@ -78,6 +78,6 @@
     "rollup": "^4.9.6"
   },
   "dependencies": {
-    "astring": "^1.8.6"
+    "astring": "^1.9.0"
   }
 }
