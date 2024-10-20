@@ -23,9 +23,14 @@
   "module": "./src/index.mjs",
   "exports": {
     ".": {
-      "types": "./src/index.d.ts",
-      "import": "./src/index.mjs",
-      "require": "./cjs/index.cjs"
+      "import": {
+        "types": "./src/index.d.ts",
+        "default": "./src/index.mjs"
+      },
+      "require": {
+        "types": "./src/index.d.ts",
+        "default": "./cjs/index.cjs"
+      }
     },
     "./parser": {
       "import": "./src/parser/index.mjs",
@@ -36,9 +41,14 @@
       "require": "./cjs/runtime/index.cjs"
     },
     "./errors": {
-      "types": "./src/runtime/errors/index.d.ts",
-      "import": "./src/runtime/errors/index.mjs",
-      "require": "./cjs/runtime/errors/index.cjs"
+      "import": {
+        "types": "./src/runtime/errors/index.d.ts",
+        "default": "./src/runtime/errors/index.mjs"
+      },
+      "require": {
+        "types": "./src/runtime/errors/index.d.ts",
+        "default": "./cjs/runtime/errors/index.cjs"
+      }
     }
   },
   "sideEffects": false,

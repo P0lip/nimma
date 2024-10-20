@@ -15,7 +15,9 @@ const BASE_DIR = '.';
 export default [
   {
     external: Object.keys(pkg.dependencies),
-    input: Object.values(pkg.exports).map(entry => entry.import),
+    input: Object.values(pkg.exports).map(entry =>
+      typeof entry.import === 'string' ? entry.import : entry.import.default,
+    ),
     output: [
       {
         dir: path.join(BASE_DIR, './cjs'),
