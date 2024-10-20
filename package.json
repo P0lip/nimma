@@ -1,6 +1,6 @@
 {
   "name": "nimma",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Scalable JSONPath engine.",
   "keywords": [
     "json",
@@ -66,15 +66,15 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@eslint/js": "^9.1.1",
-    "@ls-lint/ls-lint": "^2.2.2",
-    "eslint": "^9.1.0",
-    "eslint-plugin-simple-import-sort": "^12.1.0",
+    "@eslint/js": "^9.13.0",
+    "@ls-lint/ls-lint": "^2.2.3",
+    "eslint": "^9.13.0",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
     "husky": "^9.0.10",
     "iso-bench": "^2.4.7",
     "jsonpath-plus": "^8.0.0",
     "lodash-es": "^4.17.21",
-    "prettier": "^3.2.5",
+    "prettier": "^3.3.3",
     "rollup": "^4.9.6"
   },
   "dependencies": {
