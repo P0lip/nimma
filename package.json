@@ -61,7 +61,7 @@
   "scripts": {
     "build": "rollup -c",
     "lint": "ls-lint && eslint --cache --cache-location .cache/ src && prettier --log-level error --ignore-path .gitignore --check --cache --cache-location .cache/.prettier src",
-    "test": "mkdir -p coverage; node --test --experimental-test-coverage --test-reporter=lcov --test-reporter=dot --test-reporter-destination=coverage/lcov.info --test-reporter-destination=stdout src",
+    "test": "mkdir -p coverage; node --test --experimental-test-coverage --test-reporter=lcov --test-reporter=dot --test-reporter-destination=coverage/lcov.info --test-reporter-destination=stdout",
     "prepublishOnly": "npm run lint && npm run test && npm run build",
     "prepare": "husky"
   },
@@ -72,8 +72,6 @@
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "husky": "^9.0.10",
     "iso-bench": "^2.4.7",
-    "jsonpath-plus": "^8.0.0",
-    "lodash-es": "^4.17.21",
     "prettier": "^3.3.3",
     "rollup": "^4.27.2"
   },
