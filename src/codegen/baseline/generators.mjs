@@ -6,6 +6,10 @@ import scope from '../templates/scope.mjs';
 import state from '../templates/state.mjs';
 
 function generateStateCheck(branch, iterator, check, deep) {
+  if (iterator.feedback.fixed) {
+    return generateFixedStateCheck(branch, iterator, check);
+  }
+
   const [prevNo, no] = iterator.state.numbers;
 
   if (iterator.state.isLastNode) {
@@ -52,7 +56,58 @@ function generateStateCheck(branch, iterator, check, deep) {
   );
 }
 
+function generateFixedStateCheck(branch, iterator, check) {
+  const [prevNo, no] = iterator.state.numbers;
+
+  if (iterator.state.isLastNode) {
+    return b.ifStatement(
+      b.logicalExpression(
+        '||',
+        b.binaryExpression('!==', state.initialValue, b.numericLiteral(prevNo)),
+        b.logicalExpression(
+          '||',
+          b.binaryExpression(
+            '!==',
+            scope.depth,
+            b.numericLiteral(iterator.state.absoluteOffset + 1),
+          ),
+          b.unaryExpression('!', check),
+        ),
+      ),
+      b.returnStatement(),
+    );
+  }
+
+  return b.ifStatement(
+    b.logicalExpression(
+      '&&',
+      b.binaryExpression('===', state.initialValue, b.numericLiteral(prevNo)),
+      b.binaryExpression(
+        '===',
+        scope.depth,
+        b.numericLiteral(iterator.state.absoluteOffset + 1),
+      ),
+    ),
+    b.blockStatement([
+      b.ifStatement(
+        check,
+        b.blockStatement([
+          b.assignmentExpression('=', state.value, b.numericLiteral(no)),
+        ]),
+      ),
+    ]),
+  );
+}
+
 function generatePropertyAccess(iterator) {
+  if (iterator.feedback.fixed) {
+    return b.memberExpression(
+      scope.path,
+      b.numericLiteral(iterator.state.absoluteOffset),
+      true,
+    );
+  }
+
   return (!iterator.state.indexed && iterator.state.isLastNode) ||
     iterator.state.usesState
     ? scope.property
@@ -75,7 +130,11 @@ export function generateMemberExpression(branch, iterator, node) {
       generateStateCheck(
         branch,
         iterator,
-        b.safeBinaryExpression('===', scope.property, b.literal(node.value)),
+        b.safeBinaryExpression(
+          '===',
+          generatePropertyAccess(iterator),
+          b.literal(node.value),
+        ),
         node.deep,
       ),
     );
@@ -231,7 +290,7 @@ export function generateSliceExpression(branch, iterator, node, tree) {
 }
 
 export function generateWildcardExpression(branch, iterator) {
-  if (!iterator.state.usesState) return;
+  if (!iterator.state.usesState || iterator.feedback.fixed) return;
 
   const [prevNo, no] = iterator.state.numbers;
 

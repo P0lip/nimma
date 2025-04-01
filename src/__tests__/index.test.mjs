@@ -734,24 +734,24 @@ describe('Nimma', () => {
 
     const collected = collect(document, [
       '$.continents[:-1].countries[0:2].name',
-      // '$.continents[:1].countries[::2].name',
-      // '$.continents[:1].countries[0,1,2].name',
+      '$.continents[:1].countries[::2].name',
+      '$.continents[:1].countries[0,1,2].name',
     ]);
 
     assert.deepEqual(collected, {
-      // '$.continents[:1].countries[0,1,2].name': [
-      //   ['Austria', ['continents', 0, 'countries', 0, 'name']],
-      //   ['Belgium', ['continents', 0, 'countries', 1, 'name']],
-      //   ['Croatia', ['continents', 0, 'countries', 2, 'name']],
-      // ],
+      '$.continents[:1].countries[0,1,2].name': [
+        ['Austria', ['continents', 0, 'countries', 0, 'name']],
+        ['Belgium', ['continents', 0, 'countries', 1, 'name']],
+        ['Croatia', ['continents', 0, 'countries', 2, 'name']],
+      ],
       '$.continents[:-1].countries[0:2].name': [
         ['Austria', ['continents', 0, 'countries', 0, 'name']],
         ['Belgium', ['continents', 0, 'countries', 1, 'name']],
       ],
-      // '$.continents[:1].countries[::2].name': [
-      //   ['Austria', ['continents', 0, 'countries', 0, 'name']],
-      //   ['Croatia', ['continents', 0, 'countries', 2, 'name']],
-      // ],
+      '$.continents[:1].countries[::2].name': [
+        ['Austria', ['continents', 0, 'countries', 0, 'name']],
+        ['Croatia', ['continents', 0, 'countries', 2, 'name']],
+      ],
     });
   });
 
@@ -1537,6 +1537,53 @@ describe('Nimma', () => {
         [
           'another match',
           ['baz', 'baz', 'baz', 'baz', 'a', 'foo', 'baz', 'foo', 'foo', 'foo'],
+        ],
+      ],
+    });
+  });
+
+  it('works#42', () => {
+    const document = {
+      effect_changes: [],
+      effect_entries: [
+        {
+          effect:
+            'Wenn ein Pokémon mit dieser Fähigkeit nur noch 1/3 seiner maximalen hp oder weniger hat, werden all seine fire Attacken verstärkt, so dass sie 1,5× so viel regular damage anrichten wie sonst.',
+          language: {
+            name: 'de',
+            url: 'https://pokeapi.co/api/v2/language/6/',
+          },
+          short_effect:
+            'Erhöht den Schaden von fire Attacken um 50% wenn nur noch 1/3 der maximalen hp oder weniger übrig sind.',
+        },
+        {
+          effect:
+            'When this Pokémon has 1/3 or less of its HP remaining, its fire-type moves inflict 1.5× as much regular damage.',
+          language: {
+            name: 'en',
+            url: 'https://pokeapi.co/api/v2/language/9/',
+          },
+          short_effect:
+            'Strengthens fire moves to inflict 1.5× damage at 1/3 max HP or less.',
+        },
+      ],
+      generation: {
+        name: 'generation-iii',
+        url: 'https://pokeapi.co/api/v2/generation/3/',
+      },
+      id: 66,
+      is_main_series: true,
+      name: 'blaze',
+    };
+
+    const collected = collect(document, [
+      `$.effect_entries[?(@.language.name=='en')].short_effect`,
+    ]);
+    assert.deepEqual(collected, {
+      "$.effect_entries[?(@.language.name=='en')].short_effect": [
+        [
+          'Strengthens fire moves to inflict 1.5× damage at 1/3 max HP or less.',
+          ['effect_entries', 1, 'short_effect'],
         ],
       ],
     });

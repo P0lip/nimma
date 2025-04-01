@@ -23,11 +23,10 @@ describe('Code Generator', () => {
         "$.bar['children.bar']",
         "$.paths[*]['400']",
         '$.paths[*][404,202]',
-        '$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload',
       ]),
       `import {Scope, isObject} from "nimma/runtime";
 const zones = {
-  keys: ["info", "servers", "paths", "channels"],
+  keys: ["info", "servers", "paths"],
   zones: [{
     keys: ["contact"],
     zones: [{
@@ -42,21 +41,6 @@ const zones = {
     zone: {
       keys: ["400", 404, 202],
       zones: [{}, {}, {}]
-    }
-  }, {
-    zone: {
-      keys: ["publish", "subscribe"],
-      zones: [{
-        zone: {
-          keys: ["payload"],
-          zones: [{}]
-        }
-      }, {
-        zone: {
-          keys: ["payload"],
-          zones: [{}]
-        }
-      }]
     }
   }]
 };
@@ -136,21 +120,6 @@ const tree = {
     if (scope.path[0] !== "paths") return;
     if (String(scope.path[2]) !== "404" && String(scope.path[2]) !== "202") return;
     scope.emit("$.paths[*][404,202]", 0, false);
-  },
-  "$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload": function (scope, state) {
-    if (scope.path.length < 4) return;
-    if (scope.path[0] !== "channels") return;
-    if (scope.path[2] !== "publish" && scope.path[2] !== "subscribe") return;
-    if (state.initialValue >= 0) {
-      if (scope.sandbox.value.schemaFormat === void 0) {
-        state.value |= 1
-      } else if (state.at(-1) === 0) {
-        state.value &= 0
-        return;
-      }
-    }
-    if (state.initialValue < 1 || !(scope.path[scope.path.length - 1] === "payload")) return;
-    scope.emit("$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload", 0, false);
   }
 };
 export default function (input, callbacks) {
@@ -161,7 +130,6 @@ export default function (input, callbacks) {
     tree["$.bar['children']"](scope);
     tree["$.bar['0']"](scope);
     tree["$.bar['children.bar']"](scope);
-    const state0 = scope.allocState();
     scope.traverse(() => {
       tree["$.info.contact.*"](scope);
       tree["$[servers,paths][*]"](scope);
@@ -170,7 +138,95 @@ export default function (input, callbacks) {
       tree["$.servers[:5]"](scope);
       tree["$.paths[*]['400']"](scope);
       tree["$.paths[*][404,202]"](scope);
+    }, zones);
+  } finally {
+    scope.destroy();
+  }
+}
+`,
+    );
+  });
+
+  it('fixed with state', () => {
+    assert.equal(
+      generate([
+        '$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload',
+        "$.effect_entries[?(@.language=='en')][*].short_effect",
+        "$.effect_entries[?(@.language.name=='en')].short_effect",
+      ]),
+      `import {Scope} from "nimma/runtime";
+const zones = {
+  keys: ["channels", "effect_entries"],
+  zones: [{
+    zone: {
+      keys: ["publish", "subscribe"],
+      zones: [{
+        zone: {
+          keys: ["payload"],
+          zones: [{}]
+        }
+      }, {
+        zone: {
+          keys: ["payload"],
+          zones: [{}]
+        }
+      }]
+    }
+  }, {
+    zone: {
+      zone: {
+        keys: ["short_effect"],
+        zones: [{}]
+      }
+    }
+  }]
+};
+const tree = {
+  "$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload": function (scope, state) {
+    if (scope.path.length < 4) return;
+    if (scope.path[0] !== "channels") return;
+    if (scope.path[2] !== "publish" && scope.path[2] !== "subscribe") return;
+    if (state.initialValue === 0 && scope.path.length === 4) {
+      if (scope.sandbox.value.schemaFormat === void 0) {
+        state.value = 1
+      }
+    }
+    if (state.initialValue !== 1 || (scope.path.length !== 5 || !(scope.path[4] === "payload"))) return;
+    scope.emit("$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload", 0, false);
+  },
+  "$.effect_entries[?(@.language=='en')][*].short_effect": function (scope, state) {
+    if (scope.path.length < 2) return;
+    if (scope.path[0] !== "effect_entries") return;
+    if (state.initialValue === 0 && scope.path.length === 2) {
+      if (scope.sandbox.value.language == 'en') {
+        state.value = 1
+      }
+    }
+    if (state.initialValue !== 3 || (scope.path.length !== 4 || !(scope.path[3] === "short_effect"))) return;
+    scope.emit("$.effect_entries[?(@.language=='en')][*].short_effect", 0, false);
+  },
+  "$.effect_entries[?(@.language.name=='en')].short_effect": function (scope, state) {
+    if (scope.path.length < 2) return;
+    if (scope.path[0] !== "effect_entries") return;
+    if (state.initialValue === 0 && scope.path.length === 2) {
+      if (scope.sandbox.value.language.name == 'en') {
+        state.value = 1
+      }
+    }
+    if (state.initialValue !== 1 || (scope.path.length !== 3 || !(scope.path[2] === "short_effect"))) return;
+    scope.emit("$.effect_entries[?(@.language.name=='en')].short_effect", 0, false);
+  }
+};
+export default function (input, callbacks) {
+  const scope = new Scope(input, callbacks);
+  try {
+    const state0 = scope.allocState();
+    const state1 = scope.allocState();
+    const state2 = scope.allocState();
+    scope.traverse(() => {
       tree["$.channels[*][publish,subscribe][?(@.schemaFormat === void 0)].payload"](scope, state0);
+      tree["$.effect_entries[?(@.language=='en')][*].short_effect"](scope, state1);
+      tree["$.effect_entries[?(@.language.name=='en')].short_effect"](scope, state2);
     }, zones);
   } finally {
     scope.destroy();
