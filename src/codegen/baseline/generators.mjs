@@ -396,6 +396,10 @@ export function rewriteESTree(tree, node) {
         assertDefinedIdentifier(node.property);
       }
 
+      // Use optional chaining so a filter like `?(@.foo)` evaluates to a no-match
+      // instead of throwing when `@` is null/undefined (e.g. `example: null`).
+      node.optional = true;
+
       break;
     case 'CallExpression':
       if (

@@ -40,6 +40,18 @@ describe('Nimma', () => {
     });
   });
 
+  it('does not throw when a filter predicate walks over a null node', () => {
+    const document = {
+      a: null,
+      b: { format: 'date' },
+    };
+
+    const collected = collect(document, [`$..[?(@.format == 'date')]`]);
+    assert.deepEqual(collected, {
+      [`$..[?(@.format == 'date')]`]: [[{ format: 'date' }, ['b']]],
+    });
+  });
+
   it('works', () => {
     const document = {
       info: {

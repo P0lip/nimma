@@ -187,7 +187,7 @@ const tree = {
     if (scope.path[0] !== "channels") return;
     if (scope.path[2] !== "publish" && scope.path[2] !== "subscribe") return;
     if (state.initialValue === 0 && scope.path.length === 4) {
-      if (scope.sandbox.value.schemaFormat === void 0) {
+      if (scope.sandbox.value?.schemaFormat === void 0) {
         state.value = 1
       }
     }
@@ -198,7 +198,7 @@ const tree = {
     if (scope.path.length < 2) return;
     if (scope.path[0] !== "effect_entries") return;
     if (state.initialValue === 0 && scope.path.length === 2) {
-      if (scope.sandbox.value.language == 'en') {
+      if (scope.sandbox.value?.language == 'en') {
         state.value = 1
       }
     }
@@ -209,7 +209,7 @@ const tree = {
     if (scope.path.length < 2) return;
     if (scope.path[0] !== "effect_entries") return;
     if (state.initialValue === 0 && scope.path.length === 2) {
-      if (scope.sandbox.value.language.name == 'en') {
+      if (scope.sandbox.value?.language?.name == 'en') {
         state.value = 1
       }
     }
@@ -414,7 +414,7 @@ const tree = {
   "$..[?(@.baz)]..baz": function (scope, state) {
     if (scope.path.length < 1) return;
     if (state.initialValue >= 0) {
-      if (scope.sandbox.value.baz) {
+      if (scope.sandbox.value?.baz) {
         state.value |= 1
       } else if (state.at(-1) === 0) {
         state.value &= 0
@@ -443,21 +443,21 @@ const tree = {
     if (scope.path.length < 3) return;
     if (scope.path[0] !== "components") return;
     if (scope.path[1] !== "schemas") return;
-    if (!(scope.sandbox.property !== 'properties' && scope.sandbox.value && (scope.sandbox.value && scope.sandbox.value.example !== void 0 || scope.sandbox.value.default !== void 0))) return;
+    if (!(scope.sandbox.property !== 'properties' && scope.sandbox.value && (scope.sandbox.value && scope.sandbox.value?.example !== void 0 || scope.sandbox.value?.default !== void 0))) return;
     scope.emit("$.components.schemas..[?(@property !== 'properties' && @ && (@ && @.example !== void 0 || @.default !== void 0))]", 0, false);
   },
   "$..address.street[?(@.number > 20)]": function (scope) {
     if (scope.path.length < 3) return;
     if (scope.path[scope.path.length - 3] !== "address") return;
     if (scope.path[scope.path.length - 2] !== "street") return;
-    if (!(scope.sandbox.value.number > 20)) return;
+    if (!(scope.sandbox.value?.number > 20)) return;
     scope.emit("$..address.street[?(@.number > 20)]", 0, false);
   },
   "$.bar..[?(@.example && @.schema)].test": function (scope, state) {
     if (scope.path.length < 2) return;
     if (scope.path[0] !== "bar") return;
     if (state.initialValue >= 0) {
-      if (scope.sandbox.value.example && scope.sandbox.value.schema) {
+      if (scope.sandbox.value?.example && scope.sandbox.value?.schema) {
         state.value |= 1
       } else if (state.at(-1) === 0) {
         state.value &= 0
@@ -470,7 +470,7 @@ const tree = {
   "$..[?(@.name && @.name.match(/1_1$/))].name^^": function (scope, state) {
     if (scope.path.length < 1) return;
     if (state.initialValue >= 0) {
-      if (scope.sandbox.value.name && scope.sandbox.value.name.match(/1_1$/)) {
+      if (scope.sandbox.value?.name && scope.sandbox.value?.name?.match(/1_1$/)) {
         state.value |= 1
       } else if (state.at(-1) === 0) {
         state.value &= 0
@@ -496,13 +496,13 @@ const tree = {
   },
   "$.[?(@.bar)]": function (scope) {
     if (scope.path.length < 1) return;
-    if (!scope.sandbox.value.bar) return;
+    if (!scope.sandbox.value?.bar) return;
     scope.emit("$.[?(@.bar)]", 0, false);
   },
   "$.foo.[?(@.bar)]": function (scope) {
     if (scope.path.length < 2) return;
     if (scope.path[0] !== "foo") return;
-    if (!scope.sandbox.value.bar) return;
+    if (!scope.sandbox.value?.bar) return;
     scope.emit("$.foo.[?(@.bar)]", 0, false);
   },
   "$.foo.[bar]": function (scope) {
@@ -537,20 +537,20 @@ const tree = {
   "$..[?(@.example && @.schema)]..[?(@.example && @.schema)]": function (scope, state) {
     if (scope.path.length < 1) return;
     if (state.initialValue >= 0) {
-      if (scope.sandbox.value.example && scope.sandbox.value.schema) {
+      if (scope.sandbox.value?.example && scope.sandbox.value?.schema) {
         state.value |= 1
       } else if (state.at(-1) === 0) {
         state.value &= 0
         return;
       }
     }
-    if (state.initialValue < 1 || !(scope.sandbox.value.example && scope.sandbox.value.schema)) return;
+    if (state.initialValue < 1 || !(scope.sandbox.value?.example && scope.sandbox.value?.schema)) return;
     scope.emit("$..[?(@.example && @.schema)]..[?(@.example && @.schema)]", 0, false);
   },
   "$..[?(@.example && @.schema)]..foo.bar..[?(@.example && @.schema)]": function (scope, state) {
     if (scope.path.length < 1) return;
     if (state.initialValue >= 0) {
-      if (scope.sandbox.value.example && scope.sandbox.value.schema) {
+      if (scope.sandbox.value?.example && scope.sandbox.value?.schema) {
         state.value |= 1
       } else if (state.at(-1) === 0) {
         state.value &= 0
@@ -570,7 +570,7 @@ const tree = {
         return;
       }
     }
-    if (state.initialValue < 7 || !(scope.sandbox.value.example && scope.sandbox.value.schema)) return;
+    if (state.initialValue < 7 || !(scope.sandbox.value?.example && scope.sandbox.value?.schema)) return;
     scope.emit("$..[?(@.example && @.schema)]..foo.bar..[?(@.example && @.schema)]", 0, false);
   },
   "$..[?( @property >= 400 )]..foo": function (scope, state) {
@@ -892,13 +892,13 @@ const tree = {
   "$.info..[?(@property.startsWith('foo'))]": function (scope) {
     if (scope.path.length < 2) return;
     if (scope.path[0] !== "info") return;
-    if (!String(scope.sandbox.property).startsWith('foo')) return;
+    if (!String(scope.sandbox.property)?.startsWith('foo')) return;
     scope.emit("$.info..[?(@property.startsWith('foo'))]", 0, false);
   },
   "$.info.*[?(@property.startsWith('foo'))]": function (scope) {
     if (scope.path.length !== 3) return;
     if (scope.path[0] !== "info") return;
-    if (!String(scope.sandbox.property).startsWith('foo')) return;
+    if (!String(scope.sandbox.property)?.startsWith('foo')) return;
     scope.emit("$.info.*[?(@property.startsWith('foo'))]", 0, false);
   },
   "$..headers..[?(@.example && @.schema)]": function (scope, state) {
@@ -908,17 +908,17 @@ const tree = {
         state.value |= 1
       }
     }
-    if (state.initialValue < 1 || !(scope.sandbox.value.example && scope.sandbox.value.schema)) return;
+    if (state.initialValue < 1 || !(scope.sandbox.value?.example && scope.sandbox.value?.schema)) return;
     scope.emit("$..headers..[?(@.example && @.schema)]", 0, false);
   },
   "$..[?(@ && @.example)]": function (scope) {
     if (scope.path.length < 1) return;
-    if (!(scope.sandbox.value && scope.sandbox.value.example)) return;
+    if (!(scope.sandbox.value && scope.sandbox.value?.example)) return;
     scope.emit("$..[?(@ && @.example)]", 0, false);
   },
   "$[?(@ && @.example)]": function (scope) {
     if (scope.path.length !== 1) return;
-    if (!(scope.sandbox.value && scope.sandbox.value.example)) return;
+    if (!(scope.sandbox.value && scope.sandbox.value?.example)) return;
     scope.emit("$[?(@ && @.example)]", 0, false);
   }
 };

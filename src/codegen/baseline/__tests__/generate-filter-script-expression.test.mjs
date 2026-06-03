@@ -25,21 +25,21 @@ describe('generateFilterScriptExpression', () => {
   it('at member expression', () => {
     assert.equal(
       print(`?(@.schema || @.ex)`),
-      `!(scope.sandbox.value.schema || scope.sandbox.value.ex)`,
+      `!(scope.sandbox.value?.schema || scope.sandbox.value?.ex)`,
     );
 
     assert.equal(
       print(`?(@.schema['d'] || @.ex.baz)`),
-      `!(scope.sandbox.value.schema['d'] || scope.sandbox.value.ex.baz)`,
+      `!(scope.sandbox.value?.schema?.['d'] || scope.sandbox.value?.ex?.baz)`,
     );
 
-    assert.equal(print(`?(!@.summary)`), `!!scope.sandbox.value.summary`);
+    assert.equal(print(`?(!@.summary)`), `!!scope.sandbox.value?.summary`);
   });
 
   it('"unknown" identifier', () => {
     assert.equal(
       print(`?(@.schema === undefined)`),
-      `!(scope.sandbox.value.schema === void 0)`,
+      `!(scope.sandbox.value?.schema === void 0)`,
     );
   });
 
@@ -56,17 +56,17 @@ describe('generateFilterScriptExpression', () => {
   });
 
   it('unary expressions', () => {
-    assert.equal(print(`?(!@.amount)`), `!!scope.sandbox.value.amount`);
+    assert.equal(print(`?(!@.amount)`), `!!scope.sandbox.value?.amount`);
     assert.equal(
       print(`?(!@.line == -@.char)`),
-      '!(!scope.sandbox.value.line == -scope.sandbox.value.char)',
+      '!(!scope.sandbox.value?.line == -scope.sandbox.value?.char)',
     );
   });
 
   it('binary expressions', () => {
     assert.equal(
       print(`?(@.amount + 2 === 4)`),
-      `!(scope.sandbox.value.amount + 2 === 4)`,
+      `!(scope.sandbox.value?.amount + 2 === 4)`,
     );
   });
 
@@ -99,14 +99,14 @@ describe('generateFilterScriptExpression', () => {
     it('@path', () => {
       assert.equal(
         print(`?(@path.includes("foo"))`),
-        `!scope.sandbox.path.includes("foo")`,
+        `!scope.sandbox.path?.includes("foo")`,
       );
     });
 
     it('@parent', () => {
       assert.equal(
         print(`?(@parent.version === 1)`),
-        `!(scope.sandbox.parentValue.version === 1)`,
+        `!(scope.sandbox.parentValue?.version === 1)`,
       );
     });
 
